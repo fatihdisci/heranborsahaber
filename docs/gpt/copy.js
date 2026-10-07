@@ -38,8 +38,9 @@ async function start() {
     $('text').value=data.prompt;$('content').hidden=false;$('copy').disabled=false;
     $('description').textContent='Tamamını kopyala, GPT’ye yapıştır; yalnız tweet taslağı iste.';
     $('status').textContent='Kopyalamak için düğmeye dokun.';
-    $('copy').addEventListener('click',copyPrompt);
+    $('copy').onclick=copyPrompt;
     history.replaceState(null,'',location.pathname); // Do not leave article data in browser history.
   }catch(error){$('error').textContent=error.message || 'Aktarım açılamadı. Telegram’daki düğmeyi yeniden aç.';$('error').hidden=false;}
 }
 start();
+window.addEventListener('hashchange', start);

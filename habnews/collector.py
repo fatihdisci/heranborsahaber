@@ -87,24 +87,13 @@ class Collector:
         valid,reason=fresh(item)
         if not valid: self.db.finish(row,reason); return
         try:
-            if source.get('method')=='nitter_rss':
-                from .social import check_source
-                check_source(source)
-                if item.get('x_account')!=source['x_account'] or item.get('source_type')!='social_x':raise ValueError('social_job_mismatch')
-                # Entire owned post came from the validated RSS; never request X or quote author's content.
-                text=item['full_post'];url=item['url'];document={'title':item['title'],'preview_url':item['url']}
-            else:
-                data,meta,url,_=Fetcher(source['allowed_hosts'],self.db.require_enabled).get(item['url'])
-                from .article import extract_document
-                document=extract_document(data,meta.get('content-type',''),url,expected_title=item['title'],requested_url=item['url'])
-                text=(document['title']+'\n\n' if document['title'] else '')+document['body']
+            from .source_content import read_document,document_text,document_photo
+            document=read_document(item,source,self.db.require_enabled)
+            text=document_text(document,source);url=document['source_url']
             media=None
             if source.get('method')!='nitter_rss' and (job.get('manual') or item.get('manual_requested_at')):
                 try:
-                    from .article_media import article_photo
-                    from .images import matched_official_archive
-                    media=article_photo(document,source,self.db.path.parent/'media',self.db.require_enabled)
-                    if not media:media=matched_official_archive(document['title'],self.db.path.parent/'media',self.db.require_enabled,article_body=document['body'])
+                    media=document_photo(document,source,self.db.path.parent/'media',self.db.require_enabled)
                     if media:
                         provenance=media['provenance'];mid=digest(job['event_id']+':'+str(job['event_version'])+':'+provenance['sha256'])
                         self.db.conn.execute('INSERT OR IGNORE INTO habnews_image_candidate(id,event_id,version,payload,rights,created,path) VALUES(?,?,?,?,?,?,?)',

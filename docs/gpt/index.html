@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Haber → GPT</title>
+  <link rel="stylesheet" href="copy.css">
+  <script defer src="copy.js"></script>
+</head>
+<body>
+<main>
+  <p class="eyebrow">HABER → GPT</p>
+  <h1>Haberin tweet olsun.</h1>
+  <p id="description">Telegram’daki GPT’ye aktar düğmesinden gelen prompt ve tam haber metni burada açılır.</p>
+  <section id="content" hidden>
+    <h2 id="title"></h2>
+    <p id="count" class="muted"></p>
+    <button id="copy" type="button" disabled>Prompt + haberi kopyala</button>
+    <a class="open" href="https://chatgpt.com/" rel="noreferrer noopener" target="_blank">GPT’yi aç ↗</a>
+    <p id="status" role="status" aria-live="polite">Hazırlanıyor…</p>
+    <details><summary>Panoya alınacak metni gör</summary><textarea id="text" readonly aria-label="Prompt ve haberin tam metni" spellcheck="false"></textarea></details>
+  </section>
+  <p id="error" role="alert" hidden></p>
+  <p class="privacy">Haber bu ekran içinde işlenir. İçerik sunucuya gönderilmez ve kaydedilmez. Haberin fotoğrafı Telegram sohbetindedir.</p>
+</main>
+</body>
+</html>

@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS habnews_attempt(id TEXT PRIMARY KEY,outbox_id TEXT NO
 CREATE TABLE IF NOT EXISTS habnews_callback(nonce TEXT PRIMARY KEY,draft_id TEXT NOT NULL,action TEXT NOT NULL,recipient INTEGER NOT NULL,message_id INTEGER,hash TEXT NOT NULL,used INTEGER DEFAULT 0);
 CREATE TABLE IF NOT EXISTS habnews_update(id TEXT PRIMARY KEY,created REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS habnews_feed_callback(nonce TEXT PRIMARY KEY,observation_id TEXT NOT NULL,recipient INTEGER NOT NULL,message_id INTEGER,digest TEXT NOT NULL,used INTEGER DEFAULT 0,outbox_id TEXT UNIQUE NOT NULL);
+CREATE TABLE IF NOT EXISTS habnews_gpt_export(id TEXT PRIMARY KEY,observation_id TEXT NOT NULL,recipient INTEGER NOT NULL,digest TEXT NOT NULL,status TEXT NOT NULL,created REAL NOT NULL,outbox_id TEXT,chars INTEGER,article_digest TEXT,expires REAL);
+CREATE INDEX IF NOT EXISTS habnews_gpt_export_observation ON habnews_gpt_export(observation_id,created);
 CREATE TABLE IF NOT EXISTS habnews_revision(message_id INTEGER PRIMARY KEY,event_id TEXT NOT NULL,draft_id TEXT NOT NULL,recipient INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS habnews_budget(id TEXT PRIMARY KEY,day TEXT NOT NULL,event_id TEXT NOT NULL,kind TEXT NOT NULL,reserved INTEGER NOT NULL,actual INTEGER,status TEXT NOT NULL,metadata TEXT NOT NULL,created REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS habnews_audit(id INTEGER PRIMARY KEY AUTOINCREMENT,created REAL NOT NULL,kind TEXT NOT NULL,subject TEXT NOT NULL,metadata TEXT NOT NULL);

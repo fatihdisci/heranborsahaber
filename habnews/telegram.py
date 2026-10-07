@@ -10,13 +10,14 @@ class TelegramError(RuntimeError):
 class MediaError(ValueError):pass
 
 class Telegram:
-    METHODS={'getMe','getWebhookInfo','getUpdates','sendMessage','sendPhoto','sendDocument','editMessageCaption','editMessageMedia','answerCallbackQuery'}
+    METHODS={'getMe','getWebhookInfo','getUpdates','sendMessage','sendPhoto','sendDocument','editMessageCaption','editMessageMedia','editMessageReplyMarkup','answerCallbackQuery'}
     def __init__(self,token):
         if not token or ':' not in token: raise ValueError('telegram_auth_required')
         self._token=token; self.next_at=0
     def call(self,method,payload):
         if method not in self.METHODS: raise ValueError('telegram_method_denied')
-        if (method.startswith('send') or method in ('editMessageCaption','editMessageMedia')) and payload.get('chat_id',0)<=0: raise ValueError('private_chat_only')
+        if (method.startswith('send') or method in ('editMessageCaption','editMessageMedia','editMessageReplyMarkup')) and payload.get('chat_id',0)<=0: raise ValueError('private_chat_only')
+        if method=='editMessageReplyMarkup' and payload.get('message_id',0)<=0:raise ValueError('private_message_required')
         if method=='editMessageMedia':
             media=payload.get('media',{})
             if not payload.get('file_path') or payload.get('message_id',0)<=0 or media.get('type')!='photo' or media.get('media')!='attach://photo' or len(media.get('caption',''))>1024:raise ValueError('private_photo_edit_only')
@@ -43,8 +44,9 @@ class Telegram:
                     value=json.dumps(v,ensure_ascii=False) if isinstance(v,(dict,list,bool)) else str(v)
                     chunks.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{value}\r\n'.encode())
                 field='document' if method=='sendDocument' else 'photo'
-                content_type={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp'}.get(path.suffix.lower(),'application/octet-stream')
-                chunks.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"; filename="image{path.suffix}"\r\nContent-Type: {content_type}\r\n\r\n'.encode()+blob+f'\r\n--{boundary}--\r\n'.encode())
+                content_type={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.txt':'text/plain; charset=utf-8'}.get(path.suffix.lower(),'application/octet-stream')
+                filename='gpt-aktarim.txt' if path.suffix.lower()=='.txt' else 'image'+path.suffix
+                chunks.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"; filename="{filename}"\r\nContent-Type: {content_type}\r\n\r\n'.encode()+blob+f'\r\n--{boundary}--\r\n'.encode())
                 body=b''.join(chunks);headers={'Content-Type':'multipart/form-data; boundary='+boundary}
             else:body=encode(payload).encode();headers={'Content-Type':'application/json'}
             conn.request('POST','/bot'+self._token+'/'+method,body=body,headers=headers)
@@ -70,6 +72,8 @@ class Telegram:
 class Outbox:
     def __init__(self,db,transport): self.db=db;self.transport=transport
     def photo_fallback(self,row,attempt,reason):
+        from .gpt_export import delivery_fallback
+        if delivery_fallback(self.db,row,attempt,reason):return True
         if row['method']!='sendPhoto' or not row['draft_id']:return False
         draft=self.db.conn.execute('SELECT body,metadata FROM habnews_draft WHERE id=?',(row['draft_id'],)).fetchone()
         if not draft or not json.loads(draft['metadata']).get('manual_attribution'):return False
@@ -179,7 +183,10 @@ class ApprovalService:
                 if 'callback_query' in update:
                     from .live_feed import feed_callback
                     from .config import sources
-                    response=feed_callback(self.db,self.approval,update,sources())
+                    from .gpt_export import gpt_callback
+                    active_sources=sources()
+                    response=gpt_callback(self.db,self.approval,update,active_sources)
+                    if response is None:response=feed_callback(self.db,self.approval,update,active_sources)
                     feed_response=response is not None
                     if response is None:response=self.approval.callback(update)
                     toast=('Hazırlanıyor…' if 'kaydedildi' in response or 'hazırlanıyor' in response else 'Taslak hazır.' if response.startswith('Hazırlanan taslak:') else response[:190]) if feed_response else 'İşlem kaydedildi.' if response not in ('stale','duplicate') else response

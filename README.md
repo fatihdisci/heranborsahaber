@@ -2,6 +2,8 @@
 
 Güncel model: **gpt-6-luna**, düşünme açık, **reasoning effort high**. Otomatik düşük effort/model seçimi yok.
 
+Haber kartındaki **GPT’ye aktar**, aynı haber okuyucusuyla tam başlık/gövdeyi alır; botla ortak tweet kurallarını üzerine ekler ve haber görselini fotoğraf olarak gönderir. Gelen kopyalama ekranındaki bir dokunuşla prompt + tam haber tek parça panoya alınır. Telegram'ın 256 karakterlik düğme sınırına göre metin kesilmez. Ayrıntılar: [GPT_EXPORT.md](GPT_EXPORT.md).
+
 Katalogda 17 kaynak tanımlı; 6 Ekim 2026'daki canlı ayarda 16'sı etkin: 12 haber/resmî akış ve 4 X hesabı. **Investing Türkiye kapalıdır.** Kaynak adayları ve doğrulama sınırları: [SOURCE_AUDIT.txt](reports/SOURCE_AUDIT.txt); önceki erişim ölçümleri: [public-source-expansion.json](reports/public-source-expansion.json).
 
 Tweet oluştur yalnız haber başlığı ve ana metninden en fazla 380 karakterlik tek taslak üretir. 🚨/📢 başlığın önünde, 2–3 konu etiketi metinde yer alır. 7 Ekim 2026 düzeltmesiyle haberin kendi ana görseli dosya olarak yüklenir; tweet aynı Telegram fotoğrafının açıklamasındadır. Bu özel kaynak önizlemesi yeniden yayınlama lisansı sayılmaz. Görsel yoksa sade tweet metni gönderilir. Ayrıntılar: [LIVE_FEED.md](LIVE_FEED.md).

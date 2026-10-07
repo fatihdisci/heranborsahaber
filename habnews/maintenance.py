@@ -12,6 +12,14 @@ def cleanup(db,media_dir,now=None):
             except (ValueError,OSError):expired=True
             if expired:path.unlink(missing_ok=True)
     with db.transaction() as c:
+        # Full clipboard payloads are private operational exports, not an article archive.
+        expired=[r[0] for r in c.execute('SELECT outbox_id FROM habnews_gpt_export WHERE expires<?',(now,))]
+        for oid in expired:
+            c.execute("UPDATE habnews_outbox SET payload='{}',status=CASE WHEN status='pending' THEN 'expired' ELSE status END WHERE id=? AND status!='sending'",(oid,))
+        c.execute("UPDATE habnews_gpt_export SET status='expired' WHERE expires<?",(now,))
+        c.execute("DELETE FROM habnews_gpt_export WHERE created<?",(now-7*86400,))
+        for file in Path(media_dir).glob('gpt-*.txt'):
+            if file.stat().st_mtime<now-86400:file.unlink(missing_ok=True)
         # Any active review protects all evidence/provenance for that event.
         active="SELECT event_id FROM habnews_draft WHERE status IN ('pending','needs_review')"
         c.execute(f"UPDATE habnews_evidence SET passage='',tombstone=1 WHERE retrieved<? AND event_id NOT IN ({active})",(now-30*86400,))

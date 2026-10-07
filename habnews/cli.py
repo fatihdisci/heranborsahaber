@@ -73,6 +73,8 @@ def service(db,role,directory,credentials):
                     collector.poll()
                     from .live_feed import process_live_feed,notify_manual_failures
                     process_live_feed(db,approval,collector.sources)
+                    from .gpt_export import process_gpt_export
+                    process_gpt_export(db,approval,collector.sources)
                     collector.research_one();process_revision(db);process_image(db,approval);broker.submit_one();notify_manual_failures(db,approval)
                 if time.time()-last_cleanup>3600:cleanup(db,'/data/media');last_cleanup=time.time()
                 db.set_state('collector_heartbeat',time.time());db.recover('collector')

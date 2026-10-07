@@ -51,7 +51,8 @@ def run_job(job,reasoning=REASONING):
     prompt=encode(job)
     if len(prompt)>64000:raise HermesUnavailable('input_limit')
     agent=create_agent(reasoning)
-    result=agent.run_conversation(user_message=prompt,task_id=job['job_id'],system_message=Path(__file__).with_name('policy.txt').read_text())
+    from .editorial_prompt import model_policy
+    result=agent.run_conversation(user_message=prompt,task_id=job['job_id'],system_message=model_policy(job))
     if result.get('failed') or result.get('completed') is False:
         reason=result.get('failure_reason')
         raise HermesUnavailable('quota_paused' if reason in ('rate_limit','billing') else 'needs_review')

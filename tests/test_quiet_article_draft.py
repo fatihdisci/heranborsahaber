@@ -102,6 +102,6 @@ def test_expired_manual_text_is_refetched_without_model_charge(prepared,tmp_path
     assert db.conn.execute('SELECT sum(reserved) FROM habnews_budget').fetchone()[0]==0
     html=('<article><h1>TEST TCMB</h1><p>'+('TEST TCMB politika faizini yüzde 40 olarak belirledi. '*5)+'</p></article>').encode()
     monkeypatch.setattr('habnews.collector.Fetcher.get',lambda *a,**k:(html,{'content-type':'text/html'},item['url'],200))
-    src=next(s for s in sources() if s['stable_id']=='foreks');Collector(db,[src]).research_one();broker.submit_one()
+    src=next(s for s in sources() if s['stable_id']=='foreks')|{'enabled':True};Collector(db,[src]).research_one();broker.submit_one()
     assert len(list((tmp_path/'jobs').glob('*.job.json')))==1
     assert db.conn.execute('SELECT count(*) FROM habnews_evidence WHERE tombstone=0').fetchone()[0]==1

@@ -32,7 +32,8 @@ def process_live_feed(db,approval,sources):
         if len(summary)>2200:text+='…'
         if source['method']=='nitter_rss':text+='\n\nX paylaşımı — kaynak hesabın aktarımı; iddia ayrıca teyit edilmedi.'
         nonce=secrets.token_urlsafe(16);outbox_id=uid()
-        buttons={'inline_keyboard':[[{'text':'🔗 Paylaşımı aç' if source['method']=='nitter_rss' else '🔗 Haberi aç','url':item['url']}],[{'text':'✨ Tweet oluştur','callback_data':nonce}]]}
+        from .gpt_export import export_button
+        buttons={'inline_keyboard':[[{'text':'🔗 Paylaşımı aç' if source['method']=='nitter_rss' else '🔗 Haberi aç','url':item['url']}],[{'text':'✨ Tweet oluştur','callback_data':nonce}],[export_button(nonce)]]}
         with db.transaction() as c:
             c.execute('INSERT INTO habnews_outbox(id,recipient,part,method,payload,next_at,created) VALUES(?,?,?,?,?,?,?)',
                       (outbox_id,approval.chat_id,0,'sendMessage',encode({'chat_id':approval.chat_id,'text':text,'reply_markup':buttons}),time.time(),time.time()))

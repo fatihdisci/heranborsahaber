@@ -1,0 +1,491 @@
+version: habnews-sources-v1
+sources:
+- stable_id: foreks
+  owner: Foreks
+  priority: B
+  endpoint: https://www.foreks.com/rss
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - www.foreks.com
+  - foreks.com
+  polling_interval: 60
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Private personal review with source links; full text TTL300;
+    no image/publication license assumed. Public RSS offered for automated agents
+    via llms.txt; robots permits news and excludes private API/token paths.
+  verified_at: '2026-10-06T14:07:56.253143+00:00'
+  health: validated
+  enabled: false
+  source_family: foreks
+  terms_approved: true
+  validation_report: reports/source-access-review.json
+  delivery_mode: live_feed
+- stable_id: bloomberght
+  owner: Bloomberg HT
+  priority: B
+  endpoint: https://www.bloomberght.com/rss/tum-haberler.xml
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - www.bloomberght.com
+  - bloomberght.com
+  polling_interval: 60
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
+    source URLs. Publisher terms reviewed; no full article archive or image/publication
+    license. Public RSS endpoint offered; no access controls bypassed.
+  verified_at: '2026-10-06T14:30:10.681859+00:00'
+  health: validated
+  enabled: false
+  source_family: bloomberght
+  terms_approved: true
+  validation_report: reports/source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: investing-tr
+  owner: Investing Türkiye
+  priority: B
+  endpoint: https://tr.investing.com/rss/news.rss
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - tr.investing.com
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Official RSS reader endpoint works. Article/robots GET returns403;
+    RSS observation only, no article fetch, evidence or LLM draft; no bypass. News
+    timestamp may be unknown.
+  verified_at: '2026-10-06T14:30:10.681859+00:00'
+  health: validated
+  enabled: false
+  source_family: investing-tr
+  terms_approved: true
+  validation_report: reports/source-expansion.json
+  article_access: blocked_http_403
+  delivery_mode: live_feed
+- stable_id: haberturk
+  owner: Habertürk
+  priority: B
+  endpoint: https://www.haberturk.com/rss/ekonomi.xml
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - www.haberturk.com
+  - haberturk.com
+  polling_interval: 120
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
+    source URLs. Publisher terms reviewed; no full article archive or image/publication
+    license. Public RSS endpoint offered; no access controls bypassed.
+  verified_at: '2026-10-06T14:30:10.681859+00:00'
+  health: validated
+  enabled: false
+  source_family: haberturk
+  terms_approved: true
+  validation_report: reports/source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: sozcu
+  owner: Sözcü
+  priority: B
+  endpoint: https://www.sozcu.com.tr/feeds-rss-category-ekonomi
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - www.sozcu.com.tr
+  - sozcu.com.tr
+  polling_interval: 120
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
+    source URLs. Publisher terms reviewed; no full article archive or image/publication
+    license. Public RSS endpoint offered; no access controls bypassed.
+  verified_at: '2026-10-06T14:30:10.681859+00:00'
+  health: validated
+  enabled: false
+  source_family: sozcu
+  terms_approved: true
+  validation_report: reports/source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: tcmb
+  owner: TCMB
+  priority: A
+  endpoint: https://www.tcmb.gov.tr/
+  method: tcmb_home
+  parser_version: tcmb-home-cards-v1
+  allowed_hosts:
+  - www.tcmb.gov.tr
+  - tcmb.gov.tr
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: unknown
+  robots_terms_note: Private personal review with source links; full text TTL300;
+    no image/publication license assumed. TCMB terms permit attributed information
+    use; commercial use requires written permission. Private personal review scope
+    only.
+  verified_at: '2026-10-06T14:07:56.253143+00:00'
+  health: validated
+  enabled: false
+  source_family: tcmb
+  terms_approved: true
+  validation_report: reports/source-access-review.json
+  delivery_mode: live_feed
+- stable_id: hmb
+  owner: HMB
+  priority: A
+  endpoint: https://www.hmb.gov.tr/
+  method: discovery_only
+  parser_version: null
+  allowed_hosts:
+  - www.hmb.gov.tr
+  - hmb.gov.tr
+  polling_interval: 300
+  timezone: Europe/Istanbul
+  time_precision: unknown
+  robots_terms_note: Official homepage candidate; publication endpoint and parser
+    not yet validated.
+  verified_at: null
+  health: unverified
+  enabled: false
+  source_family: hmb
+  terms_approved: false
+  validation_report: null
+- stable_id: bist
+  owner: BIST
+  priority: A
+  endpoint: https://www.borsaistanbul.com/
+  method: discovery_only
+  parser_version: null
+  allowed_hosts:
+  - www.borsaistanbul.com
+  - borsaistanbul.com
+  polling_interval: 300
+  timezone: Europe/Istanbul
+  time_precision: unknown
+  robots_terms_note: Official homepage candidate; publication endpoint and parser
+    not yet validated.
+  verified_at: null
+  health: unverified
+  enabled: false
+  source_family: bist
+  terms_approved: false
+  validation_report: null
+- stable_id: bddk
+  owner: BDDK
+  priority: A
+  endpoint: https://www.bddk.org.tr/
+  method: discovery_only
+  parser_version: null
+  allowed_hosts:
+  - www.bddk.org.tr
+  - bddk.org.tr
+  polling_interval: 300
+  timezone: Europe/Istanbul
+  time_precision: unknown
+  robots_terms_note: Official homepage candidate; publication endpoint and parser
+    not yet validated.
+  verified_at: null
+  health: unverified
+  enabled: false
+  source_family: bddk
+  terms_approved: false
+  validation_report: null
+- stable_id: resmigazete
+  owner: RESMIGAZETE
+  priority: A
+  endpoint: https://www.resmigazete.gov.tr/
+  method: discovery_only
+  parser_version: null
+  allowed_hosts:
+  - www.resmigazete.gov.tr
+  - resmigazete.gov.tr
+  polling_interval: 300
+  timezone: Europe/Istanbul
+  time_precision: unknown
+  robots_terms_note: Official homepage candidate; publication endpoint and parser
+    not yet validated.
+  verified_at: null
+  health: unverified
+  enabled: false
+  source_family: resmigazete
+  terms_approved: false
+  validation_report: null
+- stable_id: tuik
+  owner: TUIK
+  priority: A
+  endpoint: https://www.tuik.gov.tr/
+  method: discovery_only
+  parser_version: null
+  allowed_hosts:
+  - www.tuik.gov.tr
+  - tuik.gov.tr
+  polling_interval: 300
+  timezone: Europe/Istanbul
+  time_precision: unknown
+  robots_terms_note: Official homepage candidate; publication endpoint and parser
+    not yet validated.
+  verified_at: null
+  health: unverified
+  enabled: false
+  source_family: tuik
+  terms_approved: false
+  validation_report: null
+- stable_id: dunya
+  owner: Dünya
+  priority: B
+  endpoint: https://www.dunya.com/rss
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - www.dunya.com
+  - dunya.com
+  polling_interval: 120
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
+    source URLs. Publisher terms reviewed; no full article archive or image/publication
+    license. Public RSS endpoint offered; no access controls bypassed.
+  verified_at: '2026-10-06T14:30:10.681859+00:00'
+  health: validated
+  enabled: false
+  source_family: dunya
+  terms_approved: true
+  validation_report: reports/source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: ekonomim
+  owner: Ekonomim
+  priority: B
+  endpoint: https://www.ekonomim.com/rss
+  method: rss
+  parser_version: rss-atom-v1
+  allowed_hosts:
+  - www.ekonomim.com
+  - ekonomim.com
+  polling_interval: 120
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
+    source URLs. Publisher terms reviewed; no full article archive or image/publication
+    license. Public RSS endpoint offered; no access controls bypassed.
+  verified_at: '2026-10-06T14:30:10.681859+00:00'
+  health: validated
+  enabled: false
+  source_family: ekonomim
+  terms_approved: true
+  validation_report: reports/source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: x-ismailsaymaz
+  owner: X · @ismailsaymaz
+  priority: B
+  endpoint: https://nitter.cf/ismailsaymaz/rss
+  method: nitter_rss
+  parser_version: nitter-owned-post-v1
+  allowed_hosts:
+  - nitter.cf
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Read-only public RSS relay as used by reference repository. Owner-only
+    attributed news cards; no X login/session, no publication, no media fetch; disputed
+    claims are not verified facts. Relay can be unavailable.
+  verified_at: '2026-10-06T14:51:32.978821+00:00'
+  health: validated
+  enabled: false
+  source_family: social:ismailsaymaz
+  terms_approved: true
+  validation_report: reports/live-feed-social.json
+  x_account: ismailsaymaz
+  delivery_mode: live_feed
+  article_access: verified
+- stable_id: x-haskologlu
+  owner: X · @haskologlu
+  priority: B
+  endpoint: https://nitter.cf/haskologlu/rss
+  method: nitter_rss
+  parser_version: nitter-owned-post-v1
+  allowed_hosts:
+  - nitter.cf
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Read-only public RSS relay as used by reference repository. Owner-only
+    attributed news cards; no X login/session, no publication, no media fetch; disputed
+    claims are not verified facts. Relay can be unavailable.
+  verified_at: '2026-10-06T14:51:32.978821+00:00'
+  health: validated
+  enabled: false
+  source_family: social:haskologlu
+  terms_approved: true
+  validation_report: reports/live-feed-social.json
+  x_account: haskologlu
+  delivery_mode: live_feed
+  article_access: verified
+- stable_id: x-abakingurlek
+  owner: X · @abakingurlek
+  priority: B
+  endpoint: https://nitter.cf/abakingurlek/rss
+  method: nitter_rss
+  parser_version: nitter-owned-post-v1
+  allowed_hosts:
+  - nitter.cf
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Read-only public RSS relay as used by reference repository. Owner-only
+    attributed news cards; no X login/session, no publication, no media fetch; disputed
+    claims are not verified facts. Relay can be unavailable.
+  verified_at: '2026-10-06T14:51:32.978821+00:00'
+  health: validated
+  enabled: false
+  source_family: social:abakingurlek
+  terms_approved: true
+  validation_report: reports/live-feed-social.json
+  x_account: abakingurlek
+  delivery_mode: live_feed
+  article_access: verified
+- stable_id: x-rterdogan
+  owner: X · @rterdogan
+  priority: B
+  endpoint: https://nitter.cf/rterdogan/rss
+  method: nitter_rss
+  parser_version: nitter-owned-post-v1
+  allowed_hosts:
+  - nitter.cf
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Read-only public RSS relay as used by reference repository. Owner-only
+    attributed news cards; no X login/session, no publication, no media fetch; disputed
+    claims are not verified facts. Relay can be unavailable.
+  verified_at: '2026-10-06T14:51:32.978821+00:00'
+  health: validated
+  enabled: false
+  source_family: social:rterdogan
+  terms_approved: true
+  validation_report: reports/live-feed-social.json
+  x_account: rterdogan
+  delivery_mode: live_feed
+  article_access: verified
+- stable_id: cnbce
+  owner: CNBC-e
+  endpoint: https://www.cnbce.com/rss
+  allowed_hosts:
+  - www.cnbce.com
+  priority: B
+  method: rss
+  parser_version: rss-atom-v2-clean-text
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Public publisher RSS; robots allows sampled feed and article
+    paths. Owner-only private reading and attributed draft. No full article archive,
+    image license or public syndication rights assumed. AA public website body only;
+    not licensed HAS service.
+  verified_at: '2026-10-06T16:19:54.105155+00:00'
+  health: validated
+  enabled: false
+  source_family: cnbce
+  terms_approved: true
+  validation_report: reports/public-source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: ntvpara
+  owner: NTV Para
+  endpoint: https://www.ntv.com.tr/ntvpara.rss
+  allowed_hosts:
+  - www.ntv.com.tr
+  priority: B
+  method: rss
+  parser_version: rss-atom-v2-clean-text
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Public publisher RSS; robots allows sampled feed and article
+    paths. Owner-only private reading and attributed draft. No full article archive,
+    image license or public syndication rights assumed. AA public website body only;
+    not licensed HAS service.
+  verified_at: '2026-10-06T16:19:54.105155+00:00'
+  health: validated
+  enabled: false
+  source_family: ntvpara
+  terms_approved: true
+  validation_report: reports/public-source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: trt-ekonomi
+  owner: TRT Haber Ekonomi
+  endpoint: https://www.trthaber.com/ekonomi_articles.rss
+  allowed_hosts:
+  - www.trthaber.com
+  priority: B
+  method: rss
+  parser_version: rss-atom-v2-clean-text
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Public publisher RSS; robots allows sampled feed and article
+    paths. Owner-only private reading and attributed draft. No full article archive,
+    image license or public syndication rights assumed. AA public website body only;
+    not licensed HAS service.
+  verified_at: '2026-10-06T16:19:54.105155+00:00'
+  health: validated
+  enabled: false
+  source_family: trt
+  terms_approved: true
+  validation_report: reports/public-source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: aa-ekonomi
+  owner: Anadolu Ajansı Ekonomi
+  endpoint: https://www.aa.com.tr/tr/rss/default?cat=ekonomi
+  allowed_hosts:
+  - www.aa.com.tr
+  priority: B
+  method: rss
+  parser_version: rss-atom-v2-clean-text
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Public publisher RSS; robots allows sampled feed and article
+    paths. Owner-only private reading and attributed draft. No full article archive,
+    image license or public syndication rights assumed. AA public website body only;
+    not licensed HAS service.
+  verified_at: '2026-10-06T16:19:54.105155+00:00'
+  health: validated
+  enabled: false
+  source_family: aa
+  terms_approved: true
+  validation_report: reports/public-source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed
+- stable_id: euronews-tr
+  owner: Euronews Türkçe
+  endpoint: https://tr.euronews.com/rss
+  allowed_hosts:
+  - tr.euronews.com
+  priority: B
+  method: rss
+  parser_version: rss-atom-v2-clean-text
+  polling_interval: 180
+  timezone: Europe/Istanbul
+  time_precision: source
+  robots_terms_note: Public publisher RSS; robots allows sampled feed and article
+    paths. Owner-only private reading and attributed draft. No full article archive,
+    image license or public syndication rights assumed. AA public website body only;
+    not licensed HAS service.
+  verified_at: '2026-10-06T16:19:54.105155+00:00'
+  health: validated
+  enabled: false
+  source_family: euronews
+  terms_approved: true
+  validation_report: reports/public-source-expansion.json
+  article_access: verified
+  delivery_mode: live_feed

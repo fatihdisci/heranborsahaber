@@ -1,0 +1,25 @@
+# Audited against Hermes dd0e4ab; never applied to existing Hermes.
+model:
+  provider: openai-codex
+  default: gpt-6-luna
+agent:
+  api_max_retries: 1 # This Hermes version counts attempts: 1 means zero retries.
+  reasoning_effort: high
+  max_iterations: 1
+compression:
+  enabled: false
+  codex_gpt55_autoraise: false
+fallback_providers: []
+fallback_model: {}
+auxiliary:
+  compression: {provider: openai-codex, model: gpt-6-luna}
+  vision: {provider: openai-codex, model: gpt-6-luna}
+  web_extract: {provider: openai-codex, model: gpt-6-luna}
+  title_generation: {provider: openai-codex, model: gpt-6-luna}
+  moa: {provider: openai-codex, model: gpt-6-luna}
+  approval: {provider: openai-codex, model: gpt-6-luna}
+  mcp: {provider: openai-codex, model: gpt-6-luna}
+  skills_hub: {provider: openai-codex, model: gpt-6-luna}
+  tts_audio_tags: {provider: openai-codex, model: gpt-6-luna}
+# Above routes are defense in depth; actual entry point enables zero tools,
+# no title path/gateway, no MoA, no memory and no compression.

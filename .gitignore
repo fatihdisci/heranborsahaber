@@ -1,0 +1,11 @@
+state/
+private/
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+*.sqlite*
+*.running
+*.job.json
+*.result.json

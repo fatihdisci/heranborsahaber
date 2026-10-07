@@ -1,0 +1,26 @@
+# Kabul testleri ve kalanlar
+
+7 Ekim 2026 güncel doğrulama: **237 test geçti**. Kaynak haber fotoğrafının doğrudan Telegram dosya yüklemesi, doğru haber metnine bağlanması, WEBP dönüşümü, özel sohbet sınırı ve yeniden yayınlama hakkı ayrımı kapsandı. Canlı görsel kaydı: `reports/PHOTO_DELIVERY_AUDIT.json`. Önceki metin/model sağlamlaştırma kaydı: `reports/HARDENING_AUDIT.json`. Aşağıdaki kurulum aşaması sayıları tarihsel kayıttır.
+
+6 Ekim 2026, bağımsız scratch venv (Python 3.14.7): **130 passed**, pytest raporu `reports/tests.xml`. Hermes hedef runtime Python 3.13'tür; testlerin 3.14'te geçmesi Hermes'in o interpreter'da çalıştığını göstermez. `reports/DRY_RUN.json` mock Telegram üzerinde TEST/SENTETİK taslak→part teslimatı→sürüm/hash onayıdır, gerçek LLM sonucu değildir.
+
+| Prompt alanı | Gerçekte doğrulanan | Kalan canlı/ileri kabul |
+|---|---|---|
+| 1 İzolasyon | yeni namespace/YAML mounts, model route, yabancı DB reddi, source denylist, upstream/repo read-only SHA | gerçek Docker build/mount/egress ve deployment import |
+| 2 Baseline/tarih | initial/new source baseline, restart cursor, old/future, unknown/date-only, 2026→2027 | her production endpoint parseri ve saat davranışı |
+| 3 Dedup/revision | üç kaynaklı rate event, aynı wire/benzer pasaj, aynı URL sayı düzeltmesi, rejected/new correction, stale sürüm | genel semantik clustering, tüm wire soy ilişkileri; old bot global dedup yok |
+| 4 Sayı/olgular | faiz yüzde/baz-puan farkı, raw→normalized yanlışlık, aylık/yıllık CPI ayrımı, çelişki, stage/actor/quote evidence | karmaşık tablolar/nominal nakit, şirket/fon mapping ve siyasî video/rol kapsamı |
+| 5 Güvenilmeyen içerik | ana metin eksik/PDF unsupported, same-wire tek kaynak, conflict, injection, kaynaksız cümle/etiket | production parserin ilgili main alanı; serbest paraphrase validatori daha dar |
+| 6 Görsel | wrong subject, archive label, unknown/permission/prohibited download block, CC attribution, MIME/magic, original hash/private cache | gerçek lisanslı olay fotoğrafı, güncel kişi/event matching; Commons adayları text/link only |
+| 7 Ağ/dosya | private IPv4/IPv6/mixed DNS, literal IP/localhost, redirect, byte limit, MIME spoof, traversal/integrity | gerçek container negatif ağ; PDF/OCR decoderi devre dışı |
+| 8 Telegram | numeric private/user/forward auth, çift update/callback, wrong message/stale, revision revoke, approved text-only export | yeni bot getMe/webhook/409 polling, etiketli gerçek test kartı+callback |
+| 9 Retry/crash | lease recovery, LLM uncertain nonretry, outbox ordered partial, 429/blocked/uncertain, receipt-write crash, expired send | host kill/restart ve Telegram gerçek ağ arızası; exactly-once yok |
+| 10 Model/kota/ops | route/speed locks, no foreign auth, atomic single concurrency/local daily reserve/event six turns, zero paid tools, uncertain usage, stop persistence/in-flight result block, simulated disk failures, backup/restore | tam gpt-6.1-sol Pro OAuth catalog+smoke, low/medium latency, backend output cap, gerçek quota/reset data |
+
+Yeni Mac kurulumu: gerçek Docker build ve AIAgent import geçti; üç rol UID/mount/doğrudan internet negatif kontrolleri geçti; her iki proxy yasak hosta 403 verdi. Yeni bot getMe/webhook kontrolü, özel sohbet kaydı ve gerçek TEST kartı gönderimi yapıldı. Ayrı OAuth grant, tam model hesap kataloğu, low/medium gerçek çağrı ve backend 32-token kesilme testi geçti. Özel kullanıcı gerçek TEST callback kartını onayladı, canlı kabul geçti. İlk kurulum tam bir kez aktive edildi; kaynak baseline ve sonraki poll başarılı. Mac yeniden başlatılmadı; yeni VM stop/start ve veri/auth korunumu, LaunchAgent kayıt/çalışma durumu doğrulandı. Gerçek VM içi DB backup/ayrı dizine disabled restore da geçti; restore çalışan control dosyasını değiştirmez. Güncel raporlar reports/ altında. Test isimleri integration sistemin dünyadaki her kaynağa eriştiği anlamına gelmez. Default ek tool bütçesi sıfır; nonzero ücretli araç pricing/hard-limit adapteri bu sürümde yoktur, paid-tools yolu her zaman disabled.
+
+AIAgent'e kaynak ana metni kısa ömürlü özel job dosyasıyla aktarılır. Kalıcı passage metadata'sı kısa tutulur; job sonuçları tüketilince raw giriş/sonuç dosyası kaldırılır. TTL cleanup periyodik olduğundan expired spool dosyasının fiziksel silinmesi TTL sonrasındaki cleanup çalışmasına bağlıdır. Source ve LLM freshness/deadline, fiziksel silme saatinden bağımsız kontrol edilir.
+
+Son release'te ileri/eksik özellikler kapalı tutuldu: sosyal/X, PDF/OCR/video/vision, paid search, serbest agent web araçları, AI görsel üretimi, genel publication/deploy ve eski sistem bridge. Gerçek son dakika fotoğrafı yerine sentetik görsel verilmedi.
+
+Kaynak genişlemesi: sekiz feed canlı ve baseline=1/health=ok; beş yeni yayıncının feed+ana metin testleri geçti. Investing'in hem analiz hem haber sayfaları403 verdi; resmî news.rss gözlemi açık, research/LLM yolu deterministik guard ile kapalı. İki yeni test bu kaynağın kanıt/model kuyruğu oluşturmadığını ve önceden kuyruklanmış araştırmanın da fetch yapmadığını doğrular. reports/source-expansion.json güncel kabul kaydıdır.

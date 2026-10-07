@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools==82.0.1"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "heranborsa-hermes-news"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["PyYAML==6.0.3", "Pillow==12.2.0"]
+[project.optional-dependencies]
+test = ["pytest==9.0.2"]
+[project.scripts]
+habnews = "habnews.cli:main"
+[tool.setuptools.packages.find]
+include = ["habnews*"]
+[tool.setuptools.package-data]
+habnews = ["migration.sql", "policy.txt"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]

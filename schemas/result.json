@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "habnews-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_version",
+    "relevance_reason",
+    "priority",
+    "verification_state",
+    "facts",
+    "ambiguities",
+    "headline",
+    "proposed_body",
+    "verified_tags",
+    "image_candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "habnews-v1"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "event_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "relevance_reason": {
+      "type": "string"
+    },
+    "priority": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ]
+    },
+    "verification_state": {
+      "enum": [
+        "official_primary",
+        "corroborated_independent",
+        "attributed_single_source",
+        "unverified",
+        "conflicting"
+      ]
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "source_ref",
+          "value_raw",
+          "normalized_value",
+          "unit",
+          "currency",
+          "scale",
+          "period",
+          "scope",
+          "stage",
+          "actor",
+          "quote"
+        ],
+        "properties": {
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value_raw": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "normalized_value": {
+            "type": [
+              "string",
+              "number",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "headline": {
+      "type": "string",
+      "maxLength": 180
+    },
+    "proposed_body": {
+      "type": "string",
+      "maxLength": 3200
+    },
+    "verified_tags": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "image_candidates": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

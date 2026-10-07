@@ -1,0 +1,167 @@
+{
+  "verified_at": 1791361483.8411334,
+  "automated_tests_passed": 237,
+  "source_samples": [
+    {
+      "source": "foreks",
+      "article_url": "https://www.foreks.com/haber/detay/6ac5fa9424008d7d4373d82c/PICNEWS/tr/fransa-daki-tahvil-krizinde-ecb-simdilik-devreye-girmeyecek-07-10-26/",
+      "status": "photo_ready",
+      "selected_url": "https://news-files.foreks.com/images/03165377751d42b2b733b410628345d2.jpeg",
+      "dimensions": [
+        1281,
+        855
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "bloomberght",
+      "article_url": "https://www.bloomberght.com/new-york-ta-kizamik-salgini-artti-acil-durum-ilan-edildi-3790586",
+      "status": "photo_ready",
+      "selected_url": "https://geoim.bloomberght.com/l/2026/10/07/ver1791359467/3790586/jpg/960x540",
+      "dimensions": [
+        960,
+        540
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "haberturk",
+      "article_url": "https://www.haberturk.com/ekonomi/brent-petrol-100-dolarin-ustunde-3917855",
+      "status": "photo_ready",
+      "selected_url": "https://im.haberturk.com/l/2026/10/07/ver1791358705/3917855/jpg/1200x628",
+      "dimensions": [
+        1200,
+        628
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "sozcu",
+      "article_url": "https://www.sozcu.com.tr/elon-muskin-serveti-yeniden-1-trilyon-dolari-asti-saatler-icinde-72-milyar-dolar-kazandi-p366928",
+      "status": "photo_ready",
+      "selected_url": "https://sozcu01.sozcucdn.com/sozcu/production/uploads/images/2026/10/102jpg-M02ZhYA0IEaWPUpZHtMncQ.jpg?w=1270&h=675&mode=crop&scale=both",
+      "dimensions": [
+        1270,
+        675
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "tcmb",
+      "article_url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Duyurular/Basin/2026/DUY2026-17",
+      "status": "no_article_photo",
+      "selected_url": null,
+      "dimensions": null,
+      "source_mime": null
+    },
+    {
+      "source": "dunya",
+      "article_url": "https://www.dunya.com/ekonomi/altinda-yuzde-6lik-dusus-sonrasi-cinden-dikkat-ceken-hamle-haberi-842928",
+      "status": "photo_ready",
+      "selected_url": "https://image.dunya.com/rcman/Cw1280h720q95gc/storage/files/images/2026/09/23/cin-altin-acck_cover.jpg",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "ekonomim",
+      "article_url": "https://www.ekonomim.com/foto-galeri/aktuel/yollardaki-en-saglam-5-dizel-motor-zirve-toyotanin-4-5i-goren-seviniyor-galeri-923121",
+      "status": "unavailable",
+      "error": "ValueError"
+    },
+    {
+      "source": "cnbce",
+      "article_url": "https://www.cnbce.com/haberler/merkez-bankasi-baskani-karahan-fiyat-istikrari-hedefi-dogrultusunda-kararlilikla-ilerliyoruz-h38898",
+      "status": "photo_ready",
+      "selected_url": "https://img.cnbce.com/2/1280/720/storage/files/images/2026/08/13/karahan-stok-aa-wmdp.jpg",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "ntvpara",
+      "article_url": "https://www.ntv.com.tr/ntvpara/galeri-altin-fiyatlari-bugun-ne-kadar-7-ekim-2026-gram-ceyrek-yarim-ve-tam-altin-alis-satis-fiyatlari-1745207",
+      "status": "photo_ready",
+      "selected_url": "https://images.ntv.com.tr/images/thumbs_b_c_7b12d1921f27daf05b7845ad0c79eac3-736674.jpg?format=webp&width=1200&height=630",
+      "dimensions": [
+        1200,
+        630
+      ],
+      "source_mime": "image/webp"
+    },
+    {
+      "source": "trt-ekonomi",
+      "article_url": "https://www.trthaber.com/haber/ekonomi/baskent-yilin-9-aylik-doneminde-138-milyar-dolarlik-ihracat-gerceklestirdi-959379.html",
+      "status": "photo_ready",
+      "selected_url": "https://trthaberstatic.cdn.wp.trt.com.tr/resimler/1474000/sanayi-organize-sanayi-bolgesi-fabrika-1475070.jpg",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "aa-ekonomi",
+      "article_url": "https://www.aa.com.tr/tr/ekonomi/imf-baskani-georgievadan-liderlere-enerji-soku-butce-ve-yapay-zeka-uyarisi/4080557",
+      "status": "photo_ready",
+      "selected_url": "https://web-cdnprod.aa.com.tr/uploads/Contents/2026/10/07/thumbs_b_c_c685c01ec40ed753908d4cbd8b8fe504.jpg",
+      "dimensions": [
+        864,
+        486
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "euronews-tr",
+      "article_url": "https://tr.euronews.com/2026/10/07/imf-baskani-kuresel-kamu-borcu-gsyhnin-100une-giderken-kemer-sikmaya-donus-sinyali-veriyor",
+      "status": "photo_ready",
+      "selected_url": "https://images.euronews.com/articles/stories/09/94/23/83/1200x675_cmsv2_2b498377-fa5d-55d1-83c3-ffc35c58af49-9942383.jpg",
+      "dimensions": [
+        1200,
+        675
+      ],
+      "source_mime": "image/jpeg"
+    },
+    {
+      "source": "ekonomim",
+      "article_url": "https://www.ekonomim.com/gundem/ak-parti-grup-baskani-gulerden-fon-sorusturmasi-aciklamasi-tbmmde-arastirma-komisyonu-kurulmasina-simdilik-gerek-yok-haberi-923105",
+      "status": "photo_ready",
+      "selected_url": "https://img.ekonomim.com/rcman/Cw1280h720q95gc/storage/files/images/2026/10/07/ak-partili-gulerden-fon-sorusturmasi-aciklamasi-tbmmde-komisyon-kurulmasina-gerek-yok-04rb_cover.jpg",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "source_mime": "image/jpeg",
+      "case": "user_reported_draft"
+    }
+  ],
+  "existing_draft_repair": {
+    "draft_id": "d5ab6725773741b8a21590fb982e67a1",
+    "message_id": 194,
+    "article_url": "https://www.ekonomim.com/gundem/ak-parti-grup-baskani-gulerden-fon-sorusturmasi-aciklamasi-tbmmde-arastirma-komisyonu-kurulmasina-simdilik-gerek-yok-haberi-923105",
+    "status": "photo_attached_same_message",
+    "exact_evidence_match": false,
+    "dimensions": [
+      1280,
+      720
+    ],
+    "matching_strategy": "same_canonical_url_and_unchanged_source_heading",
+    "source_heading_unchanged": true,
+    "tweet_regenerated": false
+  },
+  "new_test_messages_sent": 0,
+  "telegram_repair": {
+    "message_id": 194,
+    "actual_photo": true,
+    "photo_variants": 4,
+    "caption_unchanged": true,
+    "caption_above_media": true,
+    "new_test_messages_sent": 0
+  },
+  "live_rollout": "collector and approval updated; source egress CDN allowlist active",
+  "successful_publishers": 11
+}

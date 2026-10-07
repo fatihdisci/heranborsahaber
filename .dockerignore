@@ -1,0 +1,14 @@
+private
+state
+.env
+.env.*
+!.env.example
+.venv
+.git
+.pytest_cache
+**/__pycache__
+**/*.pyc
+**/*.sqlite*
+**/auth.json
+**/telegram.enc
+work

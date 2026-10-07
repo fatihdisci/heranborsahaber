@@ -1,0 +1,19 @@
+{
+  "landing_page_url": "https://commons.wikimedia.org/wiki/File:Example.jpg",
+  "original_asset_url": "https://upload.wikimedia.org/example.jpg",
+  "publisher": "Wikimedia Commons",
+  "creator": "TEST author",
+  "license_name": "CC BY",
+  "license_version": "4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "rights_evidence": "TEST fictional rights record, not a real licensed photograph",
+  "attribution_text": "TEST author / CC BY 4.0 / source file page",
+  "restrictions": [],
+  "retrieved_at": 1791293913.981042,
+  "photographed_at": null,
+  "subject_match": true,
+  "event_match": false,
+  "archive_or_current": "archive",
+  "confidence_reason": "TEST synthetic fixture",
+  "rights_status": "verified_reusable"
+}

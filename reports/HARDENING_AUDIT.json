@@ -1,0 +1,299 @@
+{
+  "verified_at": "2026-10-06T18:05:22.516735+00:00",
+  "automated_tests": {
+    "passed": 219,
+    "report": "tests.xml"
+  },
+  "live_page_audit": {
+    "total_urls": 28,
+    "passed_article_and_job_input": 25,
+    "rejected_ambiguous_gallery": 1,
+    "investing_http_403": 2,
+    "input_results": [
+      {
+        "source": "foreks",
+        "url": "https://www.foreks.com/haber/detay/6ac4757995016b5817e658f8/PICNEWS/tr/bbva-research-turkiye-de-eylul-enflasyonu-olumlu-geldi-ancak-rahatlamak-icin-erken-06-10-26/",
+        "status": "passed",
+        "characters": 2556,
+        "paragraphs": 15,
+        "source_digest": "1482b4088d3b17c2d26218595a6b71bd97bb47a490051bc2773e8d76a17b57af"
+      },
+      {
+        "source": "foreks",
+        "url": "https://www.foreks.com/haber/detay/6ac4770495016b5817e658fd/PICNEWS/tr/fon-sorusturmasinda-fatma-betul-sayan-kaya-ya-tmsf-hesabina-gonullu-odeme-izni-06-10-26/",
+        "status": "passed",
+        "characters": 1322,
+        "paragraphs": 7,
+        "source_digest": "2e93c28a8f7a20ba06a5276e5cfea1893a4f3614ed4daf952ea7c4fe4542f489"
+      },
+      {
+        "source": "bloomberght",
+        "url": "https://www.bloomberght.com/daron-acemoglu-turkiye-nin-yapay-zekada-firsati-uygulama-katmaninda-3790542",
+        "status": "passed",
+        "characters": 3972,
+        "paragraphs": 10,
+        "source_digest": "dfba670dae9bc2eb2370f5366ffdf813d3806462e02ec0d55afce4ba9afca5c7"
+      },
+      {
+        "source": "bloomberght",
+        "url": "https://www.bloomberght.com/hazine-iki-tahvil-ihalesinde-87-milyar-lira-borclandi-3790525",
+        "status": "passed",
+        "characters": 1292,
+        "paragraphs": 8,
+        "source_digest": "d07ee36e0fb159bf576b18ccb2e4d0dac81a206767fd1bbd2a8c76212b86acb0"
+      },
+      {
+        "source": "haberturk",
+        "url": "https://www.haberturk.com/ekonomi/imf-serbest-yatirim-fonlarinin-kuresel-piyasalardaki-artan-onemi-ve-risklerine-dikkati-cekti-3917747",
+        "status": "passed",
+        "characters": 1964,
+        "paragraphs": 8,
+        "source_digest": "2a647fd916fe36589e3ee2b2621292ce6e949f3548a052d5b40ba07f0894fb13"
+      },
+      {
+        "source": "haberturk",
+        "url": "https://www.haberturk.com/ekonomi/karahan-fon-koordinasyon-kurulu-kuruldu-kamu-kaynagi-kullanilmayacak-3917741",
+        "status": "passed",
+        "characters": 1308,
+        "paragraphs": 7,
+        "source_digest": "76dc94adfb307c39cdd818e06f3643de8e59101fc71392a5832d71b3ecb734d0"
+      },
+      {
+        "source": "sozcu",
+        "url": "https://www.sozcu.com.tr/oyak-in-enerji-devleri-totalenergies-ve-milangaz-dan-hopi-ile-dev-stratejik-ortaklik-depolar-p366724",
+        "status": "passed",
+        "characters": 3285,
+        "paragraphs": 14,
+        "source_digest": "4b1c2ca934716d28062442b15dc3bc7950ab070c3522c3604fb860c9e771c196"
+      },
+      {
+        "source": "sozcu",
+        "url": "https://www.sozcu.com.tr/tcmb-baskani-karahandan-fon-krizi-aciklamasi-p366719",
+        "status": "passed",
+        "characters": 7204,
+        "paragraphs": 15,
+        "source_digest": "1087df1131fb3e7a73d5558306f1f284b01a9326f1ffc152bd7692f542219dda"
+      },
+      {
+        "source": "tcmb",
+        "url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Duyurular/Basin/2026/DUY2026-17",
+        "status": "passed",
+        "characters": 2448,
+        "paragraphs": 11,
+        "source_digest": "ac13fb40383a725cd72f69828d0dfffec89fa9c12217ff822381b021266939a3"
+      },
+      {
+        "source": "tcmb",
+        "url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Duyurular/Basin/2026/DUY2026-23",
+        "status": "passed",
+        "characters": 2425,
+        "paragraphs": 11,
+        "source_digest": "ad3fa06a0bcee2cb852a71592d04b028e65c1d3df79c4eadb94487bcc82f283d"
+      },
+      {
+        "source": "dunya",
+        "url": "https://www.dunya.com/ekonomi/imfden-kuresel-piyasalar-icin-hedge-fon-uyarisi-kaldirac-ve-yogun-pozisyonlar-risk-olusturuyor-haberi-842854",
+        "status": "passed",
+        "characters": 1967,
+        "paragraphs": 8,
+        "source_digest": "83e213f790f57e469f731f311727751edcf9c920e0b77b80b8c96c86ff3c2f8f"
+      },
+      {
+        "source": "dunya",
+        "url": "https://www.dunya.com/gundem/erdogan-filistinli-hind-rajabin-ailesini-kabul-etti-haberi-842853",
+        "status": "passed",
+        "characters": 246,
+        "paragraphs": 1,
+        "source_digest": "d1c875636707412fa4628926fdb05abe1ff67914bfc81f218486a2365c5be405"
+      },
+      {
+        "source": "ekonomim",
+        "url": "https://www.ekonomim.com/finans/haberler/borsa/avrupa-borsalari-gunu-yukselisle-kapatti-haberi-922986",
+        "status": "passed",
+        "characters": 1012,
+        "paragraphs": 7,
+        "source_digest": "788aac8b0c144cc59486be0bfd66329e4f466bed522d93547549a0776b57ff1c"
+      },
+      {
+        "source": "ekonomim",
+        "url": "https://www.ekonomim.com/ekonomi/imfden-serbest-yatirim-fonlari-uyarisi-finansal-stres-donemlerinde-risk-yaratabilir-haberi-922985",
+        "status": "passed",
+        "characters": 1981,
+        "paragraphs": 8,
+        "source_digest": "d260745bfecff8c29490e93f45d89cb6686abc912a635df6e8ae32b63854cfe4"
+      },
+      {
+        "source": "cnbce",
+        "url": "https://www.cnbce.com/borsa/37-sirket-borsada-kendi-paylarini-aldi-iste-hisse-geri-alim-yapan-sirketler-g38861",
+        "status": "blocked_incomplete_gallery"
+      },
+      {
+        "source": "cnbce",
+        "url": "https://www.cnbce.com/enerji/petrol-stoklarinda-kritik-esik-dunyanin-petrol-tamponu-tukeniyor-h38860",
+        "status": "passed",
+        "characters": 3159,
+        "paragraphs": 20,
+        "source_digest": "54e2d0aae289c8524ddb2787916e355646aa80136f07a01e4c620f8e5fcbd233"
+      },
+      {
+        "source": "ntvpara",
+        "url": "https://www.ntv.com.tr/ntvpara/merkez-bankasi-baskani-fonlardaki-cikislar-mevduata-yoneldi-1745115",
+        "status": "passed",
+        "characters": 2265,
+        "paragraphs": 12,
+        "source_digest": "564f3ae00bf52d17834db804a8a408afb5eab54bd067bd55e14e70156e83576b"
+      },
+      {
+        "source": "ntvpara",
+        "url": "https://www.ntv.com.tr/ntvpara/arac-sahipleri-dikkat-e-devletten-kontrol-edilecek-1744889",
+        "status": "passed",
+        "characters": 685,
+        "paragraphs": 3,
+        "source_digest": "4e4585418252c0766ad21e033d9d3e8f1238e4356c272d386894f87e9a4a2dd8"
+      },
+      {
+        "source": "trt-ekonomi",
+        "url": "https://www.trthaber.com/haber/ekonomi/almanya-cikisli-hava-trafiginde-yolcular-aktarma-icin-turkiye-ve-korfezi-tercih-ediyor-959196.html",
+        "status": "passed",
+        "characters": 2517,
+        "paragraphs": 13,
+        "source_digest": "1bdf3946780e89d7de6304147bccc91e17a1a850e4b329eb367e139ab6e01089"
+      },
+      {
+        "source": "trt-ekonomi",
+        "url": "https://www.trthaber.com/haber/ekonomi/altin-fiyatlarinda-son-durum-959304.html",
+        "status": "passed",
+        "characters": 718,
+        "paragraphs": 5,
+        "source_digest": "20225ef6455da2882089c4df1d1c2a5e9acea11daf34eead118326a5c1d89e32"
+      },
+      {
+        "source": "aa-ekonomi",
+        "url": "https://www.aa.com.tr/tr/ekonomi/imf-serbest-yatirim-fonlarinin-kuresel-piyasalardaki-artan-onemi-ve-risklerine-dikkati-cekti/4080125",
+        "status": "passed",
+        "characters": 2310,
+        "paragraphs": 9,
+        "source_digest": "0b43237898c7760e8abed31fa6f18367eb10ef83b91285768e35b22da5b89bb4"
+      },
+      {
+        "source": "aa-ekonomi",
+        "url": "https://www.aa.com.tr/tr/ekonomi/uclu-danisma-kurulu-calisma-hayatinda-yeni-calisma-yontemleri-gundemiyle-toplandi/4079994",
+        "status": "passed",
+        "characters": 4695,
+        "paragraphs": 15,
+        "source_digest": "2218d6288b0b41da69efdbf3e5c62032123b82e91176abd1809327d8db26ce47"
+      },
+      {
+        "source": "euronews-tr",
+        "url": "https://tr.euronews.com/2026/10/06/basaksehir-saldirisinin-faili-kiz-ogrenci-okul-saldirilarilarinda-kizlarin-konumu-ne",
+        "status": "passed",
+        "characters": 8361,
+        "paragraphs": 46,
+        "source_digest": "95248884faeac6c0d7e7d38baeb6926e1817fa5b7a14cbf374c937045d47cd27"
+      },
+      {
+        "source": "euronews-tr",
+        "url": "https://tr.euronews.com/2026/10/06/abden-yeni-uyelere-15-yil-kurali-fonlar-ve-oy-hakki-askiya-alinabilecek",
+        "status": "passed",
+        "characters": 5719,
+        "paragraphs": 28,
+        "source_digest": "9b52419a5992d2f915109d382ec789c1a978e01fd4868da1b378566cf934282c"
+      },
+      {
+        "source": "cnbce",
+        "url": "https://www.cnbce.com/haberler/tcmb-baskani-karahandan-fon-piyasasi-mesaji-800-milyar-tl-mevduata-yoneldi-h38859",
+        "status": "passed",
+        "characters": 4932,
+        "paragraphs": 30,
+        "source_digest": "41bd107dc75791926090a02a8955124accc40eb513a42e5b89a00ab0d2e7b181"
+      },
+      {
+        "source": "bloomberght",
+        "url": "https://www.bloomberght.com/fon-tasfiyesine-yonelik-kanun-teklifi-tbmm-ye-sunulacak-3790524",
+        "status": "passed",
+        "characters": 758,
+        "paragraphs": 5,
+        "source_digest": "c45dc53d758ad54cfcfd23cf586414fd2bbbcd8968abda8b3058f4172090b53b"
+      }
+    ]
+  },
+  "model_audit": [
+    {
+      "source": "cnbce",
+      "url": "https://www.cnbce.com/haberler/tcmb-baskani-karahandan-fon-piyasasi-mesaji-800-milyar-tl-mevduata-yoneldi-h38859",
+      "passed": true,
+      "attempts": 2,
+      "characters": 205,
+      "draft": "🚨 “Fonlardan çıkışın yavaşladığını görüyoruz”\n\nFon hareketlerinin günlük olarak takip edildiğini belirten Karahan, son günlerde fonlardan çıkışın yavaşladığını söyledi.\n\nKaynak: CNBC-e\n\n#fon #TCMB #ekonomi",
+      "requested_model": "gpt-6-luna",
+      "reasoning": "high",
+      "backend_model_identity": "not exposed by AIAgent result"
+    },
+    {
+      "source": "bloomberght",
+      "url": "https://www.bloomberght.com/fon-tasfiyesine-yonelik-kanun-teklifi-tbmm-ye-sunulacak-3790524",
+      "passed": true,
+      "attempts": 1,
+      "characters": 301,
+      "draft": "🚨 Fon tasfiyesine yönelik kanun teklifi TBMM'ye sunulacak\n\nİlerleyen günlerde TBMM Başkanlığı'na sunulması planlanan geçici nitelikteki kanun teklifi kapsamında, 455 bin 578 yatırımcının 1 milyon liraya kadar olan varlıklarının tasfiyeye konu edilmesi öngörülüyor.\n\nKaynak: Bloomberg HT\n\n#fon #ekonomi",
+      "requested_model": "gpt-6-luna",
+      "reasoning": "high",
+      "backend_model_identity": "not exposed by AIAgent result"
+    },
+    {
+      "source": "haberturk",
+      "url": "https://www.haberturk.com/ekonomi/karahan-fon-koordinasyon-kurulu-kuruldu-kamu-kaynagi-kullanilmayacak-3917741",
+      "passed": true,
+      "attempts": 1,
+      "characters": 294,
+      "draft": "📢 Karahan: Fon Koordinasyon Kurulu kuruldu, kamu kaynağı kullanılmayacak\n\nKarahan, “Burada prensip olarak kamu kaynaklarının kullanılmaması kararlaştırıldı. Yetkili kurullarımız gerekli adımları atıyor, biz de eşgüdüm içinde çalışıyoruz.” ifadelerini kullandı.\n\nKaynak: Habertürk\n\n#fon #ekonomi",
+      "requested_model": "gpt-6-luna",
+      "reasoning": "high",
+      "backend_model_identity": "not exposed by AIAgent result"
+    }
+  ],
+  "telegram": {
+    "existing_message_id": 78,
+    "actual_photo": true,
+    "caption_above_media": true,
+    "archive_attribution_updated": true,
+    "new_test_messages_sent": 0
+  },
+  "image": {
+    "matching": "headline subject plus institution context; institutional archive, not portrait identification",
+    "sha256": "a2aa71e58e0071352f641b68640c28d9e3e981c6896e75b32c5c15676cc7bec8",
+    "source": "https://www.flickr.com/photos/merkez_bankasi/55462088240/",
+    "publisher_policy": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Duyurular/Sosyal+Medya"
+  },
+  "limits": [
+    "External access and source layout can change; universal error-free operation is not guaranteed.",
+    "Investing was previously blocked by HTTP 403 and is now disabled in the live source configuration.",
+    "No guaranteed reusable matching photo for every story.",
+    "Ambiguous article bodies fail closed.",
+    "Legacy cached drafts retain their earlier contract."
+  ],
+  "current_runtime_update": {
+    "date": "2026-10-06",
+    "source_catalog_entries": 17,
+    "enabled_sources": 16,
+    "active_health_ok": 16,
+    "enabled_news_or_official_feeds": 12,
+    "enabled_x_accounts": 4,
+    "disabled_sources": [
+      "investing-tr"
+    ],
+    "filter_policy": "Turkey or domestic institution, market, or issuer signal in title/summary; generic global finance alone is insufficient; SPK media coverage retained; routine KAP share transactions and explicit promotions excluded.",
+    "live_health": {
+      "enabled": true,
+      "llm_state": "ready",
+      "incidents": [],
+      "active_source_failures": 0
+    },
+    "classifier_examples": {
+      "Fed_only": "filtered: no_turkey_relevance",
+      "TCMB_rate_decision": "P0: critical_decision",
+      "Aselsan_company_news": "P1: turkey_relevance",
+      "unrelated_football": "filtered: no_turkey_relevance"
+    }
+  }
+}

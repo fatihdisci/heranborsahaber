@@ -1,0 +1,183 @@
+name: habnews
+x-app:
+  build: &id001
+    context: ..
+    dockerfile: deploy/Dockerfile
+    target: app
+  user: 11001:11001
+  read_only: true
+  cap_drop: &id002
+  - ALL
+  security_opt: &id003
+  - no-new-privileges:true
+  tmpfs: &id004
+  - /tmp:rw,noexec,nosuid,size=64m
+  restart: unless-stopped
+  pids_limit: 64
+  mem_limit: 512m
+services:
+  collector:
+    build: *id001
+    user: 11001:11001
+    read_only: true
+    cap_drop: *id002
+    security_opt: *id003
+    tmpfs: *id004
+    restart: unless-stopped
+    pids_limit: 64
+    mem_limit: 512m
+    network_mode: none
+    environment:
+      HABNEWS_FETCH_SOCKET: /broker/fetch.sock
+      HABNEWS_SWITCH_FILE: /control/runtime-state.json
+    command:
+    - --db
+    - /data/habnews.sqlite
+    - serve
+    - collector
+    - --jobs
+    - /jobs
+    volumes:
+    - ../state/data:/data
+    - ../state/jobs:/jobs
+    - ../state/broker:/broker
+    - ../state/control:/control
+    - ../private/recipient.json:/config/recipient.json:ro
+    - ../sources.yaml:/app/sources.yaml:ro
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import sqlite3,time; c=sqlite3.connect('/data/habnews.sqlite'); r=c.execute("select
+        value from habnews_runtime_state where key='collector_heartbeat'").fetchone();
+        assert r and time.time()-float(r[0])<60
+      interval: 30s
+  approval:
+    build: *id001
+    user: 11001:11001
+    read_only: true
+    cap_drop: *id002
+    security_opt: *id003
+    tmpfs: *id004
+    restart: unless-stopped
+    pids_limit: 64
+    mem_limit: 512m
+    command:
+    - --db
+    - /data/habnews.sqlite
+    - serve
+    - approval
+    environment:
+      HABNEWS_TELEGRAM_PROXY: telegram-egress:3128
+      HABNEWS_SWITCH_FILE: /control/runtime-state.json
+    networks:
+    - telegram_internal
+    volumes:
+    - ../state/data:/data
+    - ../state/control:/control
+    - ../private/telegram.json:/run/secrets/telegram.json:ro
+    depends_on:
+    - telegram-egress
+  runner:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: runner
+    user: 11001:11001
+    read_only: true
+    cap_drop: *id002
+    security_opt: *id003
+    tmpfs: *id004
+    restart: unless-stopped
+    pids_limit: 64
+    mem_limit: 2g
+    environment:
+      HABNEWS_SWITCH_FILE: /control/runtime-state.json
+      HERMES_HOME: /auth/habnews
+      CODEX_HOME: /home/habnews/empty-codex
+      HTTPS_PROXY: http://provider-egress:3128
+      HTTP_PROXY: http://provider-egress:3128
+      NO_PROXY: ''
+    networks:
+    - provider_internal
+    volumes:
+    - ../state/control:/control:ro
+    - ../state/auth:/auth
+    - ../state/jobs:/jobs
+    depends_on:
+    - provider-egress
+  source-egress:
+    build: *id001
+    user: 11001:11001
+    read_only: true
+    cap_drop: *id002
+    security_opt: *id003
+    tmpfs: *id004
+    restart: unless-stopped
+    pids_limit: 64
+    mem_limit: 512m
+    entrypoint:
+    - python
+    - -m
+    - habnews.egress
+    networks:
+    - source_external
+    volumes:
+    - ../state/broker:/broker
+    - ../state/control:/control:ro
+    - ../sources.yaml:/app/sources.yaml:ro
+  provider-egress:
+    image: ubuntu/squid:6.6-24.04_edge@sha256:8a3baed477e2c282ab8aa5edad442f69873246964f225c5c2ae8364b6610963c
+    networks:
+    - provider_internal
+    - provider_external
+    volumes:
+    - ./provider-squid.conf:/etc/squid/squid.conf:ro
+    restart: unless-stopped
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    user: '13:13'
+    entrypoint:
+    - /usr/sbin/squid
+    - -N
+    - -f
+    - /etc/squid/squid.conf
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+    pids_limit: 32
+    mem_limit: 128m
+  telegram-egress:
+    image: ubuntu/squid:6.6-24.04_edge@sha256:8a3baed477e2c282ab8aa5edad442f69873246964f225c5c2ae8364b6610963c
+    networks:
+    - telegram_internal
+    - telegram_external
+    volumes:
+    - ./telegram-squid.conf:/etc/squid/squid.conf:ro
+    restart: unless-stopped
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    user: '13:13'
+    entrypoint:
+    - /usr/sbin/squid
+    - -N
+    - -f
+    - /etc/squid/squid.conf
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+    pids_limit: 32
+    mem_limit: 128m
+networks:
+  provider_internal:
+    internal: true
+  telegram_internal:
+    internal: true
+  provider_external: {}
+  telegram_external: {}
+  source_external: {}

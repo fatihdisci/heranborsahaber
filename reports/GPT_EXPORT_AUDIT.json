@@ -1,5 +1,5 @@
 {
-  "verified_at": "2026-10-07T11:51:53.510050+00:00",
+  "verified_at": "2026-10-07T12:00:58.813814+00:00",
   "tests_passed": 249,
   "clipboard_decoder": {
     "gzip_roundtrip": true,
@@ -9,5 +9,21 @@
   },
   "model_calls_for_export": 0,
   "copy_page": "https://fatihdisci.github.io/heranborsahaber/gpt/",
-  "live_status": "rollout_pending"
+  "live_status": "active",
+  "copy_page_http": 200,
+  "browser_clipboard": {
+    "write_and_real_paste_exact_match": true,
+    "chars": 6673,
+    "source_title": "Cevdet Yılmaz'dan fon piyasası açıklaması: Hazine kaynağı kullanılmayacak",
+    "article_chars": 4267,
+    "article_digest_exact": true,
+    "phone_client_not_directly_tested": true
+  },
+  "telegram": {
+    "method": "sendPhoto",
+    "delivery": "sent",
+    "message_id": 285,
+    "copy_url_chars": 4592,
+    "recent_cards_updated": 28
+  }
 }

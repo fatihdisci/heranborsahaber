@@ -1,6 +1,6 @@
 # Kabul testleri ve kalanlar
 
-7 Ekim 2026 güncel doğrulama: **237 test geçti**. Kaynak haber fotoğrafının doğrudan Telegram dosya yüklemesi, doğru haber metnine bağlanması, WEBP dönüşümü, özel sohbet sınırı ve yeniden yayınlama hakkı ayrımı kapsandı. Canlı görsel kaydı: `reports/PHOTO_DELIVERY_AUDIT.json`. Önceki metin/model sağlamlaştırma kaydı: `reports/HARDENING_AUDIT.json`. Aşağıdaki kurulum aşaması sayıları tarihsel kayıttır.
+7 Ekim 2026 güncel doğrulama: **249 test geçti**. GPT aktarımında gerçek 6.673 karakterlik prompt/tam haber panoya alınıp birebir yapıştırıldı; fotoğraf Telegram’a gönderildi. Kayıt: `reports/GPT_EXPORT_AUDIT.json`. Kaynak haber fotoğrafının doğrudan Telegram dosya yüklemesi, doğru haber metnine bağlanması, WEBP dönüşümü, özel sohbet sınırı ve yeniden yayınlama hakkı ayrımı kapsandı. Canlı görsel kaydı: `reports/PHOTO_DELIVERY_AUDIT.json`. Önceki metin/model sağlamlaştırma kaydı: `reports/HARDENING_AUDIT.json`. Aşağıdaki kurulum aşaması sayıları tarihsel kayıttır.
 
 6 Ekim 2026, bağımsız scratch venv (Python 3.14.7): **130 passed**, pytest raporu `reports/tests.xml`. Hermes hedef runtime Python 3.13'tür; testlerin 3.14'te geçmesi Hermes'in o interpreter'da çalıştığını göstermez. `reports/DRY_RUN.json` mock Telegram üzerinde TEST/SENTETİK taslak→part teslimatı→sürüm/hash onayıdır, gerçek LLM sonucu değildir.
 

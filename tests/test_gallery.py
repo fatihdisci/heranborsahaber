@@ -80,3 +80,14 @@ def test_continuation_without_header_uses_bound_publisher_title():
     assert title == heading and intro == '' and 5 in parts and total == 21
     with pytest.raises(ValueError, match='gallery_header_missing'):
         parse_gallery(chunk, 'text/html', URL, URL)
+
+
+def test_final_photo_only_slide_does_not_follow_next_unrelated_story():
+    import re
+    chunk = response(21)
+    chunk = re.sub(b'<div property="articleBody">.*?</div>', b'<img src="https://img.ekonomim.com/storage/files/images/last.jpg">', chunk)
+    chunk = chunk.replace(b'class="infinity-item"', b'class="infinity-item" data-next="https://evil.example/next"')
+    result = parse_gallery(chunk, 'text/html', URL+'?p=21', URL)
+    assert result[2] == {21:''} and result[4] == {} and len(result[5]) == 1
+    with pytest.raises(ValueError, match='gallery_body_ambiguous'):
+        parse_gallery(chunk.replace(b'21 | 21', b'21 | 22'), 'text/html', URL+'?p=21', URL)

@@ -77,17 +77,18 @@ def parse_gallery(data, mime, url, base):
             raise ValueError('gallery_counter_invalid')
         totals.add(total)
         roots = [n for n in nodes if body_node(n)]
-        if len(roots) != 1:
+        image_only_last = not roots and number == total and any(n.tag == 'img' for n in nodes)
+        if len(roots) != 1 and not image_only_last:
             raise ValueError('gallery_body_ambiguous')
         # Keep repeated labels: each bank's rate/balance belongs to that bank.
-        body = '\n'.join(clean(n.text()) for n in visible_walk(roots[0]) if n.tag == 'p' and clean(n.text()))
-        if not body:
+        body = '' if image_only_last else '\n'.join(clean(n.text()) for n in visible_walk(roots[0]) if n.tag == 'p' and clean(n.text()))
+        if not body and roots:
             body = clean(roots[0].text())
-        if len(body) < 20 or number in parts:
+        if (len(body) < 20 and not image_only_last) or number in parts:
             raise ValueError('gallery_body_missing_or_duplicate')
         parts[number] = body
         raw_next = item.attrs.get('data-next')
-        if raw_next:
+        if raw_next and number < total:
             target = urljoin(url, raw_next)
             if page_number(target, base) != number + 1:
                 raise ValueError('gallery_next_invalid')
@@ -146,4 +147,4 @@ def read_gallery(data, mime, url, fetcher, guard):
     return {'title': title, 'body': body, 'source_url': base, 'canonical_url': base,
             'preview_url': base if image else None, 'image_url': image,
             'image_candidates': images[:3], 'method': 'ekonomim_gallery',
-            'paragraph_count': len(body.splitlines()), 'gallery_pages': total}
+            'paragraph_count': len(body.splitlines()), 'gallery_pages': total, 'image_only_pages': [n for n in parts if not parts[n]]}

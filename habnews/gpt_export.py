@@ -93,7 +93,7 @@ def delivery_fallback(db, row, attempt, reason):
 def process_gpt_export(db,approval,sources):
     db.require_enabled();row=db.claim('gpt_export')
     if not row:return
-    request=json.loads(row['payload']);rid=request['request_id']
+    request=json.loads(row['payload']);rid=request['request_id'];stage='validation'
     try:
         observation=db.conn.execute('SELECT * FROM habnews_observation WHERE id=?',(request['observation_id'],)).fetchone()
         record=db.conn.execute('SELECT * FROM habnews_gpt_export WHERE id=?',(rid,)).fetchone()
@@ -105,9 +105,11 @@ def process_gpt_export(db,approval,sources):
         source=next(s for s in sources if s['stable_id']==request['source_id'])
         item=json.loads(observation['metadata'])
         from .source_content import read_document,document_photo,document_text
+        stage='article_read'
         document=read_document(item,source,db.require_enabled)
         # The same selected heading/body sent to the model, without summary or clipping.
         source_type='social_x' if source.get('method')=='nitter_rss' else 'article'
+        stage='prompt_build'
         prompt=clipboard_prompt(document,source,source_type)
         url=copy_url(prompt,document['title'])
         media=None
@@ -115,6 +117,7 @@ def process_gpt_export(db,approval,sources):
         except Exception as exc:
             if not db.enabled():raise RuntimeError('paused') from None
             db.audit('gpt_export_photo_unavailable',rid,{'type':type(exc).__name__})
+        stage='media_validation'
         if media:
             from .article_media import private_preview
             from .images import reusable
@@ -126,6 +129,7 @@ def process_gpt_export(db,approval,sources):
         payload={'chat_id':approval.chat_id,'caption':caption,'show_caption_above_media':True,
                  'file_path':media['path'],'file_sha256':media['provenance']['sha256']} if media else {'chat_id':approval.chat_id,'text':caption,'link_preview_options':{'is_disabled':True}}
         if markup:payload['reply_markup']=markup
+        stage='delivery_queue'
         db.require_enabled()
         with db.transaction() as c:
             if media:
@@ -141,7 +145,7 @@ def process_gpt_export(db,approval,sources):
                      'source_url':document['source_url'],'photo':bool(media),'delivery':'copy_page' if markup else 'full_text_file','model_requested':False})
     except Exception as exc:
         if not db.enabled():db.finish(row,'pending',5);return
-        db.audit('gpt_export_failure',rid,{'type':type(exc).__name__})
+        db.audit('gpt_export_failure',rid,{'type':type(exc).__name__,'stage':stage})
         if row['attempts']<2:
             db.finish(row,'pending',10);return
         with db.transaction() as c:

@@ -17,7 +17,7 @@ async function decodePayload(fragment) {
   if(hash!==data.sha256)throw Error('Aktarım doğrulanamadı; Telegram’dan tekrar aç.');
   return data;
 }
-async function copyPrompt() {
+async function copyPrompt(openGPT=false) {
   const text=$('text');
   try {
     if(navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text.value);
@@ -28,7 +28,8 @@ async function copyPrompt() {
     if(!document.execCommand('copy')){$('status').textContent='Metnin tamamı seçildi. Kopyala’ya dokun.';return;}
   }
   $('status').textContent='Prompt ve haberin tamamı kopyalandı. GPT’de bir sohbete yapıştır.';
-  $('copy').textContent='Tekrar kopyala';
+  $('copy').textContent='Kopyala ve GPT’yi aç';
+  if(openGPT) window.location.assign('https://chatgpt.com/');
 }
 async function start() {
   if(!location.hash)return;
@@ -38,9 +39,17 @@ async function start() {
     $('text').value=data.prompt;$('content').hidden=false;$('copy').disabled=false;
     $('description').textContent='Tamamını kopyala, GPT’ye yapıştır; yalnız tweet taslağı iste.';
     $('status').textContent='Kopyalamak için düğmeye dokun.';
-    $('copy').onclick=copyPrompt;
+    $('copy').onclick=()=>copyPrompt(true);
+    $('copy-only').onclick=()=>copyPrompt(false);
+    $('error').hidden=true;
     history.replaceState(null,'',location.pathname); // Do not leave article data in browser history.
-  }catch(error){$('error').textContent=error.message || 'Aktarım açılamadı. Telegram’daki düğmeyi yeniden aç.';$('error').hidden=false;}
+  }catch(error){
+    $('content').hidden=true;
+    $('error').textContent=typeof DecompressionStream==='undefined'
+      ? 'Bu tarayıcı aktarımı açamıyor. Telegram menüsünden Safari veya Chrome’da açmayı dene.'
+      : 'Aktarım bağlantısı eksik veya açılamadı. Telegram’daki kopyalama düğmesini yeniden aç.';
+    $('error').hidden=false;
+  }
 }
 start();
 window.addEventListener('hashchange', start);

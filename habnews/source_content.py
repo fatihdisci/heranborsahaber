@@ -13,7 +13,11 @@ def read_document(item, source, guard):
             raise ValueError('social_job_mismatch')
         return {'title': item['title'], 'body': item['full_post'], 'source_url': item['url'],
                 'preview_url': item['url'], 'method': 'social_rss'}
-    data, meta, url, _ = Fetcher(source['allowed_hosts'], guard).get(item['url'])
+    fetcher = Fetcher(source['allowed_hosts'], guard)
+    data, meta, url, _ = fetcher.get(item['url'])
+    from .gallery import gallery_base, read_gallery
+    if gallery_base(url):
+        return read_gallery(data, meta.get('content-type', ''), url, fetcher, guard)
     from .article import extract_document
     return extract_document(data, meta.get('content-type', ''), url,
                             expected_title=item['title'], requested_url=item['url'])

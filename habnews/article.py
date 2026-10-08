@@ -83,23 +83,28 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
         if scoped:roots=outer_roots(scoped)
     # Prefer the inner body over an article-wide wrapper that also contains UI.
     if not required:roots=[r for r in roots if not any(n is not r and body_node(n) for n in r.walk())]
-    if len(roots)>1 and host!='www.ntv.com.tr':raise ValueError('multiple_article_bodies_ambiguous')
+    from .cnbce_gallery import select_gallery
+    gallery=select_gallery(nodes,url)
+    if gallery:roots=gallery[0]
+    if len(roots)>1 and host!='www.ntv.com.tr' and not gallery:raise ValueError('multiple_article_bodies_ambiguous')
     chosen=roots or ([selected] if articles else [])
-    paragraphs=[]
+    paragraphs=[gallery[1]] if gallery and gallery[1] else []
     def blocks(n,root=True):
         if ignored(n) or not root and n.tag=='article':return
-        if n.tag in ('p','h2','h3','li'):
+        if n.tag in ('p','h2','h3','li') or gallery and n.tag=='table':
             yield n;return
         for child in n.children:
             if isinstance(child,Node):yield from blocks(child,False)
     for root in chosen:
         for n in blocks(root):
-                text=clean(n.text())
-                if len(text)>=8 and not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I) and text not in paragraphs:paragraphs.append(text)
+                if gallery and n.tag=='table':
+                    text='\n'.join(' | '.join(clean(cell.text()) for cell in row.children if isinstance(cell,Node) and cell.tag in ('td','th')) for row in visible_walk(n) if row.tag=='tr')
+                else:text=clean(n.text())
+                if len(text)>=8 and not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I) and (gallery or text not in paragraphs):paragraphs.append(text)
         if not paragraphs and roots and not any(n.tag in ('p','h2','h3','li') for n in root.walk()):
             paragraphs=[clean(root.text())]
     headline=next((clean(n.text()) for n in nodes if n.tag=='h1' and clean(n.text())),meta.get('og:title',''))
-    method='article_body' if roots else 'single_article'
+    method='cnbce_gallery' if gallery else ('article_body' if roots else 'single_article')
     if not paragraphs:
         # Structured articleBody is a source-owned alternative, never a whole-page fallback.
         objects=[]
@@ -161,4 +166,4 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
         if re.search(r'author|avatar|logo|related|banner',n.attrs.get('class',''),re.I):continue
         add_image(n.attrs.get('data-src') or n.attrs.get('data-original') or n.attrs.get('src'),'article:img')
     image=images[0]['url'] if images else None
-    return {'title':headline,'body':body,'image_url':image,'image_candidates':images[:3],'preview_url':url if image else None,'method':method,'source_url':url,'canonical_url':next(iter(declared),url),'paragraph_count':len(paragraphs)}
+    return {'title':headline,'body':body,'image_url':image,'image_candidates':images[:3],'preview_url':url if image else None,'method':method,'source_url':url,'canonical_url':next(iter(declared),url),'paragraph_count':len(paragraphs),**({'gallery_pages':gallery[2]} if gallery else {})}

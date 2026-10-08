@@ -50,10 +50,17 @@ def parse_gallery(data, mime, url, base):
         raise ValueError('gallery_container_ambiguous')
     container = containers[0]
     headers = [n for n in container.children if getattr(n, 'tag', '') == 'header']
-    if len(headers) != 1:
+    if len(headers) > 1 or not headers and page_number(url, base) == 1:
         raise ValueError('gallery_header_missing')
-    title = next((clean(n.text()) for n in headers[0].walk() if n.tag == 'h1'), '')
-    intro = next((clean(n.text()) for n in headers[0].walk() if n.tag == 'h2'), '')
+    if headers:
+        title = next((clean(n.text()) for n in headers[0].walk() if n.tag == 'h1'), '')
+        intro = next((clean(n.text()) for n in headers[0].walk() if n.tag == 'h2'), '')
+    else:
+        # Subsequent public gallery pages omit the header. Canonical binding above
+        # and the same publisher headline below still identify the original story.
+        meta = {n.attrs.get('property'): n.attrs.get('content', '') for n in all_nodes if n.tag == 'meta'}
+        title = clean(meta.get('og:title', ''))
+        intro = ''
     if not title:
         raise ValueError('gallery_title_missing')
     parts = {}; totals = set(); next_links = {}; images = []
@@ -116,13 +123,15 @@ def read_gallery(data, mime, url, fetcher, guard):
             raise ValueError('gallery_size_limit')
         if page_number(final_url, base) != missing:
             raise ValueError('gallery_redirect_mismatch')
-        heading, _, incoming, count, links, candidates = parse_gallery(chunk, meta.get('content-type', ''), final_url, base)
+        heading, incoming_intro, incoming, count, links, candidates = parse_gallery(chunk, meta.get('content-type', ''), final_url, base)
         if heading != title or count != total or missing not in incoming:
             raise ValueError('gallery_content_mismatch')
         for number, body in incoming.items():
             if number in parts and parts[number] != body:
                 raise ValueError('gallery_changed_during_read')
             parts[number] = body
+        if not intro and incoming_intro:
+            intro = incoming_intro
         next_links.update(links)
         for candidate in candidates:
             if candidate['url'] not in [v['url'] for v in images]:

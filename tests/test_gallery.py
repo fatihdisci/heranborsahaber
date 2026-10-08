@@ -68,3 +68,15 @@ def test_source_reader_uses_gallery_for_full_export(monkeypatch):
     result = read_document({'url':URL,'title':'En yüksek mevduat faizi'}, {'enabled':True,'allowed_hosts':['www.ekonomim.com']}, Mock())
     assert result['method'] == 'ekonomim_gallery' and result['gallery_pages'] == 21
     assert 'BANKA 21' in result['body']
+
+
+def test_continuation_without_header_uses_bound_publisher_title():
+    import re
+    chunk = response(5)
+    heading = parse_gallery(DATA, 'text/html', URL, URL)[0]
+    chunk = re.sub(b'<header>.*?</header>', b'', chunk)
+    chunk = ('<meta property="og:title" content="'+heading+'">').encode() + chunk
+    title, intro, parts, total, _, _ = parse_gallery(chunk, 'text/html', URL+'?p=5', URL)
+    assert title == heading and intro == '' and 5 in parts and total == 21
+    with pytest.raises(ValueError, match='gallery_header_missing'):
+        parse_gallery(chunk, 'text/html', URL, URL)

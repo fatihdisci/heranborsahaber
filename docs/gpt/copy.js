@@ -17,19 +17,20 @@ async function decodePayload(fragment) {
   if(hash!==data.sha256)throw Error('Aktarım doğrulanamadı; Telegram’dan tekrar aç.');
   return data;
 }
-async function copyPrompt(openGPT=false) {
+async function copyPrompt(automatic=false) {
   const text=$('text');
   try {
     if(navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text.value);
     else throw Error('clipboard_unavailable');
   } catch (_) {
+    if(automatic) return false;
     // Older iOS WebViews require a focused selection during the same user gesture.
     text.closest('details').open=true;text.focus();text.select();text.setSelectionRange(0,text.value.length);
-    if(!document.execCommand('copy')){$('status').textContent='Metnin tamamı seçildi. Kopyala’ya dokun.';return;}
+    if(!document.execCommand('copy')){$('status').textContent='Metnin tamamı seçildi. Kopyala’ya dokun.';return false;}
   }
-  $('status').textContent='Prompt ve haberin tamamı kopyalandı. GPT’de bir sohbete yapıştır.';
-  $('copy').textContent='Kopyala ve GPT’yi aç';
-  if(openGPT) window.location.assign('https://chatgpt.com/');
+  $('status').textContent='Panoya kopyalandı. ChatGPT uygulamana geçip yapıştırabilirsin.';
+  $('copy').textContent='✓ Kopyalandı · Tekrar kopyala';
+  return true;
 }
 async function start() {
   if(!location.hash)return;
@@ -37,12 +38,13 @@ async function start() {
     const data=await decodePayload(location.hash);
     $('title').textContent=data.title;$('count').textContent=data.chars.toLocaleString('tr-TR')+' karakter · eksiksiz aktarım';
     $('text').value=data.prompt;$('content').hidden=false;$('copy').disabled=false;
-    $('description').textContent='Tamamını kopyala, GPT’ye yapıştır; yalnız tweet taslağı iste.';
+    $('description').textContent='Prompt ve tam haber tek parça panoya alınır. Sonra ChatGPT uygulamana geçip yapıştır.';
     $('status').textContent='Kopyalamak için düğmeye dokun.';
-    $('copy').onclick=()=>copyPrompt(true);
-    $('copy-only').onclick=()=>copyPrompt(false);
+    $('copy').onclick=()=>copyPrompt();
     $('error').hidden=true;
     history.replaceState(null,'',location.pathname); // Do not leave article data in browser history.
+    // Some WebViews allow this; otherwise keep the single explicit copy button.
+    await copyPrompt(true);
   }catch(error){
     $('content').hidden=true;
     $('error').textContent=typeof DecompressionStream==='undefined'

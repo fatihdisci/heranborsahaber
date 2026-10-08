@@ -6,8 +6,8 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Haber → GPT</title>
-  <link rel="stylesheet" href="copy.css">
-  <script defer src="copy.js"></script>
+  <link rel="stylesheet" href="copy.css?v=clipboard2">
+  <script defer src="copy.js?v=clipboard2"></script>
 </head>
 <body>
 <main>
@@ -17,8 +17,7 @@
   <section id="content" hidden>
     <h2 id="title"></h2>
     <p id="count" class="muted"></p>
-    <button id="copy" type="button" disabled>Kopyala ve GPT’yi aç</button>
-    <button id="copy-only" class="open" type="button">Yalnız kopyala</button>
+    <button id="copy" type="button" disabled>📋 Panoya kopyala</button>
     <p id="status" role="status" aria-live="polite">Hazırlanıyor…</p>
     <details><summary>Panoya alınacak metni gör</summary><textarea id="text" readonly aria-label="Prompt ve haberin tam metni" spellcheck="false"></textarea></details>
   </section>

@@ -90,6 +90,8 @@ def validate_result(result,job,evidence):
         source_lines=[job.get('source_title','')]+sentences+[line for f in result['facts'] for line in evidence[f['source_ref']]['passage'].splitlines()]
         if trim(headline) not in {trim(line) for line in source_lines if line.strip()}:raise ValidationError('headline_not_source_phrase')
         if not set(re.findall(r'\d+(?:[.,]\d+)*',headline)).issubset(set(re.findall(r'\d+(?:[.,]\d+)*',' '.join(sentences)))):raise ValidationError('headline_unbound_number')
+    if strict_article and manual and manual.get('source_type')=='article' and re.match(r'^(?:şirket|kurum|proje|bu şirket|söz konusu şirket)(?:[\s,.:]|$)',norm(headline),re.I):
+        raise ValidationError('generic_article_headline')
     if result['verification_state']=='official_primary' and not primary: raise ValidationError('not_primary')
     if result['verification_state']=='corroborated_independent' and len(families)<2: raise ValidationError('same_wire_not_independent')
     attributed=bool(manual) and result['verification_state']=='attributed_single_source'
@@ -110,8 +112,13 @@ def validate_result(result,job,evidence):
         if manual['source_type']=='social_x':
             from .social import ACCOUNTS
             text=ACCOUNTS[manual['account']]+', X hesabında şu ifadeleri paylaştı:\n\n'+'\n\n'.join('“'+s+'”' for s in sentences)
-        elif attributed:text=body+'\n\nKaynak: '+manual['owner']
-        else:text=body
+        else:
+            # A source sentence may serve as both headline and fact for evidence
+            # binding; show that information only once in the delivered draft.
+            trim=lambda value:norm(value).rstrip('.!? ')
+            displayed=[sentence for sentence in sentences if trim(sentence)!=trim(headline)] if strict_article else sentences
+            text=headline+('\n\n'+'\n\n'.join(displayed) if displayed else '')
+            if attributed:text+='\n\nKaynak: '+manual['owner']
         from .tweet_style import decorate
         text=decorate(text,body+' '+job.get('source_title',''))
         if len(text)>(380 if strict_article else 550):raise ValidationError('tweet_too_long')

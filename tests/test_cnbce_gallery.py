@@ -44,3 +44,19 @@ def test_shared_reader_used_by_tweet_and_gpt_export(monkeypatch):
     monkeypatch.setattr('habnews.source_content.Fetcher.get',lambda *args:(raw,{'content-type':'text/html'},url,200))
     doc=read_document({'url':url,'title':'37 şirket borsada kendi paylarını aldı'},{'enabled':True,'allowed_hosts':['www.cnbce.com']},lambda:None)
     assert doc['gallery_pages']==38 and '58.620 lot' in doc['body']
+
+
+def test_short_final_caption_is_valid_content_not_missing_body():
+    raw,url=fixture('g39045')
+    html=raw.decode()
+    t=Tree();t.feed(html)
+    last=[n for n in t.root.walk() if n.attrs.get('class')=='gallery-item'][-1]
+    # Preserve seven bound slides; replace only the last body with a real short caption.
+    pos=html.rfind('<div class="content-text">')
+    end=html.index('</div>',pos)
+    html=html[:pos]+'<div class="content-text"><p>İşte o hisseler</p>'+html[end:]
+    doc=extract_document(html.encode(),'text/html',url)
+    assert doc['gallery_pages']==7 and doc['body'].endswith('İşte o hisseler')
+    empty=html.replace('<p>İşte o hisseler</p>','')
+    with pytest.raises(ValueError,match='cnbce_gallery_body_missing'):
+        extract_document(empty.encode(),'text/html',url)

@@ -100,7 +100,7 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
                 if gallery and n.tag=='table':
                     text='\n'.join(' | '.join(clean(cell.text()) for cell in row.children if isinstance(cell,Node) and cell.tag in ('td','th')) for row in visible_walk(n) if row.tag=='tr')
                 else:text=clean(n.text())
-                if len(text)>=8 and not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I) and (gallery or text not in paragraphs):paragraphs.append(text)
+                if len(text)>=(1 if gallery else 8) and not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I) and (gallery or text not in paragraphs):paragraphs.append(text)
         if not paragraphs and roots and not any(n.tag in ('p','h2','h3','li') for n in root.walk()):
             paragraphs=[clean(root.text())]
     headline=next((clean(n.text()) for n in nodes if n.tag=='h1' and clean(n.text())),meta.get('og:title',''))

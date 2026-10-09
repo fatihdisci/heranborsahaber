@@ -34,7 +34,7 @@ def select_gallery(nodes, url):
         if counter('page') != number or not 1 <= number <= total <= 80 or number in parts:
             raise ValueError('cnbce_gallery_counter_invalid')
         roots = [n for n in scoped if body_node(n)]
-        if len(roots) != 1 or len(clean(roots[0].text())) < 20:
+        if len(roots) != 1 or not clean(roots[0].text()):
             raise ValueError('cnbce_gallery_body_missing')
         parts[number] = roots[0]; totals.add(total)
     if len(totals) != 1 or set(parts) != set(range(1, next(iter(totals)) + 1)):

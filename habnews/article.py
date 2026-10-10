@@ -91,13 +91,16 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
     paragraphs=[gallery[1]] if gallery and gallery[1] else []
     def blocks(n,root=True):
         if ignored(n) or not root and n.tag=='article':return
-        if n.tag in ('p','h2','h3','li') or gallery and n.tag=='table':
+        # Publishers also use leaf divs as paragraphs; never flatten their
+        # parent containers, which may contain ads, related news or tables.
+        leaf_div=n.tag=='div' and not root and not any(child is not n and child.tag in ('div','p','h1','h2','h3','table','ul','ol','li','section','article') for child in n.walk())
+        if n.tag in ('p','h2','h3','li','table') or leaf_div:
             yield n;return
         for child in n.children:
             if isinstance(child,Node):yield from blocks(child,False)
     for root in chosen:
         for n in blocks(root):
-                if gallery and n.tag=='table':
+                if n.tag=='table':
                     text='\n'.join(' | '.join(clean(cell.text()) for cell in row.children if isinstance(cell,Node) and cell.tag in ('td','th')) for row in visible_walk(n) if row.tag=='tr')
                 else:text=clean(n.text())
                 if len(text)>=(1 if gallery else 8) and not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I) and (gallery or text not in paragraphs):paragraphs.append(text)

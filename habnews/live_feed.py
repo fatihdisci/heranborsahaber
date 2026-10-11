@@ -3,6 +3,7 @@ import json,re,secrets,time
 from html.parser import HTMLParser
 from .db import uid,encode
 from .normalizer import classify,fresh,digest
+from .editorial_prompt import EDITORIAL_VERSION
 
 class Plain(HTMLParser):
     def __init__(self):super().__init__();self.parts=[];self.skip=0
@@ -60,7 +61,7 @@ def feed_callback(db,approval,update,sources):
             active=c.execute("SELECT 1 FROM habnews_queue WHERE kind IN ('research','llm') AND status IN ('pending','leased') AND json_extract(payload,'$.event_id')=? AND json_extract(payload,'$.event_version')=? LIMIT 1",(linked['id'],linked['version'])).fetchone()
             if active:return 'Tweet isteğin zaten hazırlanıyor. Tamamlanınca taslak bu sohbete gelecek.'
             draft=c.execute('SELECT id,body,status,metadata FROM habnews_draft WHERE event_id=? AND event_version=? ORDER BY version DESC LIMIT 1',(linked['id'],linked['version'])).fetchone()
-            if draft and draft['status'] in ('pending','approved'):
+            if draft and draft['status'] in ('pending','approved') and json.loads(draft['metadata']).get('editorial_version')==EDITORIAL_VERSION:
                 metadata=json.loads(draft['metadata'])
                 if metadata.get('image'):
                     delivered=c.execute("SELECT method,status FROM habnews_outbox WHERE draft_id=? ORDER BY part DESC LIMIT 1",(draft['id'],)).fetchone()

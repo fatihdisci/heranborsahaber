@@ -71,7 +71,7 @@ def test_button_returns_existing_ready_draft_without_new_model_request(db):
     a,click,_=card(db);db.set_state('llm_state','ready');feed_callback(db,a,click,[source()])
     eid=db.conn.execute('SELECT id FROM habnews_event').fetchone()[0]
     db.conn.execute("UPDATE habnews_queue SET status='done' WHERE kind='research'")
-    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('TEST-READY',eid,1,1,0,'TEST-HASH','TEST hazır taslak',encode({'delivery_contract':'article-photo-v1'}),'pending',time.time()))
+    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('TEST-READY',eid,1,1,0,'TEST-HASH','TEST hazır taslak',encode({'delivery_contract':'article-photo-v1','editorial_version':'source-grounded-v2'}),'pending',time.time()))
     click['update_id']=100;assert 'TEST hazır taslak' in feed_callback(db,a,click,[source()])
     assert db.conn.execute('SELECT version FROM habnews_event').fetchone()[0]==1
     assert db.conn.execute("SELECT count(*) FROM habnews_queue WHERE kind='research'").fetchone()[0]==1
@@ -92,7 +92,7 @@ def test_photo_draft_repeated_click_does_not_send_a_plain_text_duplicate(db):
     a,click,_=card(db);db.set_state('llm_state','ready');feed_callback(db,a,click,[source()])
     eid=db.conn.execute('SELECT id FROM habnews_event').fetchone()[0]
     db.conn.execute("UPDATE habnews_queue SET status='done' WHERE kind='research'")
-    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('PHOTO',eid,1,1,1,'HASH','TEST fotoğraflı taslak',encode({'image':{'path':'private-fixture'},'delivery_contract':'article-photo-v1'}),'pending',time.time()))
+    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('PHOTO',eid,1,1,1,'HASH','TEST fotoğraflı taslak',encode({'image':{'path':'private-fixture'},'delivery_contract':'article-photo-v1','editorial_version':'source-grounded-v2'}),'pending',time.time()))
     db.conn.execute("INSERT INTO habnews_outbox(id,draft_id,recipient,part,method,payload,status,next_at,message_id,created) VALUES(?,?,?,?,?,?,?,?,?,?)",('photo-receipt','PHOTO',123,0,'sendPhoto','{}','sent',time.time(),102,time.time()))
     click['update_id']=100;response=feed_callback(db,a,click,[source()])
     assert 'fotoğrafıyla' in response and not response.startswith('Hazırlanan taslak:')

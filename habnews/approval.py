@@ -3,6 +3,7 @@ from pathlib import Path
 from .db import uid,encode
 from .normalizer import digest,fresh
 from .schema import validate_result,lock_metadata
+from .editorial_prompt import EDITORIAL_VERSION
 
 BUTTONS={'approve':'Taslağı onayla','reject':'Reddet','revise':'Revize et','image':'Başka görsel','sources':'Kaynaklar'}
 MEDIA_ROOT=Path('/data/media')
@@ -56,7 +57,7 @@ class Approval:
             version=c.execute('SELECT coalesce(max(version),0)+1 FROM habnews_draft WHERE event_id=?',(event['id'],)).fetchone()[0]
             c.execute("UPDATE habnews_draft SET status='stale' WHERE event_id=? AND status IN ('pending','approved')",(event['id'],))
             did=uid(); iv=image['version'] if image else 0; h=digest(encode({'text':text,'image':image,'event_version':event['version'],'draft_version':version}))
-            meta={'verification':result['verification_state'],'reason':result['relevance_reason'],'source_urls':list(dict.fromkeys(e['url'] for e in ev.values())),
+            meta={'editorial_version':EDITORIAL_VERSION,'verification':result['verification_state'],'reason':result['relevance_reason'],'source_urls':list(dict.fromkeys(e['url'] for e in ev.values())),
                   'time_precision':payload['time_precision'],'published_at':payload['published_at'],'first_seen_at':payload['first_seen_at'],
                   'image':image,'run':run_metadata,'validated_result':result,'change_note':payload.get('change_note')}
             if job.get('manual_attribution'):meta['manual_attribution']=job['manual_attribution']

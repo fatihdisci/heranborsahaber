@@ -171,3 +171,21 @@ def test_editorial_failure_queues_bounded_repair_without_sending(prepared,tmp_pa
     payload=json.loads(db.conn.execute("SELECT payload FROM habnews_queue WHERE kind='research'").fetchone()[0])
     assert payload['repair_attempt']==1 and payload['repair_feedback']['validation_code']==code
     assert db.conn.execute('SELECT count(*) FROM habnews_outbox').fetchone()[0]==0
+
+
+def test_old_editorial_photo_draft_is_regenerated_only_on_owner_click(db):
+    import time
+    from habnews.db import encode
+    from habnews.live_feed import feed_callback
+    from test_live_feed_social import card,source
+    approval,click,_=card(db);db.set_state('llm_state','ready')
+    feed_callback(db,approval,click,[source()])
+    eid=db.conn.execute('SELECT id FROM habnews_event').fetchone()[0]
+    db.conn.execute("UPDATE habnews_queue SET status='done' WHERE kind='research'")
+    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('old-editorial',eid,1,1,1,'old','Önceki taslak',encode({'image':{'path':'fixture'},'delivery_contract':'article-photo-v1'}),'pending',time.time()))
+    before=db.conn.execute('SELECT count(*) FROM habnews_outbox').fetchone()[0]
+    click['update_id']=999
+    assert 'kaydedildi' in feed_callback(db,approval,click,[source()])
+    assert db.conn.execute('SELECT version FROM habnews_event').fetchone()[0]==2
+    assert db.conn.execute("SELECT status FROM habnews_draft WHERE id='old-editorial'").fetchone()[0]=='stale'
+    assert db.conn.execute('SELECT count(*) FROM habnews_outbox').fetchone()[0]==before

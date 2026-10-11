@@ -68,7 +68,7 @@ def test_headline_amount_requires_selected_fact_support(prepared):
 def test_nested_blocks_preserve_word_boundaries_without_duplicate_text():
     html=f'<article><h1>TEST</h1><ul><li><p>{TEXT}</p><p>İkinci madde.</p></li></ul></article>'
     body=extract_document(html.encode(),'text/html')['body']
-    assert body==TEXT+' İkinci madde.'
+    assert body==TEXT+'\nİkinci madde.'
 
 def test_incidental_person_mention_never_selects_archive(tmp_path,monkeypatch):
     monkeypatch.setattr('habnews.images.store_image',lambda *a:pytest.fail('incidental person image fetched'))

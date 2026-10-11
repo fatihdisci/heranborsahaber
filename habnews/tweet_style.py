@@ -2,17 +2,17 @@
 import re
 
 TOPICS=[
- ('fon',r'\bfon(?:u|un|lar|ların|ları|daki|dan|a)?\b|yatırım fon'),
+ ('fon',r'\bfon(?:u|un|lar|ların|ları|lardan|larda|larına|larının|larında|larından|larındaki|lardaki|daki|dan|a|da|una|unun|unda|undan)?\b|yatırım fon'),
  ('borsa',r'borsa|\bbist\b'),('SPK',r'\bspk\b|sermaye piyasası kurulu'),
- ('TCMB',r'\btcmb\b|merkez bankası'),('faiz',r'faiz'),
- ('enflasyon',r'enflasyon|tüfe|üfe'),('altın',r'altın'),('petrol',r'petrol|brent|motorin'),
- ('döviz',r'döviz|dolar|euro|parite'),('vergi',r'vergi'),('halkaarz',r'halka arz'),
+ ('TCMB',r'\btcmb\b|merkez bankası'),('faiz',r'\bfaiz\w*'),('mevduat',r'\bmevduat\w*'),
+ ('enflasyon',r'enflasyon|tüfe|üfe'),('altın',r'\baltın(?:ın|a|ı)?\b'),('petrol',r'petrol|brent|motorin'),
+ ('döviz',r'\bdöviz\w*|\bparite\w*|\b(?:dolar|euro|avro)\s*(?:/\s*(?:tl|try)|kuru|yüksel|düş|gerile)'),('vergi',r'vergi'),('halkaarz',r'halka arz'),
  ('Fed',r'\bfed\b'),('ECB',r'\becb\b'),('ihracat',r'ihracat'),
  ('istihdam',r'istihdam|işsizlik'),('kripto',r'bitcoin|kripto|ethereum'),
  ('şirket',r'şirket|hisse|temettü'),('ekonomi',r'ekonomi|finans|hazine|sanayi|yatırım|mevduat'),
 ]
-SENSITIVE=re.compile(r'öldü|ölü bulundu|intihar|hayatını kaybet|vefat|katliam',re.I)
-URGENT=re.compile(r'tasfiye|fon (?:krizi|piyasası)|fonlardan? (?:ciddi )?çıkış|faiz kararı|işlem durdur|iflas|deprem',re.I)
+SENSITIVE=re.compile(r'\bölüm|öldü|öldür|ölü bulundu|intihar|hayatını kayb|can kayb|vefat|katliam',re.I)
+URGENT=re.compile(r'tasfiye|fon krizi|fonlardan? (?:ciddi )?çıkış|faiz kararı|işlem durdur|iflas|deprem',re.I)
 
 def decorate(text,subject):
     tags=[]

@@ -14,8 +14,8 @@ class Node:
         return ''.join(('\n'+c.text()+'\n' if c.tag in ('p','div','li','h1','h2','h3','blockquote') else c.text()) if isinstance(c,Node) else c for c in self.children)
 
 NOISE=re.compile(r'(?:^|[\s_-])(?:related|suggested|recommend|advertisement|adv|newsletter|social|share|comments|news-list|google-news|footer|navigation|widget|tags|tag-list)(?:[\s_-]|$)',re.I)
-def ignored(node):
-    return node.tag in ('script','style','nav','aside','footer','header','form','button','iframe','noscript','template') or 'hidden' in node.attrs or node.attrs.get('aria-hidden')=='true' or node.attrs.get('role') in ('navigation','dialog') or bool(NOISE.search(node.attrs.get('class','')+' '+node.attrs.get('id','')))
+def ignored(node,include_headers=False):
+    return (node.tag in ('script','style','nav','aside','footer','form','button','iframe','noscript','template') or node.tag=='header' and not include_headers) or 'hidden' in node.attrs or (node.attrs.get('aria-hidden') or '').lower()=='true' or bool(re.search(r'(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*hidden)\s*(?:!important\s*)?(?:;|$)',node.attrs.get('style') or '',re.I)) or node.attrs.get('role') in ('navigation','dialog') or bool(NOISE.search(node.attrs.get('class','')+' '+node.attrs.get('id','')))
 
 class Tree(HTMLParser):
     VOID={'meta','link','img','input','hr','br','source','wbr','embed','area','base','col','param','track'}
@@ -35,12 +35,12 @@ class Tree(HTMLParser):
 BODY_CLASSES={'article-wrapper','article-body','content-text','news-detail-content','news-content-body','news-text','cms-container','detail-content','tcmb-content'}
 def body_node(n):
     return 'articleBody' in (n.attrs.get('itemprop','')+' '+n.attrs.get('property','')).split() or bool(set(n.attrs.get('class','').split()) & BODY_CLASSES)
-def visible_walk(node,skip_nested_articles=False,_root=True):
-    if ignored(node):return
+def visible_walk(node,skip_nested_articles=False,_root=True,include_headers=False):
+    if ignored(node,include_headers):return
     if skip_nested_articles and not _root and node.tag=='article':return
     yield node
     for child in node.children:
-        if isinstance(child,Node):yield from visible_walk(child,skip_nested_articles,False)
+        if isinstance(child,Node):yield from visible_walk(child,skip_nested_articles,False,include_headers)
 def clean(text):return ' '.join(text.split())
 
 def same_page(left,right):
@@ -50,6 +50,34 @@ def same_page(left,right):
 
 def outer_roots(roots):
     return [r for r in roots if not any(r is not other and any(n is r for n in other.walk()) for other in roots)]
+
+def article_paragraphs(node):
+    """Keep mixed inline/block text, short qualifications and table row boundaries."""
+    blocks={'p','div','section','li','ul','ol','h1','h2','h3','h4','blockquote','table','article'}
+    def visit(n,root=False):
+        if ignored(n) or not root and n.tag=='article':return
+        if n.tag=='h1':return
+        if n.tag=='table':
+            rows=[]
+            for row in visible_walk(n):
+                if row.tag!='tr':continue
+                cells=[clean(cell.text()) for cell in row.children if isinstance(cell,Node) and cell.tag in ('td','th') and not ignored(cell)]
+                if any(cells):rows.append(' | '.join(cells))
+            if rows:yield '\n'.join(rows)
+            return
+        pending=[]
+        for child in n.children:
+            if isinstance(child,str):pending.append(child)
+            elif ignored(child):continue
+            elif child.tag in blocks:
+                text=clean(''.join(pending));pending=[]
+                if text:yield text
+                yield from visit(child)
+            else:pending.append(child.text())
+        text=clean(''.join(pending))
+        if text:yield text
+    yield from visit(node,True)
+
 
 def extract_document(data,mime,url='',expected_title='',requested_url=''):
     if 'html' not in mime:raise ValueError('unsupported_article_mime')
@@ -65,7 +93,7 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
     if url and declared and (len(declared)!=1 or not same_page(next(iter(declared)),url)):raise ValueError('article_url_mismatch')
     articles=[n for n in visible_walk(tree.root) if n.tag=='article']
     matched=[n for n in articles if url and n.attrs.get('data-url') and same_page(urljoin(url,n.attrs['data-url']),url)]
-    headed=[n for n in articles if any(x.tag=='h1' for x in visible_walk(n,True))]
+    headed=[n for n in articles if any(x.tag=='h1' for x in visible_walk(n,True,include_headers=True))]
     candidates=matched or headed or outer_roots(articles)
     if len(candidates)>1:raise ValueError('multiple_articles_ambiguous')
     selected=candidates[0] if candidates else tree.root
@@ -89,26 +117,23 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
     if len(roots)>1 and host!='www.ntv.com.tr' and not gallery:raise ValueError('multiple_article_bodies_ambiguous')
     chosen=roots or ([selected] if articles else [])
     paragraphs=[gallery[1]] if gallery and gallery[1] else []
-    def blocks(n,root=True):
-        if ignored(n) or not root and n.tag=='article':return
-        # Publishers also use leaf divs as paragraphs; never flatten their
-        # parent containers, which may contain ads, related news or tables.
-        leaf_div=n.tag=='div' and not root and not any(child is not n and child.tag in ('div','p','h1','h2','h3','table','ul','ol','li','section','article') for child in n.walk())
-        if n.tag in ('p','h2','h3','li','table') or leaf_div:
-            yield n;return
-        for child in n.children:
-            if isinstance(child,Node):yield from blocks(child,False)
+    if not gallery and selected.tag=='article':
+        # The article's visible standfirst is news content, unlike header UI/date text.
+        for header in visible_walk(selected,True,include_headers=True):
+            if header.tag!='header':continue
+            for heading in visible_walk(header,True,include_headers=True):
+                if heading.tag=='h2' and clean(heading.text()):paragraphs.append(clean(heading.text()))
+    body_found=False
     for root in chosen:
-        for n in blocks(root):
-                if n.tag=='table':
-                    text='\n'.join(' | '.join(clean(cell.text()) for cell in row.children if isinstance(cell,Node) and cell.tag in ('td','th')) for row in visible_walk(n) if row.tag=='tr')
-                else:text=clean(n.text())
-                if len(text)>=(1 if gallery else 8) and not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I) and (gallery or text not in paragraphs):paragraphs.append(text)
-        if not paragraphs and roots and not any(n.tag in ('p','h2','h3','li') for n in root.walk()):
-            paragraphs=[clean(root.text())]
-    headline=next((clean(n.text()) for n in nodes if n.tag=='h1' and clean(n.text())),meta.get('og:title',''))
+        for text in article_paragraphs(root):
+            if not re.match(r'^(?:FOTO(?:ĞRAF)?|Fotoğraf kaynağı)\s*:',text,re.I):
+                body_found=True
+                # Repeated short labels/qualifiers can refer to different rows.
+                if gallery or not paragraphs or text!=paragraphs[-1]:paragraphs.append(text)
+    heading_nodes=list(visible_walk(selected,True,include_headers=True))
+    headline=next((clean(n.text()) for n in heading_nodes if n.tag=='h1' and clean(n.text())),meta.get('og:title',''))
     method='cnbce_gallery' if gallery else ('article_body' if roots else 'single_article')
-    if not paragraphs:
+    if not body_found:
         # Structured articleBody is a source-owned alternative, never a whole-page fallback.
         objects=[]
         def visit(v):
@@ -125,9 +150,9 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
         matches=[v for v in objects if isinstance(v.get('url'),str) and url and same_page(urljoin(url,v['url']),url)]
         if len(matches)==1 or len(objects)==1 and (not objects[0].get('url') or not url):
             obj=matches[0] if matches else objects[0];fragment=Tree();fragment.feed(obj['articleBody'])
-            paragraphs=[clean(fragment.root.text())];headline=clean(obj.get('headline') or headline);method='jsonld_article_body'
+            paragraphs=[clean(fragment.root.text())];headline=clean(obj.get('headline') or headline);method='jsonld_article_body';body_found=True
     body='\n'.join(paragraphs)
-    if len(body)<80:raise ValueError('main_text_missing_or_parser_needs_review')
+    if not body_found or len(body)<80:raise ValueError('main_text_missing_or_parser_needs_review')
     if len(body)>45000:raise ValueError('article_too_long_for_verified_model_input')
     if expected_title and headline and (not declared or requested_url and not same_page(requested_url,url)):
         words=lambda s:set(re.findall(r'\w{3,}',s.casefold()))

@@ -90,6 +90,22 @@ def validate_result(result,job,evidence):
         source_lines=[job.get('source_title','')]+sentences+[line for f in result['facts'] for line in evidence[f['source_ref']]['passage'].splitlines()]
         if trim(headline) not in {trim(line) for line in source_lines if line.strip()}:raise ValidationError('headline_not_source_phrase')
         if not set(re.findall(r'\d+(?:[.,]\d+)*',headline)).issubset(set(re.findall(r'\d+(?:[.,]\d+)*',' '.join(sentences)))):raise ValidationError('headline_unbound_number')
+    if strict_article and manual and manual.get('source_type')=='article':
+        if not headline.strip():raise ValidationError('empty_article_headline')
+        if headline.rstrip().endswith('?'):raise ValidationError('question_article_headline')
+        if re.search(r'\bson dakika\b',headline,re.I):raise ValidationError('breaking_label_not_allowed')
+        for sentence in ([] if trim(headline) in {trim(s) for s in sentences} else sentences):
+            # These literal quantity qualifications are part of the number, not decoration.
+            for match in re.finditer(r"(?:en fazla|en az|yaklaşık|yaklaşık olarak)\s+\d+(?:[.,]\d+)*|\d+(?:[.,]\d+)*(?:\s+(?:bin|milyon|milyar|trilyon))?(?:\s+(?:TL|lira|dolar|euro)(?:['’]?\w+)?)?\s+(?:üzerinde|kadar|altında|aşkın)",sentence,re.I):
+                number=re.search(r'\d+(?:[.,]\d+)*',match[0])[0]
+                if re.search(r'(?<!\d)'+re.escape(number)+r'(?![\d.,])',headline) and norm(match[0]) not in norm(headline):
+                    raise ValidationError('headline_missing_quantity_qualifier')
+        if len({norm(s) for s in sentences})!=len(sentences):raise ValidationError('duplicate_article_fact')
+        # A catchy publisher heading is not proof of its own claim. Bind its
+        # meaningful words to the chosen complete fact sentences as well.
+        fact_text=' '.join(norm(s) for s in sentences)
+        if any(word not in fact_text for word in words if word not in {'ve','ile','için','bir','bu','de','da'}):
+            raise ValidationError('headline_not_grounded_in_facts')
     if strict_article and manual and manual.get('source_type')=='article' and re.match(r'^(?:şirket|kurum|proje|bu şirket|söz konusu şirket)(?:[\s,.:]|$)',norm(headline),re.I):
         raise ValidationError('generic_article_headline')
     if result['verification_state']=='official_primary' and not primary: raise ValidationError('not_primary')
@@ -120,7 +136,7 @@ def validate_result(result,job,evidence):
             text=headline+('\n\n'+'\n\n'.join(displayed) if displayed else '')
             if attributed:text+='\n\nKaynak: '+manual['owner']
         from .tweet_style import decorate
-        text=decorate(text,body+' '+job.get('source_title',''))
+        text=decorate(text,headline+' '+' '.join(sentences))
         if len(text)>(380 if strict_article else 550):raise ValidationError('tweet_too_long')
         return text
     from .tweet_style import decorate

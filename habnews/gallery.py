@@ -1,7 +1,7 @@
 """Read a complete, publisher-bound Ekonomim gallery without unrelated page text."""
 import re
 from urllib.parse import urlsplit, urlunsplit, parse_qs, urljoin
-from .article import Tree, clean, body_node, visible_walk, same_page
+from .article import Tree, clean, body_node, visible_walk, same_page, article_paragraphs
 
 MAX_PAGES = 40
 MAX_TEXT = 45000
@@ -81,7 +81,7 @@ def parse_gallery(data, mime, url, base):
         if len(roots) != 1 and not image_only_last:
             raise ValueError('gallery_body_ambiguous')
         # Keep repeated labels: each bank's rate/balance belongs to that bank.
-        body = '' if image_only_last else '\n'.join(clean(n.text()) for n in visible_walk(roots[0]) if n.tag == 'p' and clean(n.text()))
+        body = '' if image_only_last else '\n'.join(article_paragraphs(roots[0]))
         if not body and roots:
             body = clean(roots[0].text())
         if (len(body) < 20 and not image_only_last) or number in parts:

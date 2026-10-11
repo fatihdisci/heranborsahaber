@@ -70,13 +70,13 @@ def test_verified_archive_is_sent_as_one_telegram_photo(prepared,tmp_path,monkey
     assert '📷' not in payload['caption']
     assert 'link_preview_options' not in payload
 
-def test_manual_tags_include_topic_in_selected_source_title(prepared):
+def test_manual_tags_exclude_unused_source_title_topics(prepared):
     from habnews.schema import validate_result
     db,_,job,result,_=prepared
     job=job|{'manual_attribution':{'source_type':'article','owner':'TEST','url':'https://www.tcmb.gov.tr/test'},'source_title':'TCMB fon tasfiyesi'}
     evidence={r['id']:dict(r) for r in db.conn.execute('SELECT * FROM habnews_evidence')}
     text=validate_result(result,job,evidence)
-    assert '#fon #TCMB #faiz' in text
+    assert '#TCMB #faiz' in text and '#fon' not in text
 
 def test_busy_model_waits_without_claim_attempt_or_incident(db,tmp_path):
     db.set_state('llm_state','ready');Budget(db).reserve('running','P0');db.enqueue('llm','second-request',{})

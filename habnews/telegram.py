@@ -190,7 +190,11 @@ class ApprovalService:
                     feed_response=response is not None
                     if response is None:response=self.approval.callback(update)
                     toast=('Hazırlanıyor…' if 'kaydedildi' in response or 'hazırlanıyor' in response else 'Taslak hazır.' if response.startswith('Hazırlanan taslak:') else response[:190]) if feed_response else 'İşlem kaydedildi.' if response not in ('stale','duplicate') else response
-                    self.tg.call('answerCallbackQuery',{'callback_query_id':update['callback_query']['id'],'text':toast})
+                    try:self.tg.call('answerCallbackQuery',{'callback_query_id':update['callback_query']['id'],'text':toast})
+                    except TelegramError as exc:
+                        # Telegram expires query acknowledgements; the action is already recorded.
+                        if exc.code!=400:raise
+                        self.db.audit('callback_ack_expired','telegram')
                     if response.startswith('revision_prompt:'):
                         did=response.split(':',1)[1]
                         sent=self.tg.call('sendMessage',{'chat_id':self.approval.chat_id,'text':'Bu mesaja yanıt olarak revizyon talimatını yaz.','reply_markup':{'force_reply':True}})

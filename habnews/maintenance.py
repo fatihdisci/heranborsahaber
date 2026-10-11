@@ -29,18 +29,20 @@ def cleanup(db,media_dir,now=None):
         c.execute("DELETE FROM habnews_audit WHERE created<? AND subject NOT IN (SELECT id FROM habnews_draft WHERE status IN ('pending','needs_review')) AND subject NOT IN (SELECT id FROM habnews_event WHERE status IN ('pending','needs_review','verification_pending'))",(now-180*86400,))
         c.execute("DELETE FROM habnews_decision WHERE created<? AND draft_id IN (SELECT id FROM habnews_draft WHERE status='tombstone')",(now-180*86400,))
         root=Path(media_dir).resolve()
+        retained_paths={r[0] for r in c.execute(f"SELECT path FROM habnews_image_candidate WHERE path IS NOT NULL AND tombstone=0 AND (created>=? OR event_id IN ({active}))",(now-30*86400,))}
         for row in c.execute(f"SELECT * FROM habnews_image_candidate WHERE created<? AND tombstone=0 AND event_id NOT IN ({active})",(now-30*86400,)).fetchall():
             if row['path']:
                 file=Path(row['path']).resolve()
                 if file.parent!=root:raise ValueError('media_path_outside_namespace')
-                file.unlink(missing_ok=True)
-                file.with_suffix('.json').unlink(missing_ok=True)
-                file.with_suffix('.attribution.txt').unlink(missing_ok=True)
+                # Content-addressed images can belong to more than one event.
+                if row['path'] not in retained_paths:
+                    file.unlink(missing_ok=True)
+                    file.with_suffix('.json').unlink(missing_ok=True)
+                    file.with_suffix('.attribution.txt').unlink(missing_ok=True)
             c.execute('UPDATE habnews_image_candidate SET tombstone=1,path=NULL WHERE id=?',(row['id'],))
         db.audit('retention','habnews',{'completed_at':now})
 
 def backup(db,media_dir,destination):
-    from .normalizer import digest
     dest=Path(destination);dest.mkdir(parents=True,mode=0o700,exist_ok=False)
     db.backup(dest/'habnews.sqlite')
     src=Path(media_dir)
@@ -60,13 +62,28 @@ def restore(source,destination):
     import hashlib
     src=Path(source).resolve(); dest=Path(destination)
     if dest.exists():raise ValueError('restore_destination_must_be_new')
-    for row in json.loads((src/'manifest.json').read_text()):
-        file=(src/row['path']).resolve()
-        if not file.is_relative_to(src) or file.is_symlink() or hashlib.sha256(file.read_bytes()).hexdigest()!=row['sha256']:raise ValueError('backup_integrity')
+    entries=list(src.rglob('*'))
+    if any(p.is_symlink() or not (p.is_file() or p.is_dir()) for p in entries):raise ValueError('backup_integrity')
+    try:
+        manifest=json.loads((src/'manifest.json').read_text())
+        if not isinstance(manifest,list):raise ValueError('backup_integrity')
+        verified=set()
+        for row in manifest:
+            if not isinstance(row,dict) or not isinstance(row.get('path'),str):raise ValueError('backup_integrity')
+            relative=Path(row['path']);file=src/relative
+            if relative.is_absolute() or '..' in relative.parts or relative.as_posix() in verified or not file.is_file():raise ValueError('backup_integrity')
+            if hashlib.sha256(file.read_bytes()).hexdigest()!=row.get('sha256'):raise ValueError('backup_integrity')
+            verified.add(relative.as_posix())
+        actual={p.relative_to(src).as_posix() for p in entries if p.is_file() and p!=src/'manifest.json'}
+        if verified!=actual or 'habnews.sqlite' not in verified:raise ValueError('backup_integrity')
+    except (OSError,ValueError,TypeError) as exc:
+        raise ValueError('backup_integrity') from exc
     shutil.copytree(src,dest)
     from .db import DB
     db=DB(dest/'habnews.sqlite')
     # Restored copies are offline; never write the running instance's control mount.
-    db.conn.execute("UPDATE habnews_runtime_state SET value='false' WHERE key IN ('enabled','setup_activation_requested')")
-    if db.conn.execute('PRAGMA integrity_check').fetchone()[0]!='ok':raise ValueError('restore_integrity')
-    db.audit('restore','habnews');return db.health()
+    try:
+        db.conn.execute("UPDATE habnews_runtime_state SET value='false' WHERE key IN ('enabled','setup_activation_requested')")
+        if db.conn.execute('PRAGMA integrity_check').fetchone()[0]!='ok':raise ValueError('restore_integrity')
+        db.audit('restore','habnews');return db.health()
+    finally:db.conn.close()

@@ -31,7 +31,9 @@ class PinnedHTTPS(http.client.HTTPSConnection):
         super().__init__(host,timeout=timeout,context=ssl.create_default_context()); self.pinned_ip=ip
     def connect(self):
         sock=socket.create_connection((self.pinned_ip,443),self.timeout)
-        self.sock=self._context.wrap_socket(sock,server_hostname=self.host)
+        try:self.sock=self._context.wrap_socket(sock,server_hostname=self.host)
+        except BaseException:
+            sock.close();raise
 
 class Fetcher:
     def __init__(self, allowed, guard=lambda:None, timeout=15, max_bytes=2_000_000, resolver=socket.getaddrinfo):
@@ -44,8 +46,9 @@ class Fetcher:
             p=urlsplit(url)
             if not p.hostname or not host_ok(p.hostname,self.allowed):raise UnsafeURL('host_not_allowed')
             conn=http.client.HTTPConnection('localhost',timeout=self.timeout+5)
-            sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM);sock.settimeout(self.timeout+5);sock.connect(broker);conn.sock=sock
+            sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM);conn.sock=sock
             try:
+                sock.settimeout(self.timeout+5);sock.connect(broker)
                 conn.request('POST','/fetch',body=json.dumps({'url':url,'headers':headers or {},'max_bytes':self.max_bytes}),headers={'Content-Type':'application/json'})
                 result=json.loads(conn.getresponse().read(self.max_bytes*2+16384))
                 if result.get('error'):

@@ -37,21 +37,25 @@ def process_image(db,approval):
 
 def export_approved(db,draft_id,destination):
     from pathlib import Path
-    import shutil
+    import hashlib
     draft=db.conn.execute('SELECT * FROM habnews_draft WHERE id=?',(draft_id,)).fetchone()
     if not draft or draft['status']!='approved':raise ValueError('exact_draft_not_approved')
     event=db.conn.execute('SELECT version FROM habnews_event WHERE id=?',(draft['event_id'],)).fetchone()
     if event[0]!=draft['event_version']:raise ValueError('approval_stale')
     decision=db.conn.execute("SELECT hash FROM habnews_decision WHERE draft_id=? AND action='approve' ORDER BY created DESC LIMIT 1",(draft_id,)).fetchone()
     if not decision or decision[0]!=draft['hash']:raise ValueError('approval_hash_mismatch')
-    dest=Path(destination);dest.mkdir(mode=0o700,parents=True,exist_ok=False)
-    (dest/'draft.txt').write_text(draft['body']);(dest/'metadata.json').write_text(draft['metadata'])
     meta=json.loads(draft['metadata']);image=meta.get('image')
     from .images import reusable
-    if image and reusable(image.get('provenance',{})):
+    export_image=bool(image and reusable(image.get('provenance',{})))
+    if export_image:
         file=Path(image['path']).resolve()
         if file.parent!=Path('/data/media'):raise ValueError('media_path')
-        shutil.copyfile(file,dest/('original'+file.suffix))
+        blob=file.read_bytes()
+        if hashlib.sha256(blob).hexdigest()!=image['provenance'].get('sha256'):raise ValueError('media_digest')
+    dest=Path(destination);dest.mkdir(mode=0o700,parents=True,exist_ok=False)
+    (dest/'draft.txt').write_text(draft['body']);(dest/'metadata.json').write_text(draft['metadata'])
+    if export_image:
+        (dest/('original'+file.suffix)).write_bytes(blob)
         (dest/'attribution.txt').write_text(image['provenance']['attribution_text']+'\n'+image['provenance']['license_url'])
     elif image:(dest/'attribution.txt').write_text('Özel kaynak önizlemesi; görselin yeniden yayınlama izni doğrulanmadığı için paylaşım paketine eklenmedi.\n'+image['provenance']['landing_page_url']+'\n')
     else:(dest/'attribution.txt').write_text('text_only — Kullanım hakkı uygun görsel bulunamadı.\n')

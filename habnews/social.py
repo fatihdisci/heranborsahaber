@@ -39,7 +39,8 @@ def parse_social_feed(data,source,now=None):
     if not entries:raise ValueError('social_empty_feed')
     result=[]
     for node in entries[:100]:
-        link=urlsplit(node.findtext('link') or '');match=re.fullmatch(r'/([a-zA-Z0-9_]+)/status/(\d{15,22})/?',link.path)
+        link=urlsplit(node.findtext('link') or '')
+        match=re.fullmatch(r'/([a-zA-Z0-9_]+)/status/(\d{15,22})/?',link.path)
         title=node.findtext('title') or ''
         if link.scheme!='https' or link.hostname not in ('nitter.cf','x.com','twitter.com') or not match or match[1].casefold()!=account or re.match(r'^(RT\s|R to\s|R @)',title,re.I):continue
         stamp,precision=date_value(node.findtext('pubDate'))

@@ -169,15 +169,18 @@ class JobBroker:
             rid=path.name.split('.')[0];stored=self.db.state('job:'+rid)
             if not stored:
                 path.unlink(missing_ok=True);continue
-            state=json.loads(stored);response=json.loads(path.read_text())
-            full_job_path=self.directory/(rid+'.job.running')
-            if full_job_path.exists():
-                from .normalizer import digest
-                full_job=json.loads(full_job_path.read_text())
-                if digest(encode(full_job))!=state.get('job_hash'):response={'error':'needs_review'}
-                else:state['job']=full_job|{'media':state['job'].get('media')}
+            state=json.loads(stored);response={}
             row={'id':rid,'lease':state['lease']}
             try:
+                decoded=json.loads(path.read_text())
+                if not isinstance(decoded,dict):raise ValueError('result_schema')
+                response=decoded
+                full_job_path=self.directory/(rid+'.job.running')
+                if full_job_path.exists():
+                    from .normalizer import digest
+                    full_job=json.loads(full_job_path.read_text())
+                    if not isinstance(full_job,dict) or digest(encode(full_job))!=state.get('job_hash'):response={'error':'needs_review'}
+                    else:state['job']=full_job|{'media':state['job'].get('media')}
                 if response.get('error'):
                     error=response['error']
                     if error in ('auth_required','quota_paused','model_unavailable'):

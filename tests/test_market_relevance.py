@@ -162,3 +162,15 @@ def test_spk_decision_is_not_excluded_because_summary_mentions_kap_buybacks():
 def test_official_domestic_post_still_needs_an_actual_financial_topic():
     assert classify({'title':'Enflasyonla mücadele programı devam edecek','source_id':'x-rterdogan'})[0]=='P1'
     assert classify({'title':'Gençlik buluşmasında bir araya geldik','source_id':'x-rterdogan'})[0]=='filtered'
+
+
+@pytest.mark.parametrize('title',[
+ 'Şirketlerde sermaye kaybı hesabındaki istisna 1 Ocak 2028’e uzatıldı',
+ 'Merkez Bankası bir elektronik para şirketinin faaliyet iznini iptal etti',
+ 'TCMB bir elektronik para şirketinin faaliyet iznini iptal etti',
+ 'İller Bankası’nın sermayesi 250 milyar TL’ye çıkarıldı',
+ 'İki katılım bankası birleşiyor',
+ 'Ziraat Katılım ve Halk Katılım Türkiye Varlık Fonu’na devrediliyor',
+])
+def test_material_bank_mergers_licenses_and_capital_rules_are_not_lost(title):
+    assert classify({'title':title})[0] in ('P0','P1')

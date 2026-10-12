@@ -75,6 +75,7 @@ def classify(item):
     if market:reason='capital_markets'
     elif fund and (local or not FOREIGN_MARKET.search(text)):reason='investment_funds'
     elif TR_COMPANY.search(text) and ISSUER_EVENT.search(text):reason='listed_company_material_event'
+    elif re.search(r'\bbanka\w*|katılım bank|elektronik para|ödeme kuruluş|varlık fon|katılım finans|sermaye kaybı',text) and re.search(r'birleş|devred|devir|faaliyet izni|lisans|sermaye(?:si|leri|sinin| kaybı| yeterli)|kayyum|el koy|el kon',text):reason='material_financial_system_event'
     elif local and (MACRO.search(text) or re.search(r'\b(?:bddk|seddk|tmsf)\b',text) and re.search(r'mevduat|kredi|sermaye|faaliyet izni|lisans|el koy|el kon|devir|tasfiye|sigorta.*(?:düzenleme|kural)',text)):reason='turkey_market_macro'
     else:return 'filtered','no_direct_market_relevance' if local else 'no_turkey_relevance'
     if CRITICAL_MARKET.search(text):return 'P0','critical_market_event'

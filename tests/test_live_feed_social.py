@@ -29,10 +29,10 @@ def card(db,src=None,post=None):
     click={'update_id':99,'callback_query':{'id':'cb99','data':record['nonce'],'from':{'id':123},'message':{'message_id':101,'chat':{'id':123,'type':'private'}}}}
     return a,click,tg
 
-@pytest.mark.parametrize('title',['Türkiye üniversite açılışı','Aselsan gelirini artırdı','SPK yeni bülten yayımladı','Fon krizi TBMM gündeminde'])
+@pytest.mark.parametrize('title',['Borsa İstanbul işlem saatleri değişti','Aselsan gelirini artırdı','SPK yeni bülten yayımladı','Fon krizi TBMM gündeminde'])
 def test_or_filter_and_spk_media_allowed(title):assert classify(item()|{'title':title,'summary':''})[0] in ('P0','P1')
 
-@pytest.mark.parametrize('title',['Futbol maç sonucu','KAP bilanço duyurusu','Türkiye hisse için hedef fiyat','DKB duyurusu'])
+@pytest.mark.parametrize('title',['Futbol maç sonucu','Türkiye üniversite açılışı','Türkiye hisse için hedef fiyat','DKB duyurusu'])
 def test_remaining_filter_exclusions(title):assert classify(item()|{'title':title,'summary':''})[0] not in ('P0','P1')
 
 def test_card_arrives_without_evidence_or_model_and_click_is_bound(db):

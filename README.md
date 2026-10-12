@@ -10,7 +10,7 @@ Tweet oluştur yalnız haber başlığı ve ana metninden en fazla 380 karakterl
 
 Ayrı Python uygulaması, SQLite WAL, kalıcı aşama kuyruğu, Hermes dosya iş sözleşmesi, özel Telegram inceleme/onay servisi ve Linux/container kurulum paketi. X veya başka yayın servisine gönderim yolu yoktur. Onay tam taslak/sürüm/görsel hash'ini kaydeder; yayın yapmaz.
 
-**Haber filtresi:** Başlık/özet içindeki Türkiye, yerli kurum/piyasa/şirket sinyallerinden biri yeterlidir; genel Fed/altın/petrol haberi tek başına geçmez. SPK haberleri alınır; rutin KAP geri alım/pay işlemleri ve açık yatırım tanıtımları elenir. Dört X hesabı aynı yerel alaka filtresinden geçer.
+**Haber filtresi:** Bağımsız konu gruplarından biri yeterlidir: BIST/borsa/hisse, SPK, halka arz/temettü/sermaye işlemleri, yatırım fonları/TEFAS, yerli borsa şirketlerinin önemli mali ve operasyonel gelişmeleri veya Türkiye piyasalarıyla bağlantılı makro veriler. Yalnız Türkiye/şehir/TL veya siyasetçi adı geçmesi yeterli değildir. Genel gündem, spor/magazin, yerel kazalar, personel ilanları, banka promosyonları ve günlük altın/döviz fiyatı sayfaları elenir. SPK haberleri kabul edilir; rutin KAP geri alım/pay işlemleri ve açık yatırım tanıtımları istisnası korunur. Dört X hesabı aynı filtreden geçer.
 
 **Kurulum durumu (6 Ekim 2026):** Ayrı `habnews` Colima/Linux kurulumu altı container kullanır; son sağlık kontrolünde collector sağlıklı, model hazır, Investing devre dışı ve 16 etkin kaynak görünüyordu. Bu kurulum mevcut Hermes ve Her An Borsa servislerinden ayrıdır. Güncel işletim bilgileri: [MACOS.md](MACOS.md).
 

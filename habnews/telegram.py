@@ -2,7 +2,7 @@
 import contextlib, http.client, json, os, time
 from pathlib import Path
 from .db import encode,uid
-from .normalizer import fresh
+from .normalizer import fresh,classify
 
 class TelegramError(RuntimeError):
     def __init__(self,code,retry=0):self.code=code;self.retry=retry;super().__init__(f'telegram_{code}')
@@ -94,6 +94,9 @@ class Outbox:
                 observed=c.execute('SELECT metadata FROM habnews_observation WHERE id=?',(feed[0],)).fetchone()
                 if not observed or not fresh(json.loads(observed[0]))[0]:
                     c.execute("UPDATE habnews_outbox SET status='expired' WHERE id=?",(row['id'],));return
+                if classify(json.loads(observed[0]))[0] not in ('P0','P1'):
+                    c.execute("UPDATE habnews_outbox SET status='filtered' WHERE id=?",(row['id'],))
+                    self.db.audit('feed_card_filtered',feed[0],{'reason':'current_market_filter'});return
             if row['draft_id']:
                 draft=c.execute('SELECT * FROM habnews_draft WHERE id=?',(row['draft_id'],)).fetchone()
                 current=c.execute('SELECT version FROM habnews_event WHERE id=?',(draft['event_id'],)).fetchone()[0]
@@ -154,7 +157,7 @@ class ApprovalService:
         if cmd=='/haber_butce':
             rows=[dict(r) for r in self.db.conn.execute('SELECT day,kind,sum(reserved) calls FROM habnews_budget GROUP BY day,kind ORDER BY day DESC LIMIT 7')]
             return encode({'local':rows,'real_pro_quota':'bilinmiyor','shared_account_limits':True,'paid_tools_usd':0})
-        if cmd=='/haber_filtre':return 'Türkiye odağı: Türkiye/Türk/TL ve yerel kurum, piyasa veya şirket sinyali yeterlidir; genel Fed/altın/petrol gibi küresel başlıklar tek başına gelmez. SPK haberleri kabul edilir. Yalnız KAP içindeki rutin geri alım/pay işlemi bildirimleri ve açık yatırım tanıtımı elenir. Yeni haber önce kaynak kartı olarak gelir; model yalnız Tweet oluştur düğmesine basınca çalışır. X hesapları: @ismailsaymaz @haskologlu @abakingurlek @rterdogan.'
+        if cmd=='/haber_filtre':return 'Her An Borsa odağı: BIST/borsa, hisse, halka arz, temettü, sermaye artırımı, SPK, TEFAS ve yatırım fonları; yerli borsa şirketlerinin önemli mali/operasyonel gelişmeleri; Türkiye faiz, enflasyon, rezerv, likidite ve piyasayı etkileyen makro verileri. Bu konu gruplarından biri yeterlidir. Türkiye/şehir/TL veya siyasetçi adı tek başına yeterli değildir. Genel gündem, kaza, spor, magazin, personel ilanları, banka promosyonları, günlük altın/döviz fiyatı sayfaları ve hedef fiyat tanıtımları elenir. Rutin KAP geri alım/pay işlemi istisnası korunur. X hesapları da aynı filtreden geçer. Tweet motoru yalnız düğmeye basınca çalışır.'
         if cmd=='/haber_kaynaklar':
             from .config import sources
             rows=[]

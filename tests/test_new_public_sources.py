@@ -18,7 +18,7 @@ def test_rss_html_summary_does_not_show_image_markup():
 @pytest.mark.parametrize('headline',['Petrol fiyatı yükseldi','Altın fiyatı geriledi','Fed faiz kararı','Döviz piyasalarında hareketlilik'])
 def test_global_market_categories_require_a_turkey_connection(headline):
     assert classify({'title':headline})[0]=='filtered'
-    assert classify({'title':headline,'summary':'Türkiye ekonomisine ilişkin etkileri değerlendirildi.'})[0] in ('P0','P1')
+    assert classify({'title':headline,'summary':'Türkiye enflasyonu ve politika faizi üzerindeki etkileri değerlendirildi.'})[0] in ('P0','P1')
 
 
 def test_aa_streamed_body_not_short_jsonld_summary():

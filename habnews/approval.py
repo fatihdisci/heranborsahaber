@@ -2,7 +2,7 @@ import json, secrets, time
 from pathlib import Path
 from .db import uid,encode
 from .normalizer import digest,fresh
-from .schema import validate_result,lock_metadata
+from .schema import validate_delivery_result,lock_metadata
 from .editorial_prompt import EDITORIAL_VERSION
 
 BUTTONS={'approve':'Taslağı onayla','reject':'Reddet','revise':'Revize et','image':'Başka görsel','sources':'Kaynaklar'}
@@ -36,7 +36,7 @@ class Approval:
                 ev[ref]['passage']=full
         if private_image and not any(e['url']==image['provenance']['landing_page_url'] and e['digest']==image['provenance']['article_digest'] for e in ev.values()):
             self.db.audit('draft_media_fallback',job['event_id'],{'reason':'article_media_evidence_mismatch'});image=None;private_image=False
-        text=validate_result(result,job,ev)
+        result,text,corrections=validate_delivery_result(result,job,ev)
         photo_note=''
         if image and job.get('quiet_delivery') and not private_image:
             provenance=image['provenance'];photo_note='\n\n'+provenance['attribution_text']
@@ -56,6 +56,7 @@ class Approval:
                 if hour>=6 or day>=30 or pending>100: raise ValueError('noise_backpressure_review_list')
             version=c.execute('SELECT coalesce(max(version),0)+1 FROM habnews_draft WHERE event_id=?',(event['id'],)).fetchone()[0]
             c.execute("UPDATE habnews_draft SET status='stale' WHERE event_id=? AND status IN ('pending','approved')",(event['id'],))
+            if corrections:self.db.audit('article_result_normalized',event['id'],{'changes':corrections})
             did=uid(); iv=image['version'] if image else 0; h=digest(encode({'text':text,'image':image,'event_version':event['version'],'draft_version':version}))
             meta={'editorial_version':EDITORIAL_VERSION,'verification':result['verification_state'],'reason':result['relevance_reason'],'source_urls':list(dict.fromkeys(e['url'] for e in ev.values())),
                   'time_precision':payload['time_precision'],'published_at':payload['published_at'],'first_seen_at':payload['first_seen_at'],

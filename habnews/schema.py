@@ -142,6 +142,44 @@ def validate_result(result,job,evidence):
     from .tweet_style import decorate
     return decorate(body,body)
 
+def validate_delivery_result(result,job,evidence):
+    """Repair only presentation/optional annotations, then rerun every evidence guard."""
+    try:return result,validate_result(result,job,evidence),[]
+    except ValidationError as original:
+        manual=job.get('manual_attribution',{})
+        headline_codes={'unsupported_headline','headline_not_source_phrase','headline_not_grounded_in_facts','headline_missing_quantity_qualifier','headline_unbound_number','question_article_headline','breaking_label_not_allowed','empty_article_headline','generic_article_headline'}
+        optional=('scope','period','unit','currency','scale','quote')
+        optional_codes={'unsupported_'+key for key in optional}
+        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in headline_codes|optional_codes:raise
+        import copy
+        corrected=copy.deepcopy(result);changes=[]
+        # An optional annotation is not another claim. Preserve the complete
+        # source sentence and numbers; omit a label absent from that sentence.
+        for fact in corrected['facts']:
+            if not isinstance(fact,dict) or not isinstance(fact.get('text'),str):raise original
+            for key in optional:
+                value=fact.get(key)
+                if isinstance(value,str) and norm(value) not in norm(fact['text']):
+                    fact[key]=None;changes.append('omit_unbound_'+key)
+        try:return corrected,validate_result(corrected,job,evidence),sorted(set(changes))
+        except ValidationError as exc:
+            if str(exc) not in headline_codes:raise
+            failure=exc
+        sentences=[fact['text'] for fact in corrected['facts']]
+        # Never turn arbitrary extra body text into an accepted draft.
+        if corrected['proposed_body']!=corrected['headline']+'\n\n'+'\n\n'.join(sentences):raise failure
+        for sentence in sentences:
+            headline=sentence.rstrip().rstrip('.!?')
+            if not 10<=len(headline)<=180:continue
+            candidate=corrected|{'headline':headline,'proposed_body':headline+'\n\n'+'\n\n'.join(sentences)}
+            try:text=validate_result(candidate,job,evidence)
+            except ValidationError as exc:
+                if str(exc) not in headline_codes|{'tweet_too_long'}:raise
+                continue
+            return candidate,text,sorted(set(changes+['source_sentence_headline']))
+        raise failure
+
+
 def lock_metadata(metadata):
     if metadata.get('requested_model')!=MODEL or metadata.get('provider')!=PROVIDER or metadata.get('transport')!=TRANSPORT: raise ValidationError('model_transport_lock')
     reported=metadata.get('server_model')

@@ -167,8 +167,8 @@ def test_editorial_failure_queues_bounded_repair_without_sending(prepared,tmp_pa
     class Reject:
         def create(self,*args,**kwargs):raise ValidationError(code)
     JobBroker(db,tmp_path).consume(Reject())
-    assert db.conn.execute("SELECT status FROM habnews_queue WHERE kind='llm'").fetchone()[0]=='repair_queued'
-    payload=json.loads(db.conn.execute("SELECT payload FROM habnews_queue WHERE kind='research'").fetchone()[0])
+    assert db.conn.execute("SELECT status FROM habnews_queue WHERE id=?",(row['id'],)).fetchone()[0]=='repair_queued'
+    payload=json.loads(db.conn.execute("SELECT payload FROM habnews_queue WHERE kind='llm' AND status='pending'").fetchone()[0])
     assert payload['repair_attempt']==1 and payload['repair_feedback']['validation_code']==code
     assert db.conn.execute('SELECT count(*) FROM habnews_outbox').fetchone()[0]==0
 

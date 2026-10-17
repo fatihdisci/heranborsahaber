@@ -16,7 +16,7 @@ TOPICS=[
 ]
 SENSITIVE=re.compile(r'\bölüm|öldü|öldür|ölü bulundu|intihar|hayatını kayb|can kayb|vefat|katliam',re.I)
 
-def decorate(text,subject):
+def decorate(text,subject,include_tags=True):
     tags=[]
     for tag,pattern in TOPICS:
         if re.search(pattern,subject,re.I) and tag not in tags:tags.append(tag)
@@ -26,4 +26,4 @@ def decorate(text,subject):
     # Topic words cannot establish urgency: a liquidation may be historical,
     # planned or denied. The source validation does not certify breaking timing.
     emoji='' if SENSITIVE.search(subject) else '📢 '
-    return emoji+text+'\n\n'+' '.join('#'+tag for tag in tags[:3])
+    return emoji+text+('\n\n'+' '.join('#'+tag for tag in tags[:3]) if include_tags else '')

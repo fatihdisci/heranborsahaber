@@ -230,11 +230,12 @@ def test_manual_repair_is_bounded_and_counts_known_call(prepared,tmp_path,monkey
     (broker.directory/(row['id']+'.result.json')).write_text(encode({'result':result,'run_metadata':meta}))
     monkeypatch.setattr('habnews.images.CommonsCandidates.search',lambda *a:[])
     broker.consume(a)
-    assert db.conn.execute("SELECT status FROM habnews_queue WHERE kind='llm'").fetchone()[0]==expected
+    assert db.conn.execute("SELECT status FROM habnews_queue WHERE id=?",(row['id'],)).fetchone()[0]==expected
     assert db.conn.execute('SELECT count(*) FROM habnews_draft').fetchone()[0]==0
     budget=db.conn.execute('SELECT actual,status FROM habnews_budget').fetchone();assert tuple(budget)==(1,'complete')
-    assert db.conn.execute("SELECT count(*) FROM habnews_queue WHERE kind='research'").fetchone()[0]==(1 if attempt==0 else 0)
+    assert db.conn.execute("SELECT count(*) FROM habnews_queue WHERE kind='llm' AND status='pending'").fetchone()[0]==(1 if attempt==0 else 0)
     if attempt==0:
+        db.set_state('llm_state','ready');broker.submit_one()
         repair=db.conn.execute("SELECT identity,payload FROM habnews_queue WHERE kind='research'").fetchone()
         assert repair['identity']!=json.loads(repair['payload'])['llm_identity']
         main='TCMB politika faizini yüzde 40 olarak belirledi. Bu içerik sentetik TEST verisidir.'*5

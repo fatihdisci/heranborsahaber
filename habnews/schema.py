@@ -134,9 +134,12 @@ def validate_result(result,job,evidence):
             trim=lambda value:norm(value).rstrip('.!? ')
             displayed=[sentence for sentence in sentences if trim(sentence)!=trim(headline)] if strict_article else sentences
             text=headline+('\n\n'+'\n\n'.join(displayed) if displayed else '')
+            if strict_article and job.get('controlled_rewrite'):
+                from .rewriting import display_article
+                text=display_article(headline,result['facts'],job.get('editorial_options'))
             if attributed:text+='\n\nKaynak: '+manual['owner']
         from .tweet_style import decorate
-        text=decorate(text,headline+' '+' '.join(sentences))
+        text=decorate(text,headline+' '+' '.join(sentences),include_tags=not job.get('editorial_options',{}).get('no_tags',False))
         if len(text)>(380 if strict_article else 550):raise ValidationError('tweet_too_long')
         return text
     from .tweet_style import decorate

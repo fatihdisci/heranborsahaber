@@ -78,7 +78,10 @@ class Outbox:
         draft=self.db.conn.execute('SELECT body,metadata FROM habnews_draft WHERE id=?',(row['draft_id'],)).fetchone()
         if not draft or not json.loads(draft['metadata']).get('manual_attribution'):return False
         with self.db.transaction() as c:
-            c.execute("UPDATE habnews_outbox SET method='sendMessage',payload=?,status='pending',next_at=?,lease=NULL WHERE id=?",(encode({'chat_id':row['recipient'],'text':draft['body'],'link_preview_options':{'is_disabled':True}}),time.time(),row['id']))
+            payload={'chat_id':row['recipient'],'text':draft['body'],'link_preview_options':{'is_disabled':True}}
+            markup=json.loads(row['payload']).get('reply_markup')
+            if markup:payload['reply_markup']=markup
+            c.execute("UPDATE habnews_outbox SET method='sendMessage',payload=?,status='pending',next_at=?,lease=NULL WHERE id=?",(encode(payload),time.time(),row['id']))
             c.execute("UPDATE habnews_attempt SET status='media_rejected' WHERE id=?",(attempt,))
             self.db.audit('photo_delivery_fallback',row['id'],{'reason':reason})
         return True
@@ -109,12 +112,14 @@ class Outbox:
         try:
             self.db.require_enabled()
             result=self.transport.call(row['method'],json.loads(row['payload']))
+            if result is True and row['method']=='editMessageReplyMarkup':result={'message_id':json.loads(row['payload'])['message_id']}
             # If receipt persistence fails, sending lease expires to uncertain; never auto-resend.
             with self.db.transaction() as c:
                 c.execute("UPDATE habnews_outbox SET status='sent',message_id=?,lease=NULL WHERE id=? AND lease=?",(result['message_id'],row['id'],lease))
                 c.execute("UPDATE habnews_attempt SET status='accepted',message_id=? WHERE id=?",(result['message_id'],attempt))
                 if 'reply_markup' in json.loads(row['payload']):c.execute('UPDATE habnews_callback SET message_id=? WHERE draft_id=?',(result['message_id'],row['draft_id']))
                 c.execute('UPDATE habnews_feed_callback SET message_id=? WHERE outbox_id=?',(result['message_id'],row['id']))
+                c.execute('UPDATE habnews_retry_callback SET message_id=? WHERE outbox_id=?',(result['message_id'],row['id']))
                 self.db.audit('telegram_accepted',row['id'],{'message_id':result['message_id']})
         except MediaError:
             if not self.photo_fallback(row,attempt,'local_integrity'):
@@ -154,6 +159,14 @@ class ApprovalService:
             if missing:return 'Başlatılmadı: '+', '.join(missing)
             self.db.set_state('enabled','true');self.db.audit('start','telegram');return 'habnews başlatıldı; eski kuyruk tazelik kontrolünden geçer.'
         if cmd=='/haber_durum':return encode(self.db.health())
+        if cmd=='/haber_kalite':
+            from .quality import operational_metrics
+            m=operational_metrics(self.db)
+            return (f"Son 7 gün: {m['drafts']} taslak; ortalama {m['mean_characters']} karakter.\n"
+                    f"Modelsiz düzenleme: {m['edits_without_model']}; birleştirilen tekrar: {m['grouped_duplicate_cards']}.\n"
+                    f"Yerel model çağrısı: {m['known_local_model_calls']}; sonucu belirsiz: {m['uncertain_local_calls']}.\n"
+                    f"Biçim düzeltme isteği: {m['format_repair_requests']}; kullanıcı tekrar denemesi: {m['manual_retries']}.\n"
+                    'Bu sayılar okunabilirlik puanı veya hesabın toplam kullanımı değildir.')
         if cmd=='/haber_butce':
             rows=[dict(r) for r in self.db.conn.execute('SELECT day,kind,sum(reserved) calls FROM habnews_budget GROUP BY day,kind ORDER BY day DESC LIMIT 7')]
             return encode({'local':rows,'real_pro_quota':'bilinmiyor','shared_account_limits':True,'paid_tools_usd':0})
@@ -172,7 +185,7 @@ class ApprovalService:
             if not ident.isalnum():return 'Geçersiz ID.'
             row=self.db.conn.execute('SELECT body FROM habnews_draft WHERE id=?',(ident,)).fetchone()
             return row[0] if row else 'Taslak bulunamadı; tam ID kullan.'
-        return 'Komutlar: /haber_durum /haber_durdur /haber_baslat /haber_butce /haber_kaynaklar /haber_filtre /haber_taslak <id>'
+        return 'Komutlar: /haber_durum /haber_durdur /haber_baslat /haber_butce /haber_kaynaklar /haber_filtre /haber_kalite /haber_taslak <id>'
     def notify_incidents(self):
         # Operational diagnostics are available via /haber_durum, never pushed into the news conversation.
         for incident in self.db.conn.execute('SELECT * FROM habnews_incident').fetchall():
@@ -188,7 +201,9 @@ class ApprovalService:
                     from .config import sources
                     from .gpt_export import gpt_callback
                     active_sources=sources()
-                    response=gpt_callback(self.db,self.approval,update,active_sources)
+                    from .failures import retry_callback
+                    response=retry_callback(self.db,self.approval,update)
+                    if response is None:response=gpt_callback(self.db,self.approval,update,active_sources)
                     if response is None:response=feed_callback(self.db,self.approval,update,active_sources)
                     feed_response=response is not None
                     if response is None:response=self.approval.callback(update)
@@ -206,7 +221,7 @@ class ApprovalService:
                     elif feed_response:
                         if response.startswith('Hazırlanan taslak:\n\n'):
                             self.tg.call('sendMessage',{'chat_id':self.approval.chat_id,'text':response.split('\n\n',1)[1]})
-                    elif response not in ('duplicate','Reddedildi.'):
+                    elif response not in ('duplicate','Reddedildi.','Düzenleme isteği kaydedildi.'):
                         self.tg.call('sendMessage',{'chat_id':self.approval.chat_id,'text':response})
                 elif 'message' in update:
                     msg=update['message']

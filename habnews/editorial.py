@@ -61,3 +61,91 @@ def export_approved(db,draft_id,destination):
     else:(dest/'attribution.txt').write_text('text_only — Kullanım hakkı uygun görsel bulunamadı.\n')
     for file in dest.iterdir():file.chmod(0o600)
     return {'draft_id':draft_id,'hash':draft['hash'],'published':False,'package':str(dest)}
+
+
+def process_draft_edit(db, approval):
+    """Re-render retained validated facts; model work is used only if needed."""
+    from .schema import validate_result, ValidationError
+    db.require_enabled()
+    row = db.claim('draft_edit')
+    if not row:
+        return
+    payload = json.loads(row['payload'])
+    draft = db.conn.execute('SELECT * FROM habnews_draft WHERE id=?', (payload['draft_id'],)).fetchone()
+    event = db.conn.execute('SELECT * FROM habnews_event WHERE id=?', (payload['event_id'],)).fetchone()
+    latest = db.conn.execute('SELECT max(version) FROM habnews_draft WHERE event_id=?', (payload['event_id'],)).fetchone()[0]
+    if not draft or not event or event['version'] != payload['event_version'] or draft['hash'] != payload['hash'] or draft['version'] != latest or draft['status'] != 'pending':
+        db.finish(row, 'stale')
+        return
+    item = json.loads(db.conn.execute('SELECT payload FROM habnews_event_version WHERE event_id=? AND version=?', (event['id'], event['version'])).fetchone()[0])
+    if not fresh(item)[0]:
+        db.finish(row, 'expired')
+        approval._out(None, 0, 'Bu taslak için düzenleme süresi doldu. Haber kartından yeniden taslak isteyebilirsin.')
+        return
+    meta = json.loads(draft['metadata'])
+    result = meta['validated_result']
+    options = dict(meta.get('editorial_context', {}).get('editorial_options', {}))
+    if payload['mode'] == 'no_tags':
+        options['no_tags'] = True
+    job = dict(meta.get('editorial_context', {})) | {
+        'event_id': event['id'], 'event_version': event['version'],
+        'evidence_refs': list({f['source_ref'] for f in result['facts']}),
+        'manual_attribution': meta['manual_attribution'], 'quiet_delivery': True,
+        'edit_controls': True, 'controlled_rewrite': True, 'editorial_options': options,
+    }
+    if payload['mode']=='no_tags':
+        job['controlled_rewrite']=meta.get('editorial_context',{}).get('controlled_rewrite',False)
+    evidence = {r['id']: dict(r) for r in db.conn.execute('SELECT * FROM habnews_evidence WHERE event_id=? AND event_version=? AND tombstone=0', (event['id'], event['version']))}
+    candidates = [result]
+    if payload['mode'] in ('shorten', 'headline'):
+        headings = [job.get('source_title', '')] + [f['text'].rstrip('.!?') for f in result['facts']]
+        for heading in headings:
+            if heading and heading != result['headline']:
+                candidates.append(result | {'headline': heading, 'proposed_body': heading + '\n\n' + '\n\n'.join(f['text'] for f in result['facts'])})
+    valid = []
+    for candidate in candidates:
+        try:
+            text = validate_result(candidate, job, evidence)
+        except ValidationError:
+            continue
+        if text == draft['body']:
+            continue
+        if payload['mode'] == 'shorten' and len(text) >= len(draft['body']):
+            continue
+        if payload['mode'] == 'headline' and candidate['headline'] == result['headline']:
+            continue
+        valid.append((candidate, text))
+    if valid:
+        chosen = min(valid, key=lambda value: len(value[1]))[0]
+        try:
+            approval.create(job, chosen, meta['run'], image=meta.get('image'))
+        except Exception as exc:
+            db.audit('draft_edit_failure', draft['id'], {'type': type(exc).__name__})
+            db.finish(row, 'needs_review')
+            db.conn.execute('UPDATE habnews_callback SET used=0 WHERE draft_id=?', (draft['id'],))
+            approval._out(None, 0, 'Düzenlenmiş taslak hazırlanamadı. Aynı düzenleme düğmesinden tekrar deneyebilirsin.')
+            return
+        db.audit('draft_edited', draft['id'], {'mode': payload['mode'], 'model_calls': 0})
+        db.finish(row)
+        return
+    if payload['mode'] == 'no_tags':
+        db.conn.execute('UPDATE habnews_callback SET used=0 WHERE draft_id=?', (draft['id'],))
+        approval._out(None, 0, 'Bu taslakta kaldırılacak etiket yok.')
+        db.finish(row)
+        return
+    instructions = {
+        'shorten': 'Aynı gelişmeyi daha kısa anlat. Gerekli koşul, dönem, yalanlama ve atfı çıkarma. Tam kaynak cümleleri kullan; başlık tekrarını önle.',
+        'simplify': 'Aynı gelişme için daha sade ve kendi başına anlaşılır kaynak cümleleri seç. Teknik ayrıntıyı azaltırken anlamı ve gerekli koşulları koru.',
+        'headline': 'Aynı gelişme için önceki başlıktan farklı, kaynakta birebir bulunan açık bir başlık veya tam cümle seç. Olguların anlamını değiştirme.',
+    }
+    if db.state('llm_state') != 'ready':
+        db.conn.execute('UPDATE habnews_callback SET used=0 WHERE draft_id=?', (draft['id'],))
+        approval._out(None, 0, 'Tweet motoru şu anda hazır değil. Mevcut taslağın korunuyor; düzenlemeyi daha sonra deneyebilirsin.')
+        db.finish(row)
+        return
+    db.enqueue('llm', 'llm:edit:' + row['id'], {
+        'event_id': event['id'], 'event_version': event['version'], 'editorial_options': options,
+        'revision': {'instruction': instructions[payload['mode']], 'previous_draft_id': draft['id'], 'previous_headline': result['headline']},
+        'edit_request': {'draft_id':draft['id'],'hash':draft['hash'],'mode':payload['mode'],'previous_text':draft['body']},
+    })
+    db.finish(row)

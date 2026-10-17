@@ -3,7 +3,7 @@ from pathlib import Path
 from .db import encode
 
 
-def cleanup(db,media_dir,now=None):
+def cleanup_maintext(db,now=None):
     now=now or time.time()
     maintext=db.path.parent/'maintext'
     if maintext.exists():
@@ -11,7 +11,15 @@ def cleanup(db,media_dir,now=None):
             try:expired=json.loads(path.read_text()).get('expires_at',0)<now
             except (ValueError,OSError):expired=True
             if expired:path.unlink(missing_ok=True)
+
+
+def cleanup(db,media_dir,now=None):
+    now=now or time.time()
+    cleanup_maintext(db,now)
     with db.transaction() as c:
+        c.execute('DELETE FROM habnews_retry_callback WHERE queue_id IN (SELECT queue_id FROM habnews_job_failure WHERE created<?)',(now-7*86400,))
+        c.execute('DELETE FROM habnews_job_failure WHERE created<?',(now-7*86400,))
+        c.execute('DELETE FROM habnews_feed_group WHERE created<?',(now-7*86400,))
         # Full clipboard payloads are private operational exports, not an article archive.
         expired=[r[0] for r in c.execute('SELECT outbox_id FROM habnews_gpt_export WHERE expires<?',(now,))]
         for oid in expired:

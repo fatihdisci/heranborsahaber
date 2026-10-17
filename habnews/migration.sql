@@ -28,3 +28,7 @@ CREATE TABLE IF NOT EXISTS habnews_budget(id TEXT PRIMARY KEY,day TEXT NOT NULL,
 CREATE TABLE IF NOT EXISTS habnews_audit(id INTEGER PRIMARY KEY AUTOINCREMENT,created REAL NOT NULL,kind TEXT NOT NULL,subject TEXT NOT NULL,metadata TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS habnews_incident(id TEXT PRIMARY KEY,status TEXT NOT NULL,reason TEXT NOT NULL,created REAL NOT NULL,recovered REAL);
 CREATE TRIGGER IF NOT EXISTS habnews_audit_no_update BEFORE UPDATE ON habnews_audit BEGIN SELECT RAISE(ABORT,'append-only audit'); END;
+CREATE TABLE IF NOT EXISTS habnews_feed_group(observation_id TEXT PRIMARY KEY,primary_observation_id TEXT NOT NULL,created REAL NOT NULL);
+CREATE INDEX IF NOT EXISTS habnews_feed_group_primary ON habnews_feed_group(primary_observation_id);
+CREATE TABLE IF NOT EXISTS habnews_job_failure(queue_id TEXT PRIMARY KEY,stage TEXT NOT NULL,code TEXT NOT NULL,created REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS habnews_retry_callback(nonce TEXT PRIMARY KEY,queue_id TEXT NOT NULL,recipient INTEGER NOT NULL,message_id INTEGER,outbox_id TEXT NOT NULL,used INTEGER DEFAULT 0);

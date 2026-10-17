@@ -120,9 +120,11 @@ class Collector:
                 families=c.execute('SELECT count(DISTINCT family) FROM habnews_evidence WHERE event_id=? AND event_version=? AND tombstone=0',(eid,job['event_version'])).fetchone()[0]
                 primary=c.execute('SELECT count(*) FROM habnews_evidence WHERE event_id=? AND event_version=? AND primary_source=1 AND tombstone=0',(eid,job['event_version'])).fetchone()[0]
                 if job.get('manual') or item.get('manual_requested_at') or primary or families>=2:
-                    self.db.enqueue('llm',job.get('llm_identity',f"{eid}:{job['event_version']}"),{'event_id':eid,'event_version':job['event_version'],'revision':job.get('revision'),'repair_attempt':job.get('repair_attempt',0),'repair_feedback':job.get('repair_feedback')})
+                    self.db.enqueue('llm',job.get('llm_identity',f"{eid}:{job['event_version']}"),{'event_id':eid,'event_version':job['event_version'],'revision':job.get('revision'),'repair_attempt':job.get('repair_attempt',0),'repair_feedback':job.get('repair_feedback'),'editorial_options':job.get('editorial_options',{}),'edit_request':job.get('edit_request')})
                 else: self.db.audit('verification_pending',eid,{'independent_families':families})
                 self.db.finish(row)
         except Exception as exc:
+            from .failures import record_failure,source_failure
+            record_failure(self.db,row['id'],'research',source_failure(exc))
             self.db.audit('research_failure',row['id'],{'type':type(exc).__name__})
             self.db.finish(row,'dead_letter' if row['attempts']>=3 else 'pending',min(300,30*2**row['attempts']))

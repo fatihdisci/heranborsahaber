@@ -113,14 +113,14 @@ class JobBroker:
         if missing_full:
             Budget(self.db).finish(reservation,actual=0)
             if item.get('manual_requested_at'):
-                self.db.enqueue('research','research:refresh:'+row['id'],{'event_id':event['id'],'event_version':event['version'],'source_id':item['source_id'],'item':item,'manual':True,'llm_identity':'llm:refresh:'+row['id'],'repair_attempt':payload.get('repair_attempt',0),'repair_feedback':payload.get('repair_feedback'),'revision':payload.get('revision')})
+                self.db.enqueue('research','research:refresh:'+row['id'],{'event_id':event['id'],'event_version':event['version'],'source_id':item['source_id'],'item':item,'manual':True,'llm_identity':'llm:refresh:'+row['id'],'repair_attempt':payload.get('repair_attempt',0),'repair_feedback':payload.get('repair_feedback'),'revision':payload.get('revision'),'editorial_options':payload.get('editorial_options',{}),'edit_request':payload.get('edit_request')})
                 self.db.finish(row,'refresh_queued')
             else:self.db.finish(row,'needs_review')
             return
         job={'schema_version':'habnews-job-v1','job_id':row['id'],'event_id':event['id'],'event_version':event['version'],
              'evidence_refs':[e['id'] for e in evidence],'evidence':evidence,'source_title':item['title'],'model':MODEL,'provider':PROVIDER,
              'allowed_tools':[],'deadline':time.time()+180,'max_calls':1,'max_input_chars':64000,'max_output_tokens':8000,
-             'revision':payload.get('revision'),
+             'revision':payload.get('revision'),'edit_request':payload.get('edit_request'),
              'repair_attempt':payload.get('repair_attempt',0),'repair_feedback':payload.get('repair_feedback'),
              'output_schema':json.loads(Path('/app/schemas/result.json').read_text()) if Path('/app/schemas/result.json').exists() else {}}
         if item.get('manual_requested_at'):
@@ -132,6 +132,9 @@ class JobBroker:
             job['source_title']=evidence[0].get('source_title') or item['title']
             job['preview_url']=evidence[0].get('preview_url')
             job['content_contract']=contract_by_ref.get(evidence[0]['id'])
+            job['controlled_rewrite']=job['content_contract']=='article-v2'
+            job['editorial_options']=payload.get('editorial_options',{})
+            job['edit_controls']=job['content_contract']=='article-v2'
         if len(encode(job))>64000:
             Budget(self.db).finish(reservation,actual=0);self.db.finish(row,'needs_review')
             self.db.audit('model_input_rejected',event['id'],{'reason':'input_limit'});return
@@ -143,6 +146,8 @@ class JobBroker:
         safe_job['preview_url']=job.get('preview_url')
         safe_job['content_contract']=job.get('content_contract')
         safe_job['source_title']=job.get('source_title')
+        for key in ('controlled_rewrite','editorial_options','edit_controls','edit_request'):
+            if key in job:safe_job[key]=job[key]
         safe_job['media']=media_by_ref.get(evidence[0]['id']) if evidence else None
         self.db.set_state('job:'+row['id'],encode({'lease':row['lease'],'reservation':reservation,'job':safe_job,'job_hash':digest(encode(job))}))
         try:atomic_file(self.directory/(row['id']+'.job.json'),job)
@@ -161,6 +166,8 @@ class JobBroker:
             for ref in job.get('evidence_refs',[]):
                 if ref.isalnum():(self.db.path.parent/'maintext'/(ref+'.json')).unlink(missing_ok=True)
             self.db.conn.execute('DELETE FROM habnews_runtime_state WHERE key=?',(row['key'],))
+            from .failures import record_failure
+            record_failure(self.db,rid,'llm','model_timeout')
             self.db.audit('model_job_abandoned',rid,{'reason':'deadline_and_grace_exceeded','automatic_replay':False})
     def consume(self,approval):
         from .budget import Budget
@@ -183,6 +190,8 @@ class JobBroker:
                     else:state['job']=full_job|{'media':state['job'].get('media')}
                 if response.get('error'):
                     error=response['error']
+                    from .failures import record_failure
+                    record_failure(self.db,rid,'llm','model_response' if error=='needs_review' else error)
                     if error in ('auth_required','quota_paused','model_unavailable'):
                         self.db.set_state('llm_state',error);self.db.incident('llm',error)
                     else:self.db.audit('model_job_failed',rid,{'code':error})
@@ -197,26 +206,32 @@ class JobBroker:
             except Exception as exc:
                 from .schema import ValidationError
                 code=str(exc) if isinstance(exc,ValidationError) else type(exc).__name__
+                from .failures import record_failure
+                record_failure(self.db,rid,'llm','validation')
                 self.db.audit('result_needs_review',rid,{'type':type(exc).__name__,'code':code})
                 known=response.get('run_metadata')
                 Budget(self.db).finish(state['reservation'],1 if known else None,known,uncertain=not bool(known))
                 repaired=False
-                repairable=code in ('headline_not_grounded_in_facts','question_article_headline','empty_article_headline','breaking_label_not_allowed','headline_missing_quantity_qualifier','duplicate_article_fact','generic_article_headline','unreferenced_body_claim','unsupported_sentence','incomplete_source_sentence','unsupported_headline','headline_not_source_phrase','headline_unbound_number','actor_stage_required','fact_schema','schema_keys','numeric_format_needs_review','numeric_normalization_mismatch','numeric_without_raw','tweet_too_long') or code.startswith('unsupported_')
+                repairable=code in ('edit_not_improved','headline_not_grounded_in_facts','question_article_headline','empty_article_headline','breaking_label_not_allowed','headline_missing_quantity_qualifier','duplicate_article_fact','generic_article_headline','unreferenced_body_claim','unsupported_sentence','incomplete_source_sentence','unsupported_headline','headline_not_source_phrase','headline_unbound_number','actor_stage_required','fact_schema','schema_keys','numeric_format_needs_review','numeric_normalization_mismatch','numeric_without_raw','tweet_too_long') or code.startswith('unsupported_')
                 if isinstance(exc,ValidationError) and repairable and state['job'].get('manual_attribution') and state['job'].get('repair_attempt',0)<2:
                     eid=state['job']['event_id'];version=state['job']['event_version']
                     item=json.loads(self.db.conn.execute('SELECT payload FROM habnews_event_version WHERE event_id=? AND version=?',(eid,version)).fetchone()[0])
                     from .normalizer import fresh
                     if fresh(item)[0]:
                         attempt=state['job'].get('repair_attempt',0)+1
-                        self.db.enqueue('research','research:manual-repair:'+rid,{'event_id':eid,'event_version':version,'source_id':item['source_id'],'item':item,'manual':True,'repair_attempt':attempt,'repair_feedback':{'validation_code':code,'previous_result':response.get('result')},'llm_identity':'llm:manual-repair:'+rid})
+                        self.db.enqueue('llm','llm:manual-repair:'+rid,{'event_id':eid,'event_version':version,'repair_attempt':attempt,'repair_feedback':{'validation_code':code,'previous_result':response.get('result')},'revision':state['job'].get('revision'),'editorial_options':state['job'].get('editorial_options',{}),'edit_request':state['job'].get('edit_request')})
                         self.db.audit('manual_format_repair',eid,{'attempt':attempt,'code':code});repaired=True
                 try:self.db.finish(row,'repair_queued' if repaired else 'needs_review')
                 except RuntimeError:pass
             finally:
                 path.unlink(missing_ok=True)
                 (self.directory/(rid+'.job.running')).unlink(missing_ok=True)
-                for reference in state['job'].get('evidence_refs',[]):
-                    if reference.isalnum():(self.db.path.parent/'maintext'/(reference+'.json')).unlink(missing_ok=True)
+                # Keep the already-bound source spool only until its existing
+                # five-minute expiry, allowing revisions/repairs to reuse it.
+                # Expired content is refetched by submit_one and removed by cleanup.
+                if not state['job'].get('manual_attribution'):
+                    for reference in state['job'].get('evidence_refs',[]):
+                        if reference.isalnum():(self.db.path.parent/'maintext'/(reference+'.json')).unlink(missing_ok=True)
                 self.db.conn.execute('DELETE FROM habnews_runtime_state WHERE key=?',('job:'+rid,))
 
 class Runner:
@@ -241,5 +256,6 @@ class Runner:
                 code=getattr(exc,'status_code',None)
                 message=str(exc) if isinstance(exc,HermesUnavailable) else ''
                 error='quota_paused' if code==429 else 'auth_required' if code in (401,403) or message=='auth_required' or getattr(exc,'relogin_required',False) else 'quota_paused' if message=='quota_paused' else 'model_unavailable' if code==404 else 'needs_review'
+                if message=='deadline_expired':error='model_timeout'
                 response={'error':error,'exception_type':type(exc).__name__}
             atomic_file(output,response)

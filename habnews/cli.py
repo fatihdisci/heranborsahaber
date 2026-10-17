@@ -59,24 +59,25 @@ def service(db,role,directory,credentials):
         from .collector import Collector
         from .hermes import JobBroker
         from .approval import Approval
-        from .maintenance import cleanup
+        from .maintenance import cleanup,cleanup_maintext
         collector=Collector(db,sources());broker=JobBroker(db,directory)
         recipient=json.loads(Path('/config/recipient.json').read_text())
-        approval=Approval(db,recipient['user_id'],recipient['chat_id']);last_cleanup=0
+        approval=Approval(db,recipient['user_id'],recipient['chat_id']);last_cleanup=0;last_maintext_cleanup=0
         while True:
             try:
                 from .hermes import atomic_file
                 if not os.getenv('HABNEWS_SWITCH_FILE'):atomic_file(Path(directory)/'runtime-state.json',{'enabled':db.enabled(),'updated_at':time.time()})
                 broker.consume(approval)
                 if db.enabled():
-                    from .editorial import process_revision,process_image
+                    from .editorial import process_revision,process_image,process_draft_edit
                     collector.poll()
                     from .live_feed import process_live_feed,notify_manual_failures
                     process_live_feed(db,approval,collector.sources)
                     from .gpt_export import process_gpt_export
                     process_gpt_export(db,approval,collector.sources)
-                    collector.research_one();process_revision(db);process_image(db,approval);broker.submit_one();notify_manual_failures(db,approval)
+                    collector.research_one();process_revision(db);process_draft_edit(db,approval);process_image(db,approval);broker.submit_one();notify_manual_failures(db,approval)
                 if time.time()-last_cleanup>3600:cleanup(db,'/data/media');last_cleanup=time.time()
+                if time.time()-last_maintext_cleanup>30:cleanup_maintext(db);last_maintext_cleanup=time.time()
                 db.set_state('collector_heartbeat',time.time());db.recover('collector')
                 critical=db.conn.execute("SELECT id FROM habnews_queue WHERE status='pending' AND created<? LIMIT 1",(time.time()-180,)).fetchone()
                 if critical:db.incident('queue_age','Pending work older than 3 minutes')

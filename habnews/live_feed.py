@@ -27,10 +27,15 @@ def process_live_feed(db,approval,sources):
         item=json.loads(observation['metadata']);source=next(s for s in sources if s['stable_id']==observation['source_id'])
         if not source['enabled'] or not fresh(item)[0]:db.finish(row,'expired');return
         if classify(item)[0] not in ('P0','P1'):db.finish(row,'filtered');return
+        from .feed_groups import group_duplicate,update_note
+        with db.transaction():
+            if group_duplicate(db,approval,source,item,observation):
+                db.finish(row);return
         title=plain(item['title']);summary=plain(item.get('summary',''))
         if summary==title:summary=''
         text='📰 '+source['owner']+'\n\n'+title[:450]+('\n\n'+summary[:2200] if summary else '')
         if len(summary)>2200:text+='…'
+        text+=update_note(db,observation,item)
         if source['method']=='nitter_rss':text+='\n\nX paylaşımı — kaynak hesabın aktarımı; iddia ayrıca teyit edilmedi.'
         nonce=secrets.token_urlsafe(16);outbox_id=uid()
         from .gpt_export import export_button
@@ -101,7 +106,7 @@ def enqueue_recent(db,sources,now=None):
     """One migration: recover recently missed eligible cards, excluding historical baselines."""
     now=time.time() if now is None else now;available={s['stable_id']:s for s in sources if s['enabled'] and s.get('delivery_mode')=='live_feed'};count=0
     with db.transaction() as c:
-        for row in c.execute("SELECT * FROM habnews_observation WHERE first_seen>? AND stage NOT IN ('baseline','tombstone','feed_queued','feed_pending')",(now-1800,)).fetchall():
+        for row in c.execute("SELECT * FROM habnews_observation WHERE first_seen>? AND stage NOT IN ('baseline','tombstone','feed_queued','feed_pending','feed_grouped')",(now-1800,)).fetchall():
             if row['source_id'] not in available:continue
             item=json.loads(row['metadata'])
             if classify(item)[0] not in ('P0','P1') or not fresh(item,now)[0]:continue
@@ -110,11 +115,25 @@ def enqueue_recent(db,sources,now=None):
     return count
 
 def notify_manual_failures(db,approval):
-    for row in db.conn.execute("SELECT id,payload,status FROM habnews_queue WHERE kind IN ('research','llm') AND status IN ('needs_review','dead_letter','uncertain','expired','paused_result')").fetchall():
+    seen=set()
+    rows=db.conn.execute("SELECT id,payload,status,created FROM habnews_queue WHERE kind IN ('research','llm') AND status IN ('needs_review','dead_letter','uncertain','expired','paused_result') ORDER BY created DESC").fetchall()
+    for row in rows:
         payload=json.loads(row['payload']);eid=payload.get('event_id')
-        if not eid or db.state('manual_failure_notice:'+row['id']):continue
+        if not eid or eid in seen:continue
         event=db.conn.execute('SELECT payload,version FROM habnews_event_version WHERE event_id=? ORDER BY version DESC LIMIT 1',(eid,)).fetchone()
         if not event or payload.get('event_version')!=event['version'] or not json.loads(event[0]).get('manual_requested_at'):continue
+        seen.add(eid)
+        if db.state('manual_failure_notice:'+row['id']):continue
         with db.transaction():
-            approval._out(None,0,'Bu haberin taslağı hazırlanamadı. Aynı karttan yeniden deneyebilirsin.')
+            active=db.conn.execute("SELECT 1 FROM habnews_queue WHERE kind IN ('research','llm','draft_edit') AND status IN ('pending','leased') AND json_extract(payload,'$.event_id')=? AND json_extract(payload,'$.event_version')=?",(eid,event['version'])).fetchone()
+            if active:continue
+            ready=db.conn.execute("SELECT 1 FROM habnews_draft WHERE event_id=? AND event_version=? AND status IN ('pending','approved') AND created>?",(eid,event['version'],row['created'])).fetchone()
+            if not ready:
+                from .failures import failure_notice
+                failure_notice(db,approval,row)
+                edit=payload.get('edit_request')
+                if edit:
+                    # A failed edit leaves its original draft usable. The
+                    # callback path checks for active retries before queuing.
+                    db.conn.execute("UPDATE habnews_callback SET used=0 WHERE draft_id IN (SELECT id FROM habnews_draft WHERE id=? AND hash=? AND event_id=? AND event_version=? AND status='pending')",(edit['draft_id'],edit['hash'],eid,event['version']))
             db.set_state('manual_failure_notice:'+row['id'],'true')

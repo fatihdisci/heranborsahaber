@@ -6,6 +6,7 @@ from .schema import validate_delivery_result,lock_metadata
 from .editorial_prompt import EDITORIAL_VERSION
 
 BUTTONS={'approve':'Taslağı onayla','reject':'Reddet','revise':'Revize et','image':'Başka görsel','sources':'Kaynaklar'}
+EDIT_BUTTONS={'shorten':'Kısalt','simplify':'Daha sade','headline':'Başlığı değiştir','no_tags':'Etiketleri kaldır'}
 MEDIA_ROOT=Path('/data/media')
 
 class Approval:
@@ -37,6 +38,16 @@ class Approval:
         if private_image and not any(e['url']==image['provenance']['landing_page_url'] and e['digest']==image['provenance']['article_digest'] for e in ev.values()):
             self.db.audit('draft_media_fallback',job['event_id'],{'reason':'article_media_evidence_mismatch'});image=None;private_image=False
         result,text,corrections=validate_delivery_result(result,job,ev)
+        if job.get('edit_request'):
+            from .schema import ValidationError
+            request=job['edit_request']
+            previous=self.db.conn.execute('SELECT * FROM habnews_draft WHERE id=?',(request['draft_id'],)).fetchone()
+            if not previous or previous['event_id']!=job['event_id'] or previous['event_version']!=job['event_version'] or previous['hash']!=request['hash'] or previous['status']!='pending':
+                raise ValueError('stale_edit_request')
+            previous_result=json.loads(previous['metadata'])['validated_result']
+            if (text==previous['body'] or request['mode']=='shorten' and len(text)>=len(previous['body'])
+                or request['mode']=='headline' and result['headline']==previous_result['headline']):
+                raise ValidationError('edit_not_improved')
         photo_note=''
         if image and job.get('quiet_delivery') and not private_image:
             provenance=image['provenance'];photo_note='\n\n'+provenance['attribution_text']
@@ -63,6 +74,7 @@ class Approval:
                   'image':image,'run':run_metadata,'validated_result':result,'change_note':payload.get('change_note')}
             if job.get('manual_attribution'):meta['manual_attribution']=job['manual_attribution']
             if job.get('quiet_delivery'):meta['delivery_contract']='article-photo-v1'
+            meta['editorial_context']={key:job[key] for key in ('content_contract','source_title','controlled_rewrite','editorial_options','edit_controls') if key in job}
             c.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',(did,event['id'],event['version'],version,iv,h,text,encode(meta),'pending',time.time()))
             for ref in {f['source_ref'] for f in result['facts']}:
                 initial=c.execute('SELECT passage FROM habnews_evidence WHERE id=?',(ref,)).fetchone()[0]
@@ -74,10 +86,20 @@ class Approval:
             if job.get('quiet_delivery'):
                 preview=job.get('preview_url')
                 if preview and preview not in meta['source_urls']:raise ValueError('preview_source_mismatch')
+                markup=None
+                if job.get('edit_controls'):
+                    buttons=[]
+                    for action,label in EDIT_BUTTONS.items():
+                        nonce=secrets.token_urlsafe(16)
+                        c.execute('INSERT INTO habnews_callback VALUES(?,?,?,?,?,?,0)',(nonce,did,action,self.chat_id,None,h))
+                        buttons.append({'text':label,'callback_data':nonce})
+                    markup={'inline_keyboard':[buttons[:2],buttons[2:]]}
                 if image:
-                    markup={'inline_keyboard':[[{'text':'🔗 Kaynak','url':image['provenance']['landing_page_url']}]]} if private_image else None
+                    if private_image:
+                        if markup is None:markup={'inline_keyboard':[]}
+                        markup['inline_keyboard'].append([{'text':'🔗 Kaynak','url':image['provenance']['landing_page_url']}])
                     self._out_media(did,0,'sendPhoto',image['path'],text+photo_note,markup)
-                else:self._out(did,0,text,disable_preview=True)
+                else:self._out(did,0,text,markup,disable_preview=True)
                 c.execute("UPDATE habnews_event SET status='pending' WHERE id=?",(event['id'],))
                 self.db.audit('draft_created',did,{'event_version':event['version'],'draft_version':version,'hash':h,'quiet_delivery':True})
                 return did
@@ -140,6 +162,13 @@ class Approval:
             event=c.execute('SELECT * FROM habnews_event WHERE id=?',(draft['event_id'],)).fetchone()
             if draft['hash']!=record['hash'] or draft['status']!='pending' or event['version']!=draft['event_version']: return 'stale'
             action=record['action']
+            if action in EDIT_BUTTONS:
+                if not self.db.enabled():return 'Akış durdurulmuş. Önce /haber_baslat kullan.'
+                if c.execute("SELECT 1 FROM habnews_queue WHERE kind IN ('research','llm','draft_edit','revision') AND status IN ('pending','leased') AND json_extract(payload,'$.event_id')=? AND json_extract(payload,'$.event_version')=?",(event['id'],event['version'])).fetchone():
+                    return 'Bu taslak için işlem zaten hazırlanıyor.'
+                c.execute('UPDATE habnews_callback SET used=1 WHERE draft_id=?',(draft['id'],))
+                self.db.enqueue('draft_edit','edit:'+record['nonce'],{'draft_id':draft['id'],'hash':draft['hash'],'event_id':event['id'],'event_version':event['version'],'mode':action})
+                return 'Düzenleme isteği kaydedildi.'
             if action in ('approve','reject'):
                 c.execute('UPDATE habnews_callback SET used=1 WHERE draft_id=?',(draft['id'],))
                 status='approved' if action=='approve' else 'rejected'

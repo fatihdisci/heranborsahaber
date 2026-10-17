@@ -148,9 +148,10 @@ def validate_delivery_result(result,job,evidence):
     except ValidationError as original:
         manual=job.get('manual_attribution',{})
         headline_codes={'unsupported_headline','headline_not_source_phrase','headline_not_grounded_in_facts','headline_missing_quantity_qualifier','headline_unbound_number','question_article_headline','breaking_label_not_allowed','empty_article_headline','generic_article_headline'}
+        display_codes=headline_codes|{'tweet_too_long'}
         optional=('scope','period','unit','currency','scale','quote')
         optional_codes={'unsupported_'+key for key in optional}
-        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in headline_codes|optional_codes:raise
+        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in display_codes|optional_codes:raise
         import copy
         corrected=copy.deepcopy(result);changes=[]
         # An optional annotation is not another claim. Preserve the complete
@@ -163,18 +164,20 @@ def validate_delivery_result(result,job,evidence):
                     fact[key]=None;changes.append('omit_unbound_'+key)
         try:return corrected,validate_result(corrected,job,evidence),sorted(set(changes))
         except ValidationError as exc:
-            if str(exc) not in headline_codes:raise
+            if str(exc) not in display_codes:raise
             failure=exc
         sentences=[fact['text'] for fact in corrected['facts']]
         # Never turn arbitrary extra body text into an accepted draft.
         if corrected['proposed_body']!=corrected['headline']+'\n\n'+'\n\n'.join(sentences):raise failure
+        # Reusing a complete chosen fact as the headline removes the old title
+        # and its duplicate display, without dropping any facts or conditions.
         for sentence in sentences:
             headline=sentence.rstrip().rstrip('.!?')
             if not 10<=len(headline)<=180:continue
             candidate=corrected|{'headline':headline,'proposed_body':headline+'\n\n'+'\n\n'.join(sentences)}
             try:text=validate_result(candidate,job,evidence)
             except ValidationError as exc:
-                if str(exc) not in headline_codes|{'tweet_too_long'}:raise
+                if str(exc) not in display_codes:raise
                 continue
             return candidate,text,sorted(set(changes+['source_sentence_headline']))
         raise failure

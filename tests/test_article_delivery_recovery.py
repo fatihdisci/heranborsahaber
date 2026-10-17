@@ -74,6 +74,43 @@ def test_valid_result_is_returned_unchanged(prepared):
     assert canonical is result and changes==[]
 
 
+def long_case(prepared):
+    headline='TCMB: Bankaların kredi büyümesine ilişkin düzenlemenin uygulama koşullarını açıkladı'
+    first='TCMB, bankaların kredi büyümesine ilişkin düzenlemenin gelecek ay yürürlüğe gireceğini ve mevcut kredileri kapsamayacağını açıkladı.'
+    second='TCMB, bankaların yeni başvurular için geçerli olacak uygulama koşullarını müşterilerine sözleşme öncesinde bildirmeleri gerektiğini açıkladı.'
+    result,job,evidence=draft_case(prepared,headline,first)
+    fact=copy.deepcopy(result['facts'][0]);fact['text']=second
+    result['facts'].append(fact)
+    result['proposed_body']+='\n\n'+second
+    next(iter(evidence.values()))['passage']+='\n'+second
+    return result,job,evidence
+
+
+def test_overlong_draft_removes_redundant_heading_without_losing_conditions(prepared):
+    result,job,evidence=long_case(prepared)
+    original=copy.deepcopy(result)
+    with pytest.raises(ValidationError,match='tweet_too_long'):validate_result(result,job,evidence)
+    canonical,text,changes=validate_delivery_result(result,job,evidence)
+    assert len(text)<=380 and changes==['source_sentence_headline']
+    assert canonical['facts']==original['facts'] and result==original
+    for fact in result['facts']:
+        assert text.count(fact['text'].rstrip('.'))==1
+    assert 'mevcut kredileri kapsamayacağını' in text
+    assert 'sözleşme öncesinde' in text
+    assert 'Kaynak: TEST' in text
+
+
+def test_recovery_never_drops_a_fact_to_fit_the_length_budget(prepared):
+    result,job,evidence=long_case(prepared)
+    extra='TCMB, düzenleme kapsamında bankaların müşterilere verecekleri bilgilerin açık ve anlaşılır olması gerektiğini ayrıca açıkladı.'
+    fact=copy.deepcopy(result['facts'][0]);fact['text']=extra
+    result['facts'].append(fact);result['proposed_body']+='\n\n'+extra
+    next(iter(evidence.values()))['passage']+='\n'+extra
+    original=copy.deepcopy(result)
+    with pytest.raises(ValidationError,match='tweet_too_long'):validate_delivery_result(result,job,evidence)
+    assert result==original
+
+
 def test_approval_persists_corrected_result_and_queues_only_one_quiet_draft(prepared):
     db,approval,_,_,metadata=prepared
     result,job,evidence=news_case(prepared)

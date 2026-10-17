@@ -32,7 +32,7 @@ Düğme düzeltmesi: İşlem sürerken tekrar basış yeni model çağrısı yap
 
 Ana konusu Karahan olan ve TCMB bağlamı doğrulanan haberler için TCMB'nin resmî Flickr arşivinden kullanım izni açık kurum toplantısı fotoğrafı doğrulandı; isim eşleşmesinden kişinin fotoğrafta bulunduğu sonucu çıkarılmaz; bu fotoğraf olayın güncel görüntüsü olarak sunulmaz. 7 Ekim'den itibaren öncelik haberin kendi görselindedir; kurum arşivi yalnız uygun yedektir. Investing kapalı kalır.
 
-Tweet biçimi: Doğrulanmış başlık/olgulara göre 2–3 konu etiketi eklenir. Uygun yüksek etkili haberlerde 🚨, diğer uygun haberlerde 📢 yalnız başlığın önünde kullanılır; metin sonuna emoji eklenmez ve ölüm haberlerinde emoji kullanılmaz. Kullanıcının istediği taslak en fazla 380 karakterdir. Modelin kanıt denetimi öncesi gövdesi değişmez; süslemeyi uygulama sonradan ekler. 219 test geçti.
+Tweet biçimi: Doğrulanmış başlık/olgulara göre 2–3 konu etiketi eklenir. 📢 yalnız başlığın önünde kullanılır; konu kelimelerinden aciliyet çıkarılarak 🚨 eklenmez. Metin sonuna emoji eklenmez ve ölüm haberlerinde emoji kullanılmaz. Kullanıcının istediği taslak en fazla 380 karakterdir. Modelin kanıt denetimi öncesi gövdesi değişmez; süslemeyi uygulama sonradan ekler. Bu bölümün ilk sürümünde 219 test geçti.
 
 
 ## İçerik ve teslimat sağlamlaştırması — 6 Ekim 2026
@@ -52,3 +52,11 @@ Kaynak görseli yalnız aynı haberin `og:image`, `twitter:image`, haberle URL b
 Özel sohbet önizlemesinin kaydı yeniden yayınlama izninden ayrıdır: `private_source_preview`/`unknown`. Bu dosya yeniden kullanım hakkı doğrulanmış medya diye export edilmez. Hakları doğrulanmış arşiv yolu korunur. Görsel indirme denemesi üç aday ve yaklaşık 20 saniye ile sınırlıdır; erişim engeli aşılmaz.
 
 237 otomatik test geçti; yanlış haber/görsel eşleşmesi, yabancı CDN, bozuk dosya, WEBP dönüşümü, fotoğraflı tek mesaj, özel sohbet sınırı, multipart upload ve yayınlama paketinde hak ayrımı doğrulandı. Canlı kaynak örnekleri ve mevcut taslağın aynı mesajdaki fotoğraf düzeltmesi: `reports/PHOTO_DELIVERY_AUDIT.json`.
+
+## Editoryal iyileştirmeler — 17 Ekim 2026
+
+`source-grounded-v3` aylık/yıllık dönem, beklenti/gerçekleşme ve yüzde/yüzde puan ayrımlarını ortak bot ve kopyalama talimatlarında açıklar. Cari denge, bütçe, temettü ve kredi haberleri özel konu etiketleri alır. Konu kelimeleri olayın aciliyetini kanıtlamadığından iflas, tasfiye veya faiz kararı haberlerinde otomatik 🚨 kullanılmaz.
+
+380 karakteri aşan manuel haber taslağında seçilmiş tam kaynak cümlesi başlık olarak denenir; aynı cümlenin gövdede tekrar gösterilmesi engellenir. Bütün olgular, sayılar, koşullar ve kaynak atfı korunur; tüm doğrulamalar yeniden çalışır. Metin hâlâ sığmıyorsa olgu silinmez, mevcut sınırlı model düzeltme akışı sürer. Sosyal paylaşım sözleşmesi bu otomatik kısaltmaya dahil değildir.
+
+Önceki editoryal sürümle oluşturulmuş taslak, kullanıcı karta yeniden bastığında güncel kurallarla hazırlanır. Değişiklikler MacBook'ta 450 çevrimdışı testle doğrulandı; canlı model veya Telegram denemesi yapılmadı. Mac mini'deki runtime'a uygulanması ayrıca gerekir; depodaki kodun değişmesi canlı kurulumu güncellemez.

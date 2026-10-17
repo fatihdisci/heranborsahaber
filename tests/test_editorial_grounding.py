@@ -182,7 +182,7 @@ def test_old_editorial_photo_draft_is_regenerated_only_on_owner_click(db):
     feed_callback(db,approval,click,[source()])
     eid=db.conn.execute('SELECT id FROM habnews_event').fetchone()[0]
     db.conn.execute("UPDATE habnews_queue SET status='done' WHERE kind='research'")
-    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('old-editorial',eid,1,1,1,'old','Önceki taslak',encode({'image':{'path':'fixture'},'delivery_contract':'article-photo-v1'}),'pending',time.time()))
+    db.conn.execute('INSERT INTO habnews_draft VALUES(?,?,?,?,?,?,?,?,?,?)',('old-editorial',eid,1,1,1,'old','Önceki taslak',encode({'image':{'path':'fixture'},'delivery_contract':'article-photo-v1','editorial_version':'source-grounded-v2'}),'pending',time.time()))
     before=db.conn.execute('SELECT count(*) FROM habnews_outbox').fetchone()[0]
     click['update_id']=999
     assert 'kaydedildi' in feed_callback(db,approval,click,[source()])

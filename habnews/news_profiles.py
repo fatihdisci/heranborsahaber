@@ -2,6 +2,8 @@
 import re
 
 PROFILES = [
+    ('fund_liquidation', r'tasfiye.*fon|fon.*tasfiye',
+     'Fon tasfiyesinde açıklamayı yapan portföy şirketini açıkça belirt. Toplam tasfiye edilen fon sayısı ve toplam büyüklük ile bugün tasfiye edilen fonlar, bugünkü büyüklük ve yatırımcı sayısını ayrı tut; farklı grupların sayılarını birleştirme. Şirketin “fonumuz/fonlarımız” sözlerini botun kendi sözü gibi yazma. Kendi başına anlaşılır kaynak cümleleri seç; “Bununla birlikte” diye bağlamsız başlama. Kaynak alıntısında konuşanı açıkça belirt.'),
     ('claim', r'iddia|yalanla|soruşturma|suçlama',
      'İddia veya yalanlamayı kimin yaptığını ilk cümlede belirt. İddiayı gerçekleşmiş olay gibi yazma; yalanlama ve soruşturma aşamasını koru.'),
     ('rate', r'politika faizi|faiz kararı|para politikası kurulu',

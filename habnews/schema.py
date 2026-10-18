@@ -128,18 +128,22 @@ def validate_result(result,job,evidence):
         if manual['source_type']=='social_x':
             from .social import ACCOUNTS
             text=ACCOUNTS[manual['account']]+', X hesabında şu ifadeleri paylaştı:\n\n'+'\n\n'.join('“'+s+'”' for s in sentences)
+            topic_text=' '.join(sentences)
         else:
             # A source sentence may serve as both headline and fact for evidence
             # binding; show that information only once in the delivered draft.
             trim=lambda value:norm(value).rstrip('.!? ')
             displayed=[sentence for sentence in sentences if trim(sentence)!=trim(headline)] if strict_article else sentences
             text=headline+('\n\n'+'\n\n'.join(displayed) if displayed else '')
-            if strict_article and job.get('controlled_rewrite'):
-                from .rewriting import display_article
-                text=display_article(headline,result['facts'],job.get('editorial_options'))
+            from .rewriting import display_article,article_speaker,SOURCE_VOICE
+            source_voice=any(SOURCE_VOICE.search(s) for s in sentences)
+            if strict_article and (job.get('controlled_rewrite') or source_voice):
+                speaker=article_speaker(job.get('source_title',''),[evidence[ref]['passage'] for ref in allowed if ref in evidence],result['facts'])
+                text=display_article(headline,result['facts'],job.get('editorial_options'),speaker=speaker)
+            topic_text=text
             if attributed:text+='\n\nKaynak: '+manual['owner']
         from .tweet_style import decorate
-        text=decorate(text,headline+' '+' '.join(sentences),include_tags=not job.get('editorial_options',{}).get('no_tags',False))
+        text=decorate(text,topic_text,include_tags=not job.get('editorial_options',{}).get('no_tags',False))
         if len(text)>(380 if strict_article else 550):raise ValidationError('tweet_too_long')
         return text
     from .tweet_style import decorate

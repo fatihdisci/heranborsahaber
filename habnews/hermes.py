@@ -106,6 +106,9 @@ class JobBroker:
                 or full.get('content_contract')=='article-v2' and (not full.get('document_digest') or not isinstance(full.get('source_title'),str))):
                 missing_full=True;break
             record['full_text']=full['text']
+            # The retained excerpt is for audit, not a second, shorter model source.
+            if full.get('content_contract')=='article-v2':
+                record.pop('passage',None)
             record['source_title']=full.get('source_title',item['title'])
             record['preview_url']=full.get('preview_url')
             media_by_ref[record['id']]=full.get('media')
@@ -212,7 +215,7 @@ class JobBroker:
                 known=response.get('run_metadata')
                 Budget(self.db).finish(state['reservation'],1 if known else None,known,uncertain=not bool(known))
                 repaired=False
-                repairable=code in ('edit_not_improved','headline_not_grounded_in_facts','question_article_headline','empty_article_headline','breaking_label_not_allowed','headline_missing_quantity_qualifier','duplicate_article_fact','generic_article_headline','unreferenced_body_claim','unsupported_sentence','incomplete_source_sentence','unsupported_headline','headline_not_source_phrase','headline_unbound_number','actor_stage_required','fact_schema','schema_keys','numeric_format_needs_review','numeric_normalization_mismatch','numeric_without_raw','tweet_too_long') or code.startswith('unsupported_')
+                repairable=code in ('unattributed_source_voice','edit_not_improved','headline_not_grounded_in_facts','question_article_headline','empty_article_headline','breaking_label_not_allowed','headline_missing_quantity_qualifier','duplicate_article_fact','generic_article_headline','unreferenced_body_claim','unsupported_sentence','incomplete_source_sentence','unsupported_headline','headline_not_source_phrase','headline_unbound_number','actor_stage_required','fact_schema','schema_keys','numeric_format_needs_review','numeric_normalization_mismatch','numeric_without_raw','tweet_too_long') or code.startswith('unsupported_')
                 if isinstance(exc,ValidationError) and repairable and state['job'].get('manual_attribution') and state['job'].get('repair_attempt',0)<2:
                     eid=state['job']['event_id'];version=state['job']['event_version']
                     item=json.loads(self.db.conn.execute('SELECT payload FROM habnews_event_version WHERE event_id=? AND version=?',(eid,version)).fetchone()[0])

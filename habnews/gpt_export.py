@@ -113,16 +113,18 @@ def process_gpt_export(db,approval,sources):
         prompt=clipboard_prompt(document,source,source_type)
         url=copy_url(prompt,document['title'])
         media=None
-        try:media=document_photo(document,source,db.path.parent/'media',db.require_enabled)
+        stage='media_read'
+        try:
+            media=document_photo(document,source,db.path.parent/'media',db.require_enabled)
+            if media:
+                from .article_media import private_preview
+                from .images import reusable
+                p=media['provenance']
+                if not (private_preview(p) and p['landing_page_url']==document['source_url'] and p['article_digest']==digest(document_text(document,source)) or reusable(p)):raise ValueError('export_media_binding')
         except Exception as exc:
             if not db.enabled():raise RuntimeError('paused') from None
+            media=None
             db.audit('gpt_export_photo_unavailable',rid,{'type':type(exc).__name__})
-        stage='media_validation'
-        if media:
-            from .article_media import private_preview
-            from .images import reusable
-            p=media['provenance']
-            if not (private_preview(p) and p['landing_page_url']==document['source_url'] and p['article_digest']==digest(document_text(document,source)) or reusable(p)):raise ValueError('export_media_binding')
         markup={'inline_keyboard':[[{'text':'📋 Prompt + haberi kopyala','url':url}]]} if len(url)<=MAX_BUTTON_URL else None
         caption='GPT’ye aktarım hazır. Prompt ve tam haber metnini kopyalayıp GPT’ye yapıştır.' if markup else 'Prompt ve tam haber metni, kesilmeden TXT dosyasında.'
         if media and media['provenance'].get('archive_or_current')=='archive':caption+='\nArşiv fotoğrafı — '+media['provenance']['attribution_text']
@@ -132,6 +134,11 @@ def process_gpt_export(db,approval,sources):
         stage='delivery_queue'
         db.require_enabled()
         with db.transaction() as c:
+            current=c.execute('SELECT digest FROM habnews_observation WHERE id=?',(request['observation_id'],)).fetchone()
+            current_record=c.execute('SELECT status FROM habnews_gpt_export WHERE id=?',(rid,)).fetchone()
+            if not current or current['digest']!=request['digest'] or not current_record or current_record['status']!='pending':
+                c.execute("UPDATE habnews_gpt_export SET status='expired' WHERE id=? AND status='pending'",(rid,))
+                db.finish(row,'stale');return
             if media:
                 p=media['provenance']
                 c.execute('INSERT OR IGNORE INTO habnews_image_candidate(id,event_id,version,payload,rights,created,path) VALUES(?,?,?,?,?,?,?)',
@@ -150,5 +157,6 @@ def process_gpt_export(db,approval,sources):
             db.finish(row,'pending',10);return
         with db.transaction() as c:
             c.execute("UPDATE habnews_gpt_export SET status='failed' WHERE id=?",(rid,))
-            queue_part(db,approval.chat_id,'sendMessage',{'chat_id':approval.chat_id,'text':'Haberin tam metni alınamadı. Aynı karttan GPT’ye aktar düğmesine yeniden basabilirsin.','link_preview_options':{'is_disabled':True}})
+            message=('Haberin tam metni alınamadı.' if stage=='article_read' else 'GPT aktarımı tamamlanamadı.')+' Aynı karttan GPT’ye aktar düğmesine yeniden basabilirsin.'
+            queue_part(db,approval.chat_id,'sendMessage',{'chat_id':approval.chat_id,'text':message,'link_preview_options':{'is_disabled':True}})
             db.finish(row,'needs_review')

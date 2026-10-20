@@ -25,8 +25,12 @@ async function copyPrompt(automatic=false) {
   } catch (_) {
     if(automatic) return false;
     // Older iOS WebViews require a focused selection during the same user gesture.
-    text.closest('details').open=true;text.focus();text.select();text.setSelectionRange(0,text.value.length);
-    if(!document.execCommand('copy')){$('status').textContent='Metnin tamamı seçildi. Kopyala’ya dokun.';return false;}
+    let copied=false;
+    try {
+      text.closest('details').open=true;text.focus();text.select();text.setSelectionRange(0,text.value.length);
+      copied=Boolean(document.execCommand('copy'));
+    } catch (_) { /* Clipboard restrictions must leave the full text accessible. */ }
+    if(!copied){$('status').textContent='Panoya erişilemedi. Açılan metnin tamamını seçip kopyalayabilirsin.';return false;}
   }
   $('status').textContent='Panoya kopyalandı. ChatGPT uygulamana geçip yapıştırabilirsin.';
   $('copy').textContent='✓ Kopyalandı · Tekrar kopyala';

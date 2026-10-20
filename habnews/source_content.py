@@ -35,3 +35,10 @@ def document_photo(document, source, directory, guard):
     return (article_photo(document, source, directory, guard)
             or matched_official_archive(document['title'], directory, guard,
                                         article_body=document['body']))
+
+
+def extraction_failure_code(exc):
+    """Retain a bounded internal parser reason without logging URLs/content."""
+    import re
+    code=str(exc)
+    return code if isinstance(exc,ValueError) and re.fullmatch(r'[a-z][a-z0-9_]{2,90}',code) else type(exc).__name__

@@ -170,7 +170,7 @@ class ApprovalService:
         if cmd=='/haber_butce':
             rows=[dict(r) for r in self.db.conn.execute('SELECT day,kind,sum(reserved) calls FROM habnews_budget GROUP BY day,kind ORDER BY day DESC LIMIT 7')]
             return encode({'local':rows,'real_pro_quota':'bilinmiyor','shared_account_limits':True,'paid_tools_usd':0})
-        if cmd=='/haber_filtre':return 'Her An Borsa odağı: BIST/borsa, hisse, halka arz, temettü, sermaye artırımı, SPK, TEFAS ve yatırım fonları; yerli borsa şirketlerinin önemli mali/operasyonel gelişmeleri; Türkiye faiz, enflasyon, rezerv, likidite ve piyasayı etkileyen makro verileri. Bu konu gruplarından biri yeterlidir. Türkiye/şehir/TL veya siyasetçi adı tek başına yeterli değildir. Genel gündem, kaza, spor, magazin, personel ilanları, banka promosyonları, günlük altın/döviz fiyatı sayfaları ve hedef fiyat tanıtımları elenir. Rutin KAP geri alım/pay işlemi istisnası korunur. X hesapları da aynı filtreden geçer. Tweet motoru yalnız düğmeye basınca çalışır.'
+        if cmd=='/haber_filtre':return 'Her An Borsa odağı: BIST/borsa, hisse, halka arz, temettü, sermaye artırımı, SPK, TEFAS ve yatırım fonları; yerli borsa şirketlerinin önemli mali/operasyonel gelişmeleri; Türkiye faiz, enflasyon, rezerv, likidite ve piyasayı etkileyen makro verileri. Bu konu gruplarından biri yeterlidir. Türkiye/şehir/TL veya siyasetçi adı tek başına yeterli değildir. Genel gündem, kaza, spor, magazin, personel ilanları, banka promosyonları, günlük altın/döviz fiyatı sayfaları ve hedef fiyat tanıtımları elenir. Fon krizi, tasfiye, takas kesinliği, PBLK ve yatırımcı alacaklarına ilişkin gelişmeler ayrıca izlenir; bu konularla bağlantılı önemli KAP haberleri korunur. Diğer rutin KAP geri alım/pay işlemi istisnası korunur. X hesapları da aynı filtreden geçer. Tweet motoru yalnız düğmeye basınca çalışır.'
         if cmd=='/haber_kaynaklar':
             from .config import sources
             rows=[]
@@ -178,7 +178,12 @@ class ApprovalService:
                 if not source['enabled']:continue
                 mode='canlı haber; Tweet oluştur düğmesi' if source.get('delivery_mode')=='live_feed' else 'aktif'
                 if source.get('article_access')=='blocked_http_403':mode+='; metin erişimi engelli (403)'
-                rows.append(source['owner']+' — '+mode+'; '+str(source['polling_interval']//60)+' dakikada bir')
+                health=self.db.conn.execute('SELECT health FROM habnews_source WHERE id=?',(source['stable_id'],)).fetchone()
+                if health and health[0]=='blocked':mode+='; kaynak erişimi engelli'
+                elif health and health[0]=='degraded':mode+='; son kaynak kontrolü başarısız'
+                interval=source['polling_interval']
+                cadence=str(interval//60)+' dakikada bir' if interval%60==0 else str(interval)+' saniyede bir'
+                rows.append(source['owner']+' — '+mode+'; '+cadence)
             return '\n'.join(rows) if rows else 'Aktif kaynak yok.'
         if cmd=='/haber_taslak' and len(text.split())==2:
             ident=text.split()[1]
@@ -193,7 +198,7 @@ class ApprovalService:
     def tick(self):
         self.notify_incidents()
         waiting=self.db.conn.execute("SELECT 1 FROM habnews_outbox WHERE status='pending' AND next_at<=? LIMIT 1",(time.time(),)).fetchone()
-        updates=self.tg.call('getUpdates',{'offset':int(self.db.state('telegram_offset','0')),'timeout':0 if waiting and self.db.enabled() else 20,'allowed_updates':['message','callback_query']})
+        updates=self.tg.call('getUpdates',{'offset':int(self.db.state('telegram_offset','0')),'timeout':(0 if waiting else 5) if self.db.enabled() else 20,'allowed_updates':['message','callback_query']})
         for update in updates:
             try:
                 if 'callback_query' in update:

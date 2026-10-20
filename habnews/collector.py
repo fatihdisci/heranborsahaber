@@ -2,6 +2,7 @@ import json, random, time
 from .db import uid, encode
 from .normalizer import digest, norm, parse_feed, fresh, classify, event_key, material_signature, extract_article
 from .network import Fetcher, HTTPFailure
+from .source_content import extraction_failure_code
 
 class Collector:
     def __init__(self,db,sources): self.db=db; self.sources=sources
@@ -44,14 +45,17 @@ class Collector:
                 c.execute('INSERT INTO habnews_event_observation VALUES(?,?)',(eid,oid))
                 self.db.enqueue('research',oid,{'event_id':eid,'event_version':v,'observation_id':oid,'item':item,'source_id':sid})
             c.execute('UPDATE habnews_source SET baseline=1,last_success=?,failures=0,health=? WHERE id=?',(now,'ok',sid))
-    def poll(self):
+    def poll(self,max_sources=None):
         self.db.require_enabled()
+        polled=0
         for source in self.sources:
             if not source['enabled']: continue
             self.db.require_enabled(); sid=source['stable_id']; now=time.time()
             self.db.conn.execute('INSERT OR IGNORE INTO habnews_source(id) VALUES(?)',(sid,))
             row=self.db.conn.execute('SELECT * FROM habnews_source WHERE id=?',(sid,)).fetchone()
             if row['next_poll']>now or row['health']=='blocked': continue
+            if max_sources is not None and polled>=max_sources:break
+            polled+=1
             headers={}
             if row['etag']: headers['If-None-Match']=row['etag']
             if row['modified']: headers['If-Modified-Since']=row['modified']
@@ -126,5 +130,5 @@ class Collector:
         except Exception as exc:
             from .failures import record_failure,source_failure
             record_failure(self.db,row['id'],'research',source_failure(exc))
-            self.db.audit('research_failure',row['id'],{'type':type(exc).__name__})
+            self.db.audit('research_failure',row['id'],{'type':type(exc).__name__,'code':extraction_failure_code(exc)})
             self.db.finish(row,'dead_letter' if row['attempts']>=3 else 'pending',min(300,30*2**row['attempts']))

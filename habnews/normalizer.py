@@ -43,14 +43,15 @@ TR_COMPANY=re.compile(r'\b(?:thy|thy.?ao|turkish airlines|aselsan|tüpraş|tupra
 HYPE=re.compile(r'hisseyi uçur|piyasayı salla|hedef fiyat|al tavsiyesi|sat tavsiyesi|garanti kazanç|köşeyi dönecek|kaçırılmayacak fırsat',re.I)
 # Independent OR routes: a domestic market, fund or regulator signal is enough.
 # Place names, TL amounts and politicians alone never establish market relevance.
-MARKET=re.compile(r"\b(?:spk|kap|sermaye piyasası kurulu|bist(?:\s*\d+)?|borsa istanbul|tefas|bes|bireysel emeklilik sistemi|vbts|takasbank|mkk|merkezi kayıt kuruluşu|yatırımcı tazmin merkezi)\b|halka arz|temettü|bedelli|bedelsiz|sermaye artır|açığa satış|devre kesici|pay geri al|hisse(?:ler|nin|ye|de|den|si| senedi| senetleri)?\b|portföy yönetim|yatırım ortaklığı",re.I)
+MARKET=re.compile(r"\b(?:spk|kap|sermaye piyasası kurulu|bist(?:\s*\d+)?|borsa istanbul|tefas|bes|bireysel emeklilik sistemi|vbts|takasbank|mkk|merkezi kayıt kuruluşu|yatırımcı tazmin merkezi)\b|halka arz|temettü|bedelli|bedelsiz|sermaye artır|açığa satış|devre kesici|pay geri al|hisse(?:ler(?:i|in|e|de|den|inin|ine|ini|inde|inden|indeki)?|nin|ye|de|den|si(?:nin|ne|ni|nde|nden)?| senedi| senetleri)?\b|portföy yönetim|yatırım ortaklığı",re.I)
 STOCK_EXCHANGE=re.compile(r'\bborsa(?:da|dan|nın|ya|sı|yı|lar|ları)?\b',re.I)
 COMMODITY_EXCHANGE=re.compile(r'ticaret borsası|emtia borsası|ürün ihtisas borsası',re.I)
-FUND=re.compile(r'\bfon(?:u|un|a|da|dan|lar|ları|ların|larda|lardan|larına|larının|larında|larından|larındaki|una|unun|unda|undan)?\b',re.I)
+FUND=re.compile(r'\bfon(?:umuz|umuzun|larımız|larımızın|u|un|a|da|dan|lar|ları|ların|larda|lardan|larına|larının|larında|larından|larındaki|una|unun|unda|undan)?\b',re.I)
 FUND_CONTEXT=re.compile(r'yatırım|yatırımcı|para piyasası|portföy|tefas|tasfiye|stopaj|getiri|manipülasyon|soruşturma|kriz|ödeme|tazmin|iad[ea]|fon kurulu|fon yönetim|fon.*(?:giriş|çıkış|dondur)|(?:giriş|çıkış).*fon',re.I)
 ISSUER_EVENT=re.compile(r'bilanço|finansal sonuç|k[âa]r(?:ı|ını|ında|\b)|zarar|gelir|ciro|hasılat|mevduat|kredi hacmi|yolcu say|doluluk oran|abone say|trafik sonuç|satış|sözleşme|anlaşma|sipariş|ihale|yatırım|üretim|kapasite|birleşme|satın al|devral|borç|finansman|kredi not|iflas|konkordato|yönetim kurulu|genel kurul|sermaye|\bpay(?:ı|ları|larının|larını|dan|da)?\b|iş birliği|işbirliği|ortaklık',re.I)
 MACRO=re.compile(r'faiz|enflasyon|\btüfe\b|\büfe\b|\bppk\b|zorunlu karşılık|rezerv|likidite|para politikası|parasal sıkılaş|parasal genişle|\bgsy[iı]?h\b|ekonomik büyüme|büyüme (?:veri|oran|rakam)|cari (?:açık|açığ|fazla|denge)|bütçe (?:açık|açığ|fazla|denge)|işsizlik (?:oran|veri|rakam)|sanayi üretim|dış ticaret (?:açık|fazla|denge)|güven endeks|kredi derecelendir|kredi not|risk primi|\bcds\b|mevduat.*(?:artış|azal|çıkış|giriş|büyü)|(?:artış|azal).*mevduat|döviz.*(?:müdahale|düzenleme)|sermaye (?:akım|hareket)|yabancı yatırımcı|yabancı.*(?:alım|satış)|ödeme sistem|finansal istikrar|bankacılık.*(?:düzenleme|kriz)|stopaj|kurumlar vergisi',re.I)
 FOREIGN_MARKET=re.compile(r'wall street|nasdaq|dow jones|s&p|new york borsası|tokyo borsası|avrupa borsaları|çin borsası|\bnikkei\b|\bdax\b|\bftse\b|\b(?:abd|amerikan|küresel|global|avrupa|çin|japonya)\b',re.I)
+FOREIGN_ISSUER=re.compile(r'\b(?:tesla|tsla|nvidia|nvda|apple|aapl|microsoft|msft|amazon|amzn|alphabet|google|googl|anthropic|openai|jpmorgan|jp morgan|goldman sachs|morgan stanley|bitcoin|ethereum|kripto)\b',re.I)
 DOMESTIC_MARKET=re.compile(r'\b(?:spk|bist(?:\s*\d+)?|tefas|vbts|kap)\b|borsa istanbul|sermaye piyasası kurulu',re.I)
 # These templates produce repeated consumer/reference notices, not new market events.
 LOW_SIGNAL_TITLE=re.compile(r'personel alımı|eleman alımı|memur alımı|işçi alımı|iş ilanı|emekli.*promosyon|promosyon.*emekli|maaşını taşı|(?:mevduat|kredi|faiz|promosyon).{0,80}hangi banka|hangi banka.{0,80}(?:mevduat|kredi|faiz|promosyon)|banka banka|(?:dolar|euro|altın|gram|çeyrek).*(?:kaç (?:tl|lira)|ne kadar|güncel fiyat|fiyatları ne)|(?:en yüksek|en iyi).*mevduat|son depremler listesi|aktüel ürün|indirim katalo',re.I)
@@ -61,24 +62,29 @@ def classify(item):
     # for relevance matching, leaving source text and evidence untouched.
     title=norm(item['title']).replace('\u0307','')
     text=title+' '+norm(item.get('summary','')).replace('\u0307','')
-    if ROUTINE_KAP.search(text) and not re.search(r'\bspk\b|sermaye piyasası kurulu',title):return 'scope_excluded','routine KAP share transaction'
+    from .market_topics import investor_focus,FOREIGN_FUND,FOCUS_ACTION
+    title_focus=investor_focus(title)
+    critical_title=bool(title_focus or re.search(r'tasfiye|temerrüt|takas kesinli[ğg]i',title))
+    if ROUTINE_KAP.search(text) and not critical_title and not re.search(r'\bspk\b|sermaye piyasası kurulu',title):return 'scope_excluded','routine KAP share transaction'
     regulatory=bool(re.search(r'\bspk\b|sermaye piyasası kurulu',title) and re.search(r'düzenleme|ceza|suç duyur|soruştur|yasak|yaptırım',text))
     if HYPE.search(text) and not regulatory:return 'filtered','promotion'
     if LOW_SIGNAL_TITLE.search(title) and (re.search(r'personel alımı|eleman alımı|memur alımı|işçi alımı|iş ilanı',title) or not regulatory):return 'filtered','routine_consumer_or_recruitment'
     local_text=re.sub(r'\b(?:abd|amerikan|ingiltere|çin)\s+hazine', 'foreign treasury',text)
     local=bool(TURKEY.search(local_text) or TR_COMPANY.search(text) or re.search(r'\b(?:erdoğan|şimşek|karahan|tmsf|bddk|seddk)\b',text) or item.get('source_id') in ('tcmb','x-rterdogan','x-abakingurlek'))
+    focus=investor_focus(text) and not (FOREIGN_FUND.search(text) and not local)
     market=bool(MARKET.search(text) or STOCK_EXCHANGE.search(text) and not COMMODITY_EXCHANGE.search(text))
     fund=bool(FUND.search(text) and FUND_CONTEXT.search(text) and not re.search(r'uluslararası para fonu|\bimf\b|afet fonu|iklim fonu|sosyal yardım fonu',text))
     # A specific foreign market is not assumed to be a Turkish security.
-    if FOREIGN_MARKET.search(text) and not (local or DOMESTIC_MARKET.search(text)):
+    if (FOREIGN_MARKET.search(text) or FOREIGN_ISSUER.search(text)) and not (local or DOMESTIC_MARKET.search(text) or focus):
         return 'filtered','no_turkey_relevance'
-    if market:reason='capital_markets'
+    if focus:reason='investor_protection_focus'
+    elif market:reason='capital_markets'
     elif fund and (local or not FOREIGN_MARKET.search(text)):reason='investment_funds'
     elif TR_COMPANY.search(text) and ISSUER_EVENT.search(text):reason='listed_company_material_event'
     elif re.search(r'\bbanka\w*|katılım bank|elektronik para|ödeme kuruluş|varlık fon|katılım finans|sermaye kaybı',text) and re.search(r'birleş|devred|devir|faaliyet izni|lisans|sermaye(?:si|leri|sinin| kaybı| yeterli)|kayyum|el koy|el kon',text):reason='material_financial_system_event'
     elif local and (MACRO.search(text) or re.search(r'\b(?:bddk|seddk|tmsf)\b',text) and re.search(r'mevduat|kredi|sermaye|faaliyet izni|lisans|el koy|el kon|devir|tasfiye|sigorta.*(?:düzenleme|kural)',text)):reason='turkey_market_macro'
     else:return 'filtered','no_direct_market_relevance' if local else 'no_turkey_relevance'
-    if CRITICAL_MARKET.search(text):return 'P0','critical_market_event'
+    if CRITICAL_MARKET.search(text) or focus and FOCUS_ACTION.search(text):return 'P0','critical_market_event'
     return 'P1',reason
 
 def event_key(item):

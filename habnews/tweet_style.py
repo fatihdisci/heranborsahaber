@@ -7,6 +7,7 @@ TOPICS=[
  ('kredi',r'\bkredi(?:ler\w*|nin|ye|yi|si|sinin|sini|sine|leri|lerinde)?\b'),
  ('fon',r'\bfon(?:umuz|umuzun|umuzda|umuzdan|umuza|larımız|larımızın|larımızdan|larımızda|larımıza|u|un|lar|ların|ları|lardan|larda|larına|larının|larında|larından|larındaki|lardaki|daki|dan|a|da|una|unun|unda|undan)?\b|yatırım fon'),
  ('portföy',r'\bportföy\w*'),('tasfiye',r'\btasfiye\w*'),
+ ('PBLK',r'\bpblk\b'),('takas',r'\btakas(?:ın|a|ta|tan)?\b'),('yatırımcı',r'\byatırımcı(?:lar|ların|ları|nın|ya|yı)?\b'),
  ('borsa',r'borsa|\bbist\b'),('SPK',r'\bspk\b|sermaye piyasası kurulu'),
  ('TCMB',r'\btcmb\b|merkez bankası'),('faiz',r'\bfaiz\w*'),('mevduat',r'\bmevduat\w*'),
  ('enflasyon',r'enflasyon|tüfe|üfe'),('altın',r'\baltın(?:ın|a|ı)?\b'),('petrol',r'petrol|brent|motorin'),

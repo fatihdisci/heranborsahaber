@@ -152,7 +152,8 @@ def process_gpt_export(db,approval,sources):
                      'source_url':document['source_url'],'photo':bool(media),'delivery':'copy_page' if markup else 'full_text_file','model_requested':False})
     except Exception as exc:
         if not db.enabled():db.finish(row,'pending',5);return
-        db.audit('gpt_export_failure',rid,{'type':type(exc).__name__,'stage':stage})
+        from .source_content import extraction_failure_code
+        db.audit('gpt_export_failure',rid,{'type':type(exc).__name__,'stage':stage,'code':extraction_failure_code(exc)})
         if row['attempts']<2:
             db.finish(row,'pending',10);return
         with db.transaction() as c:

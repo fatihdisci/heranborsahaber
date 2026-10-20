@@ -2,7 +2,9 @@
 import re
 
 PROFILES = [
-    ('fund_liquidation', r'tasfiye.*fon|fon.*tasfiye',
+    ('investor_settlement', r'\bpblk\b|takas kesinli[ğg]i|muaccel alacak|yatırımcı alacak',
+     'PBLK gibi kodların anlamını yalnız haber açıkça açıklıyorsa yaz; bunları şirket/hisse kodu sanma. Takas kesinliği, blokaj, muaccel alacak, hak sahipliği, ödeme önceliği ve fiilen yapılan ödeme farklı kavramlardır. Mevzuat teklifi, komisyondan geçme, Genel Kurul kabulü ve yürürlük aşamalarını ayır. Kaynak açıkça söylemiyorsa kodun otomatik ödeme veya kazanılmış hak garantisi sağladığını ileri sürme. Yorum ve hukuki görüşü sahibine atfet; geçmişe dönük etki veya kesin ödeme tarihi uydurma.'),
+    ('fund_liquidation', r'tasfiye.*fon|fon.*tasfiye|fon kriz|sorunlu fon',
      'Fon tasfiyesinde açıklamayı yapan portföy şirketini açıkça belirt. Toplam tasfiye edilen fon sayısı ve toplam büyüklük ile bugün tasfiye edilen fonlar, bugünkü büyüklük ve yatırımcı sayısını ayrı tut; farklı grupların sayılarını birleştirme. Şirketin “fonumuz/fonlarımız” sözlerini botun kendi sözü gibi yazma. Kendi başına anlaşılır kaynak cümleleri seç; “Bununla birlikte” diye bağlamsız başlama. Kaynak alıntısında konuşanı açıkça belirt.'),
     ('claim', r'iddia|yalanla|soruşturma|suçlama',
      'İddia veya yalanlamayı kimin yaptığını ilk cümlede belirt. İddiayı gerçekleşmiş olay gibi yazma; yalanlama ve soruşturma aşamasını koru.'),

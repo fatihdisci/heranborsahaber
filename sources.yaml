@@ -76,7 +76,7 @@ sources:
   allowed_hosts:
   - www.haberturk.com
   - haberturk.com
-  polling_interval: 120
+  polling_interval: 90
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
@@ -99,7 +99,7 @@ sources:
   allowed_hosts:
   - www.sozcu.com.tr
   - sozcu.com.tr
-  polling_interval: 120
+  polling_interval: 90
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
@@ -245,7 +245,7 @@ sources:
   allowed_hosts:
   - www.dunya.com
   - dunya.com
-  polling_interval: 120
+  polling_interval: 90
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
@@ -268,7 +268,7 @@ sources:
   allowed_hosts:
   - www.ekonomim.com
   - ekonomim.com
-  polling_interval: 120
+  polling_interval: 60
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Owner-only personal RSS reading and brief factual evidence with
@@ -382,7 +382,7 @@ sources:
   priority: B
   method: rss
   parser_version: rss-atom-v2-clean-text
-  polling_interval: 180
+  polling_interval: 60
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Public publisher RSS; robots allows sampled feed and article
@@ -405,7 +405,7 @@ sources:
   priority: B
   method: rss
   parser_version: rss-atom-v2-clean-text
-  polling_interval: 180
+  polling_interval: 90
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Public publisher RSS; robots allows sampled feed and article
@@ -428,7 +428,7 @@ sources:
   priority: B
   method: rss
   parser_version: rss-atom-v2-clean-text
-  polling_interval: 180
+  polling_interval: 120
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Public publisher RSS; robots allows sampled feed and article
@@ -451,7 +451,7 @@ sources:
   priority: B
   method: rss
   parser_version: rss-atom-v2-clean-text
-  polling_interval: 180
+  polling_interval: 90
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Public publisher RSS; robots allows sampled feed and article
@@ -474,7 +474,7 @@ sources:
   priority: B
   method: rss
   parser_version: rss-atom-v2-clean-text
-  polling_interval: 180
+  polling_interval: 120
   timezone: Europe/Istanbul
   time_precision: source
   robots_terms_note: Public publisher RSS; robots allows sampled feed and article

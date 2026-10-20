@@ -147,10 +147,15 @@ def extract_document(data,mime,url='',expected_title='',requested_url=''):
             if n.tag=='script' and n.attrs.get('type')=='application/ld+json':
                 try:visit(json.loads(''.join(c for c in n.children if isinstance(c,str))))
                 except (ValueError,TypeError):pass
-        matches=[v for v in objects if isinstance(v.get('url'),str) and url and same_page(urljoin(url,v['url']),url)]
-        if len(matches)==1 or len(objects)==1 and (not objects[0].get('url') or not url):
+        def object_url(value):
+            linked=value.get('url') or value.get('mainEntityOfPage')
+            if isinstance(linked,dict):linked=linked.get('@id') or linked.get('url')
+            return linked if isinstance(linked,str) else ''
+        matches=[v for v in objects if object_url(v) and url and same_page(urljoin(url,object_url(v)),url)]
+        if len(matches)==1 or len(objects)==1 and (not object_url(objects[0]) or not url):
             obj=matches[0] if matches else objects[0];fragment=Tree();fragment.feed(obj['articleBody'])
-            paragraphs=[clean(fragment.root.text())];headline=clean(obj.get('headline') or headline);method='jsonld_article_body';body_found=True
+            paragraphs=list(article_paragraphs(fragment.root)) if any(isinstance(c,Node) for c in fragment.root.children) else [clean(line) for line in obj['articleBody'].splitlines() if clean(line)]
+            headline=clean(obj.get('headline') or headline);method='jsonld_article_body';body_found=True
     body='\n'.join(paragraphs)
     if not body_found or len(body)<80:raise ValueError('main_text_missing_or_parser_needs_review')
     if len(body)>45000:raise ValueError('article_too_long_for_verified_model_input')

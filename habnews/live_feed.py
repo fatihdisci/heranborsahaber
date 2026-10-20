@@ -137,3 +137,14 @@ def notify_manual_failures(db,approval):
                     # callback path checks for active retries before queuing.
                     db.conn.execute("UPDATE habnews_callback SET used=0 WHERE draft_id IN (SELECT id FROM habnews_draft WHERE id=? AND hash=? AND event_id=? AND event_version=? AND status='pending')",(edit['draft_id'],edit['hash'],eid,event['version']))
             db.set_state('manual_failure_notice:'+row['id'],'true')
+
+
+def drain_live_feed(db,approval,sources,limit=20):
+    """Drain a small local batch without letting network work delay each card."""
+    processed=0
+    while processed<limit:
+        if not db.enabled():break
+        pending=db.conn.execute("SELECT 1 FROM habnews_queue WHERE kind='live_feed' AND status='pending' AND next_at<=? LIMIT 1",(time.time(),)).fetchone()
+        if not pending:break
+        process_live_feed(db,approval,sources);processed+=1
+    return processed

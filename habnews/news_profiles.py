@@ -6,6 +6,8 @@ PROFILES = [
      'Fon tasfiyesinde açıklamayı yapan portföy şirketini açıkça belirt. Toplam tasfiye edilen fon sayısı ve toplam büyüklük ile bugün tasfiye edilen fonlar, bugünkü büyüklük ve yatırımcı sayısını ayrı tut; farklı grupların sayılarını birleştirme. Şirketin “fonumuz/fonlarımız” sözlerini botun kendi sözü gibi yazma. Kendi başına anlaşılır kaynak cümleleri seç; “Bununla birlikte” diye bağlamsız başlama. Kaynak alıntısında konuşanı açıkça belirt.'),
     ('claim', r'iddia|yalanla|soruşturma|suçlama',
      'İddia veya yalanlamayı kimin yaptığını ilk cümlede belirt. İddiayı gerçekleşmiş olay gibi yazma; yalanlama ve soruşturma aşamasını koru.'),
+    ('ipo', r'halka arz|izahname',
+     'Halka arz haberinde önce ihraççı şirketin adını ve yeni gelişmeyi yaz: başvuru, yeniden başvuru, onay, ret veya talep toplama. Başvuruyu SPK onayı gibi sunma. Haberi yalnız sermaye artırımı/ortak satışı ayrıntısıyla başlatma; kimin halka arzı olduğu tek başına okunduğunda anlaşılmalı. Pay sahibi şirket ile halka arz edilen şirketi karıştırma. Nominal sermaye tutarı halka arz büyüklüğü veya satış fiyatı değildir. Tutar ve mevcut ortak satışı bilgisi ancak ana gelişmeden sonra kısa ayrıntı olabilir.'),
     ('rate', r'politika faizi|faiz kararı|para politikası kurulu',
      'Kararı alan kurum, yeni faiz oranı ve kararın yönünü öne çıkar. Önceki oran ve yürürlük tarihi yalnız kaynakta varsa kullan. Beklentiyi karar gibi sunma; baz puan farkını kendin hesaplama.'),
     ('inflation', r'enflasyon|tüfe|üfe',

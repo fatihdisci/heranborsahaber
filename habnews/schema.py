@@ -83,6 +83,10 @@ def validate_result(result,job,evidence):
         families.add(ev['family']);primary=primary or bool(ev['primary_source']);sentences.append(text)
     # Conservative v1 guard: all body claims are verbatim supported fact sentences.
     if body!=headline+'\n\n'+'\n\n'.join(sentences): raise ValidationError('unreferenced_body_claim')
+    from .story_context import ipo_application_heading
+    story=ipo_application_heading(job.get('source_title',''),[evidence[f['source_ref']]['passage'] for f in result['facts']]) if strict_article and manual and manual.get('source_type')=='article' else None
+    if story and norm(headline).rstrip('.!? ')!=norm(story['headline']).rstrip('.!? '):
+        raise ValidationError('missing_story_lead')
     words=re.findall(r'\w+',norm(headline)); supported=' '.join(norm(evidence[f['source_ref']]['passage']) for f in result['facts'])
     if any(word not in supported for word in words): raise ValidationError('unsupported_headline')
     if strict_article:
@@ -105,9 +109,9 @@ def validate_result(result,job,evidence):
         # A catchy publisher heading is not proof of its own claim. Bind its
         # meaningful words to the chosen complete fact sentences as well.
         fact_text=' '.join(norm(s) for s in sentences)
-        if any(word not in fact_text for word in words if word not in {'ve','ile','için','bir','bu','de','da'}):
+        if not story and any(word not in fact_text for word in words if word not in {'ve','ile','için','bir','bu','de','da'}):
             raise ValidationError('headline_not_grounded_in_facts')
-    if strict_article and manual and manual.get('source_type')=='article' and re.match(r'^(?:şirket|kurum|proje|bu şirket|söz konusu şirket)(?:[\s,.:]|$)',norm(headline),re.I):
+    if strict_article and manual and manual.get('source_type')=='article' and re.match(r'^(?:şirket|kurum|proje|bu şirket|söz konusu şirket|halka arzın|sermaye artırımı|bu kapsamda)(?:[\s,.:]|$)',norm(headline),re.I):
         raise ValidationError('generic_article_headline')
     if result['verification_state']=='official_primary' and not primary: raise ValidationError('not_primary')
     if result['verification_state']=='corroborated_independent' and len(families)<2: raise ValidationError('same_wire_not_independent')
@@ -155,7 +159,7 @@ def validate_delivery_result(result,job,evidence):
     try:return result,validate_result(result,job,evidence),[]
     except ValidationError as original:
         manual=job.get('manual_attribution',{})
-        headline_codes={'unsupported_headline','headline_not_source_phrase','headline_not_grounded_in_facts','headline_missing_quantity_qualifier','headline_unbound_number','question_article_headline','breaking_label_not_allowed','empty_article_headline','generic_article_headline'}
+        headline_codes={'missing_story_lead','unsupported_headline','headline_not_source_phrase','headline_not_grounded_in_facts','headline_missing_quantity_qualifier','headline_unbound_number','question_article_headline','breaking_label_not_allowed','empty_article_headline','generic_article_headline'}
         display_codes=headline_codes|{'tweet_too_long','body_length'}
         optional=('scope','period','unit','currency','scale','quote')
         optional_codes={'unsupported_'+key for key in optional}
@@ -199,7 +203,9 @@ def validate_delivery_result(result,job,evidence):
         # Reusing a complete chosen fact as the headline removes the old title
         # and its duplicate display, without dropping any facts or conditions.
         from .rewriting import attributed_quote_headline
-        candidates=[attributed_quote_headline(f) for f in corrected['facts']]+sentences
+        from .story_context import ipo_application_heading
+        story=ipo_application_heading(job.get('source_title',''),[evidence[f['source_ref']]['passage'] for f in corrected['facts'] if f['source_ref'] in evidence])
+        candidates=([story['headline']] if story else [])+[attributed_quote_headline(f) for f in corrected['facts']]+sentences
         for sentence in candidates:
             if not sentence:continue
             headline=sentence.rstrip().rstrip('.!?')
@@ -209,7 +215,7 @@ def validate_delivery_result(result,job,evidence):
             except ValidationError as exc:
                 if str(exc) not in display_codes:raise
                 continue
-            return candidate,text,sorted(set(changes+['source_sentence_headline']))
+            return candidate,text,sorted(set(changes+(['source_story_heading'] if story and headline==story['headline'] else ['source_sentence_headline'])))
         raise failure
 
 

@@ -159,7 +159,7 @@ def validate_delivery_result(result,job,evidence):
         display_codes=headline_codes|{'tweet_too_long','body_length'}
         optional=('scope','period','unit','currency','scale','quote')
         optional_codes={'unsupported_'+key for key in optional}
-        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in display_codes|optional_codes|{'unreferenced_body_claim'}:raise
+        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in display_codes|optional_codes|{'unreferenced_body_claim','numeric_format_needs_review'}:raise
         import copy
         corrected=copy.deepcopy(result);changes=[]
         # Only harmless whitespace differences may repair the body contract.
@@ -168,10 +168,23 @@ def validate_delivery_result(result,job,evidence):
             body=corrected.get('proposed_body')
             if isinstance(body,str) and body!=canonical and ' '.join(body.split())==' '.join(canonical.split()):
                 corrected['proposed_body']=canonical;changes.append('body_whitespace')
+            elif corrected['facts']:
+                first=corrected['facts'][0]['text']
+                shortened=corrected['headline']+('\n\n'+'\n\n'.join(f['text'] for f in corrected['facts'][1:]) if len(corrected['facts'])>1 else '')
+                if (norm(first).rstrip('.!? ')==norm(corrected['headline']).rstrip('.!? ')
+                    and isinstance(body,str) and ' '.join(body.split())==' '.join(shortened.split())):
+                    corrected['proposed_body']=canonical;changes.append('body_headline_deduplicated')
         # An optional annotation is not another claim. Preserve the complete
         # source sentence and numbers; omit a label absent from that sentence.
         for fact in corrected['facts']:
             if not isinstance(fact,dict) or not isinstance(fact.get('text'),str):raise original
+            # A calendar date with no numeric claim is metadata, not a monetary
+            # quantity. Keep its complete text and period; never guess a value.
+            raw=fact.get('value_raw')
+            if (isinstance(raw,str) and norm(raw) in norm(fact['text']) and fact.get('normalized_value') is None
+                and all(fact.get(k) is None for k in ('unit','currency','scale'))
+                and re.fullmatch(r'\d{1,2} (?:Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık)(?: \d{4})?',raw,re.I)):
+                fact['value_raw']=None;changes.append('calendar_date_not_quantity')
             for key in optional:
                 value=fact.get(key)
                 if isinstance(value,str) and norm(value) not in norm(fact['text']):

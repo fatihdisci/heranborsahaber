@@ -87,7 +87,8 @@ def validate_result(result,job,evidence):
     if any(word not in supported for word in words): raise ValidationError('unsupported_headline')
     if strict_article:
         trim=lambda t:norm(t).rstrip('.!? ')
-        source_lines=[job.get('source_title','')]+sentences+[line for f in result['facts'] for line in evidence[f['source_ref']]['passage'].splitlines()]
+        from .rewriting import attributed_quote_headline
+        source_lines=[attributed_quote_headline(f) or '' for f in result['facts']]+[job.get('source_title','')]+sentences+[line for f in result['facts'] for line in evidence[f['source_ref']]['passage'].splitlines()]
         if trim(headline) not in {trim(line) for line in source_lines if line.strip()}:raise ValidationError('headline_not_source_phrase')
         if not set(re.findall(r'\d+(?:[.,]\d+)*',headline)).issubset(set(re.findall(r'\d+(?:[.,]\d+)*',' '.join(sentences)))):raise ValidationError('headline_unbound_number')
     if strict_article and manual and manual.get('source_type')=='article':
@@ -155,12 +156,18 @@ def validate_delivery_result(result,job,evidence):
     except ValidationError as original:
         manual=job.get('manual_attribution',{})
         headline_codes={'unsupported_headline','headline_not_source_phrase','headline_not_grounded_in_facts','headline_missing_quantity_qualifier','headline_unbound_number','question_article_headline','breaking_label_not_allowed','empty_article_headline','generic_article_headline'}
-        display_codes=headline_codes|{'tweet_too_long'}
+        display_codes=headline_codes|{'tweet_too_long','body_length'}
         optional=('scope','period','unit','currency','scale','quote')
         optional_codes={'unsupported_'+key for key in optional}
-        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in display_codes|optional_codes:raise
+        if job.get('content_contract')!='article-v2' or manual.get('source_type')!='article' or str(original) not in display_codes|optional_codes|{'unreferenced_body_claim'}:raise
         import copy
         corrected=copy.deepcopy(result);changes=[]
+        # Only harmless whitespace differences may repair the body contract.
+        if isinstance(corrected.get('headline'),str) and isinstance(corrected.get('facts'),list) and all(isinstance(f,dict) and isinstance(f.get('text'),str) for f in corrected['facts']):
+            canonical=corrected['headline']+'\n\n'+'\n\n'.join(f['text'] for f in corrected['facts'])
+            body=corrected.get('proposed_body')
+            if isinstance(body,str) and body!=canonical and ' '.join(body.split())==' '.join(canonical.split()):
+                corrected['proposed_body']=canonical;changes.append('body_whitespace')
         # An optional annotation is not another claim. Preserve the complete
         # source sentence and numbers; omit a label absent from that sentence.
         for fact in corrected['facts']:
@@ -178,7 +185,10 @@ def validate_delivery_result(result,job,evidence):
         if corrected['proposed_body']!=corrected['headline']+'\n\n'+'\n\n'.join(sentences):raise failure
         # Reusing a complete chosen fact as the headline removes the old title
         # and its duplicate display, without dropping any facts or conditions.
-        for sentence in sentences:
+        from .rewriting import attributed_quote_headline
+        candidates=[attributed_quote_headline(f) for f in corrected['facts']]+sentences
+        for sentence in candidates:
+            if not sentence:continue
             headline=sentence.rstrip().rstrip('.!?')
             if not 10<=len(headline)<=180:continue
             candidate=corrected|{'headline':headline,'proposed_body':headline+'\n\n'+'\n\n'.join(sentences)}

@@ -38,8 +38,10 @@ def display_article(headline, facts, options=None, speaker=None):
     from .normalizer import norm
     options = options or {}
     trim = lambda value: norm(value).rstrip('.!? ')
-    matching = next((f for f in facts if trim(f['text']) == trim(headline)), None)
+    matching = next((f for f in facts if trim(f['text']) == trim(headline) or attributed_quote_headline(f) and trim(attributed_quote_headline(f)) == trim(headline)), None)
     def render(f):
+        quote=attributed_quote(f)
+        if quote:return f['actor']+': “'+quote+'”'
         if SOURCE_VOICE.search(f['text']):
             if not speaker:
                 from .schema import ValidationError
@@ -47,7 +49,7 @@ def display_article(headline, facts, options=None, speaker=None):
             return attributed_fund_sentence(f['text'],speaker,bool(f.get('quote')))
         return rewrite_sentence(f['text'], f['actor'], bool(f.get('quote')))
     title = render(matching).rstrip('.') if matching else headline
-    body = [render(f) for f in facts if trim(f['text']) != trim(headline)]
+    body = [render(f) for f in facts if f is not matching]
     # Even "shorten" retains every selected fact, including conditions/denials.
     return title + ('\n\n' + '\n\n'.join(body) if body else '')
 
@@ -82,3 +84,20 @@ def attributed_fund_sentence(text,speaker,quoted=False):
         if today:
             return f'{speaker}: Bugün tasfiye edilen fonların büyüklüğü {today[1]} TL; toplam yatırımcı sayısı {today[2]}.'
     return speaker+' açıklamasında: “'+text+'”'
+
+
+def attributed_quote(fact):
+    """Remove only a neutral reporting wrapper; keep the entire literal quotation."""
+    actor=fact.get('actor');text=fact.get('text')
+    if not isinstance(actor,str) or not actor or not isinstance(text,str):return None
+    match=re.fullmatch(re.escape(actor)+r' (?:paylaşımında|açıklamasında) ["“]([^"“”]+)["”] ifadelerini kullandı\.',text)
+    return match[1] if match else None
+
+
+def attributed_quote_headline(fact):
+    quote=attributed_quote(fact)
+    if not quote:return None
+    # This is a display key only. The renderer still includes the WHOLE quote.
+    first=re.split(r'(?<=[.!?])\s+',quote,maxsplit=1)[0].rstrip('.!?')
+    title=fact['actor']+': '+first
+    return title if 10<=len(title)<=180 else None

@@ -6,7 +6,7 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 
 ## Korunan / değişen parçalar
 
-- `heranborsahaber` kaynak geçmişi ayrı `sector-haber` dalında korundu; eski kurulum yeniden başlatılmadı.
+- Aktif SECTOR HABER kodu `heranborsahaber` reposunun `main` dalında, `sector/` dizinindedir. Eski kod arşiv olarak korunur; eski kurulum yeniden başlatılmadı.
 - Heranborsacode’un **commit edilmiş** ana metin, tablo ve metin yardımcıları `src/reused/` içine alındı. Eski çalışma ağacındaki değişikliklere dokunulmadı.
 - Hisse fiyatı, AKD, Terane, kurum dağılımı, eski OAuth/MKK anahtarları ve eski X yayın hedefi taşınmadı.
 - Yeni kaynak kaydı, Türkçe editör promptu, kaynak denetimi, marka kartları, olay gruplama ve Telegram içerik kuyruğu eklendi.
@@ -32,7 +32,7 @@ Kurulumda eski RSS arşivi canlı kuyruğa boşaltılmaz; başlangıç anı ve k
 Günlük en fazla 60 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X yayını kalıcı olarak kapsam dışıdır.
 NTV’nin denenen RSS’i ve TCMB’nin özel PPK beslemesi eski kaldığı için etkinleştirilmedi. PPK basın duyuruları genel TCMB basın akışından takip edilir.
 TÜİK RSS adayı 404, güncel veri portalı ise otomatik istemciye koruma sayfası verdi; bültenler okunmuş gibi sisteme eklenmedi.
-KAP, haberlerin kendi metninde verilen resmî bildirim bağlantılarından birincil kaynak olarak okunur; lisanslı API veya varsayılan sayısal bildirim taraması kullanılmaz.
+Haber okuyucusu KAP bağlantılarını birincil kaynak olarak okuyabilir. Ayrıca bağımsız KAP toplayıcısı çalışır; kalıcı cursor, saklama ve kuyruk kuralları [KAP.md](KAP.md) içindedir. Devre kesici gönderimi kapalıdır; KAP kuyruğunun Telegram tüketicisi henüz bağlı değildir.
 SPK’nın güncel bülten listesi ve PDF’leri ayrı okuyucuyla takip edilir; sayfa ve tablo sınırları korunur.
 
 Kamuya açık RSS veya okunabilir sayfa, yeniden yayın/görsel lisansı sayılmaz.
@@ -49,6 +49,14 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 - **X yayını kalıcı olarak yoktur.** X hedef ayarı ve yayın hazırlığı kaldırılmıştır. Eski onay düğmeleri yalnız yerel taslak durumu değiştirir; yayın kaydı oluşturmaz.
 
 ## Kurulum ve işletim
+
+### MacBook üzerinden geliştirmeye devam
+
+`main` dalını çekip `sector/` altında geliştirme ve test yapılabilir. Canlı haber ve KAP servisleri Mac mini'de çalışır; Git pull/push canlı servisi kendiliğinden güncellemez.
+MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
+Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
+
+Güncel kararlar: X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç ve Düzenle düğmeleri; model `gpt-6.1-sol` / `low`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.

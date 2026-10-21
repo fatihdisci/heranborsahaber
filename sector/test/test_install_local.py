@@ -32,7 +32,9 @@ class FakeInstaller(module.Installer):
     def command(self,args,**kwargs):
         args=list(map(str,args));self.events.append(' '.join(args[:3]))
         if args[:2]==['npm','ci'] and self.failure=='npm':raise RuntimeError('npm failed')
-        if args[:3]==['npm','run','build'] and self.failure=='build':raise RuntimeError('build failed')
+        if args[:3]==['npm','run','build']:
+            assert (Path(kwargs['cwd'])/'wrangler.toml').is_file(), 'staged build requires its configuration'
+            if self.failure=='build':raise RuntimeError('build failed')
         if args[:2]==['/usr/bin/xcrun','swiftc']:
             if self.failure=='ocr':raise RuntimeError('OCR failed')
             Path(args[-1]).write_text('new OCR')

@@ -28,9 +28,9 @@ export function styleIssues(draft:Draft,documents:Document[]):string[]{
 }
 
 const emoji=/[\p{Extended_Pictographic}\p{Regional_Indicator}\u20e3]/u;
-export function headlineWithEmoji(headline:string):string{return !headline.trim()||emoji.test(headline)?headline:'📢 '+headline.trim();}
+export function headlineWithEmoji(headline:string):string{headline=headline.replace(/^\s*🏢\uFE0F?\s*/u,'📢 ');return !headline.trim()||emoji.test(headline)?headline:'📢 '+headline.trim();}
 export function invalidEmojiPlacement(draft:Draft):boolean {
  const headline=draft.headline.trim();
- const rest=headline.replace(/^(?:📢|🚨|📊|🏦|🏢|🌍|⚡|💻|📈|📉)\uFE0F?\s+/u,'');
+ const rest=headline.replace(/^(?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\uFE0F?\s+/u,'');
  return emoji.test(rest)||[draft.body,draft.card_headline,draft.card_body,...draft.hashtags].some(t=>emoji.test(t??''));
 }

@@ -72,6 +72,8 @@ def call(job,instructions,payload):
 EMOJI=re.compile(r'[\U0001F000-\U0001FAFF\u2600-\u27BF\u20e3\u00a9\u00ae\u203c\u2049\u2122\u2139\u2194-\u21ff\u2300-\u23ff\u2b00-\u2bff\u3030\u303d\u3297\u3299]')
 
 def ensure_headline_emoji(draft):
+    if isinstance(draft,dict) and isinstance(draft.get('headline'),str):
+        draft={**draft,'headline':re.sub(r'^\s*🏢\ufe0f?\s*','📢 ',draft['headline'])}
     if isinstance(draft,dict) and isinstance(draft.get('headline'),str) and draft['headline'].strip() and not EMOJI.search(draft['headline']):
         return {**draft,'headline':'📢 '+draft['headline'].strip()}
     return draft
@@ -81,7 +83,7 @@ def presentation_issues(draft,policy=None):
     if not isinstance(draft.get('headline'),str) or any(not isinstance(t,str) for t in draft['hashtags']):return []
     text='\n\n'.join(p for p in [draft['headline'],draft['body'],' '.join(draft['hashtags'])] if p)
     issues=[]
-    rest=re.sub(r'^(?:📢|🚨|📊|🏦|🏢|🌍|⚡|💻|📈|📉)\ufe0f?\s+','',draft['headline'].strip())
+    rest=re.sub(r'^(?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\ufe0f?\s+','',draft['headline'].strip())
     if EMOJI.search(rest) or any(EMOJI.search(str(draft.get(k,''))) for k in ['body','card_headline','card_body']) or any(EMOJI.search(t) for t in draft['hashtags']):
         issues.append('Yalnız tweet başlığının başında boşlukla ayrılmış tek uygun emoji bırak. Gövde, başlığın devamı, etiketler ve görsel metnindeki bütün emojileri kaldır; olgusal bilgileri sözcüklerle koru.')
     if len(text.encode('utf-16-le'))//2>1024:issues.append('Başlık, gövde ve etiketleri kritik olguları koruyarak toplam 1024 UTF-16 karakter içine yeniden yaz. Metni kesme veya bölme.')

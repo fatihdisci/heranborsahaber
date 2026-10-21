@@ -1,0 +1,116 @@
+import {DatabaseSync,type SQLInputValue} from 'node:sqlite';
+import {randomUUID} from 'node:crypto';
+import type {Disclosure,Indices,Listing} from './parser';
+import {decide,digestAt,preferences,DEFAULTS,type Preferences} from './rules';
+export type Job='live'|'backfill'|'reconcile'|'discovery'|'indices'|'groups';
+export interface Lease {job:Job;token:string;cursor:number;ceiling:number|null;failures:number;}
+const SCHEMA=`
+CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS jobs(name TEXT PRIMARY KEY,cursor INTEGER NOT NULL DEFAULT 0,ceiling INTEGER,next_at INTEGER NOT NULL DEFAULT 0,lease_token TEXT,lease_until INTEGER NOT NULL DEFAULT 0,failures INTEGER NOT NULL DEFAULT 0,last_ok INTEGER,last_error TEXT);
+CREATE TABLE IF NOT EXISTS discovered(id INTEGER PRIMARY KEY,published_at TEXT NOT NULL,first_seen INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS checks(id INTEGER PRIMARY KEY,checked_at INTEGER NOT NULL,disposition TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS gaps(id INTEGER PRIMARY KEY,kind TEXT NOT NULL,attempts INTEGER NOT NULL,next_try INTEGER NOT NULL,first_seen INTEGER NOT NULL,last_error TEXT);
+CREATE TABLE IF NOT EXISTS disclosures(id INTEGER PRIMARY KEY,source_ref TEXT NOT NULL UNIQUE,oid TEXT,related_oid TEXT,correction INTEGER NOT NULL,published_at TEXT NOT NULL,first_seen INTEGER NOT NULL,metadata TEXT NOT NULL,decision TEXT NOT NULL,silent INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS feed(id INTEGER PRIMARY KEY REFERENCES disclosures(id),source_ref TEXT NOT NULL UNIQUE,title TEXT NOT NULL,company TEXT,published_at TEXT NOT NULL,first_seen INTEGER NOT NULL,topics TEXT NOT NULL,subject_codes TEXT NOT NULL,related_codes TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS queue(id TEXT PRIMARY KEY,source_ref TEXT NOT NULL UNIQUE,kind TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'ready',created_at INTEGER NOT NULL,available_at INTEGER NOT NULL,frozen_at INTEGER,payload TEXT NOT NULL,sent_at INTEGER);
+CREATE TABLE IF NOT EXISTS queue_members(disclosure_id INTEGER PRIMARY KEY REFERENCES disclosures(id),queue_id TEXT NOT NULL REFERENCES queue(id));
+CREATE TABLE IF NOT EXISTS circuit_pending(disclosure_id INTEGER PRIMARY KEY REFERENCES disclosures(id),first_seen INTEGER NOT NULL,codes TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS gaps_due ON gaps(next_try);
+CREATE INDEX IF NOT EXISTS queue_ready ON queue(state,available_at);
+`;
+export class KapStore {
+ readonly db:DatabaseSync;
+ constructor(path:string){
+  this.db=new DatabaseSync(path);const d=this.db;
+  try{d.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');const app=Number(d.prepare('PRAGMA application_id').get()!.application_id);
+   const count=Number(d.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").get()!.n);
+   if(app!==0x534B4150&&(app!==0||count))throw new Error('kap_database_namespace');
+   d.exec('PRAGMA journal_mode=WAL; PRAGMA application_id=1397440848;');d.exec(SCHEMA);
+   this.run("INSERT OR IGNORE INTO settings VALUES('preferences',?)",JSON.stringify(DEFAULTS));
+   for(const name of ['live','backfill','reconcile','discovery','indices','groups'])this.run('INSERT OR IGNORE INTO jobs(name) VALUES(?)',name);
+  }catch(e){d.close();throw e;}
+ }
+ run(sql:string,...values:SQLInputValue[]){return this.db.prepare(sql).run(...values);}
+ row<T>(sql:string,...values:SQLInputValue[]):T|undefined{return this.db.prepare(sql).get(...values) as T|undefined;}
+ rows<T>(sql:string,...values:SQLInputValue[]):T[]{return this.db.prepare(sql).all(...values) as T[];}
+ transaction<T>(fn:()=>T):T{this.db.exec('BEGIN IMMEDIATE');try{const value=fn();this.db.exec('COMMIT');return value;}catch(e){this.db.exec('ROLLBACK');throw e;}}
+ get<T>(key:string):T|null {const row=this.row<{value:string}>('SELECT value FROM settings WHERE key=?',key);return row?JSON.parse(row.value):null;}
+ set(key:string,value:unknown){this.run('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',key,JSON.stringify(value));}
+ prefs(){return preferences(this.get('preferences'));}
+ configure(value:unknown){this.set('preferences',preferences(value));}
+ claim(job:Job,now:number):Lease|null {
+  const token=randomUUID();const changed=this.run('UPDATE jobs SET lease_token=?,lease_until=? WHERE name=? AND next_at<=? AND lease_until<=?',token,now+120_000,job,now,now).changes;
+  if(!changed)return null;const row=this.row<{cursor:number;ceiling:number|null;failures:number}>('SELECT * FROM jobs WHERE name=?',job)!;return {job,token,...row};
+ }
+ guard(lease:Lease,now:number){if(!this.row('SELECT 1 FROM jobs WHERE name=? AND lease_token=? AND lease_until>?',lease.job,lease.token,now))throw new Error('kap_lease_lost');}
+ finish(lease:Lease,now:number,interval:number,error?:string){
+  const failures=error?lease.failures+1:0;const wait=error?Math.min(300_000,30_000*2**Math.min(failures-1,4)):interval;
+  this.run('UPDATE jobs SET lease_token=NULL,lease_until=0,next_at=?,failures=?,last_error=?,last_ok=CASE WHEN ? IS NULL THEN ? ELSE last_ok END WHERE name=? AND lease_token=?',now+wait,failures,error??null,error??null,now,lease.job,lease.token);
+ }
+ discover(list:Listing[],lease:Lease,now:number){this.transaction(()=>{
+  this.guard(lease,now);const ids=list.map(x=>x.id),max=Math.max(...ids),min=Math.min(...ids);
+  if(this.get<number>('notification_start')===null){
+   this.set('notification_start',now);this.set('bootstrap',{at:new Date(now).toISOString(),latest:max,oldestListed:min});
+   this.run("UPDATE jobs SET cursor=? WHERE name='live'",max);
+   this.run("UPDATE jobs SET cursor=?,ceiling=? WHERE name='backfill'",min-1,max);
+  }
+  for(const r of list)if(Date.parse(r.publishedAt)>=now-86400_000)this.run('INSERT OR IGNORE INTO discovered VALUES(?,?,?)',r.id,r.publishedAt,now);
+  this.set('last_listing',{at:now,max:Math.max(max,this.latest()),count:list.length,oldestPublished:list.reduce((a,b)=>Date.parse(a.publishedAt)<Date.parse(b.publishedAt)?a:b).publishedAt});
+ });}
+ latest():number{return this.get<{max:number}>('last_listing')?.max??0;}
+ checked(id:number){return !!this.row('SELECT 1 FROM checks WHERE id=?',id);}
+ nextRepair(now:number):number|null {
+  const row=this.row<{id:number}>(`SELECT id FROM (
+   SELECT id,next_try AS due FROM gaps WHERE next_try<=?
+   UNION ALL SELECT d.id,d.first_seen AS due FROM discovered d WHERE d.id>? AND NOT EXISTS(SELECT 1 FROM checks c WHERE c.id=d.id) AND NOT EXISTS(SELECT 1 FROM gaps g WHERE g.id=d.id)
+  ) ORDER BY due,id LIMIT 1`,now,this.get<{latest:number}>('bootstrap')?.latest??0);return row?.id??null;
+ }
+ gap(id:number,kind:string,error:string,lease:Lease,now:number,advance=false){this.transaction(()=>{
+  this.guard(lease,now);const attempts=(this.row<{attempts:number}>('SELECT attempts FROM gaps WHERE id=?',id)?.attempts??0)+1;
+  this.run('INSERT INTO gaps VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind,attempts=excluded.attempts,next_try=excluded.next_try,last_error=excluded.last_error',id,kind,attempts,now+Math.min(300_000,30_000*2**Math.min(attempts-1,4)),now,error);
+  if(advance)this.advance(lease,id);
+ });}
+ advance(lease:Lease,id:number){this.run('UPDATE jobs SET cursor=MAX(cursor,?) WHERE name=? AND lease_token=?',id,lease.job,lease.token);}
+ skip(lease:Lease,id:number,now:number){this.transaction(()=>{this.guard(lease,now);this.advance(lease,id);});}
+ save(d:Disclosure,lease:Lease,now:number,advance:boolean){this.transaction(()=>{
+  this.guard(lease,now);
+  if(!this.checked(d.id)){
+   const p=this.prefs(),decision=decide(d,p,this.get<Indices>('indices'));
+   const cutoff=this.get<number>('notification_start');if(cutoff===null)throw new Error('kap_not_bootstrapped');
+   const firstSeen=this.row<{first_seen:number}>('SELECT first_seen FROM discovered WHERE id=?',d.id)?.first_seen??now;
+   const silent=lease.job==='backfill'||d.id<=(this.get<{latest:number}>('bootstrap')?.latest??0)||Date.parse(d.publishedAt)<cutoff;
+   const withinBackfill=lease.job!=='backfill'||Date.parse(d.publishedAt)>=now-86400_000;
+   if(decision.store&&withinBackfill){
+    this.run('INSERT INTO disclosures VALUES(?,?,?,?,?,?,?,?,?,?)',d.id,d.sourceRef,d.oid,d.relatedOid,Number(d.isCorrection),d.publishedAt,firstSeen,JSON.stringify(d),JSON.stringify(decision),Number(silent));
+    this.run('INSERT INTO feed VALUES(?,?,?,?,?,?,?,?,?)',d.id,d.sourceRef,d.title,d.company,d.publishedAt,firstSeen,JSON.stringify(decision.topics),JSON.stringify(d.subjectCodes),JSON.stringify(d.relatedCodes));
+    if(!silent&&decision.action!=='off'){
+     if(decision.action==='circuit')this.run('INSERT INTO circuit_pending VALUES(?,?,?)',d.id,now,JSON.stringify(d.subjectCodes));
+     else {const key=d.sourceRef;this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,decision.action,now,decision.action==='digest'?digestAt(now,p.fundDigestTime):now,now,JSON.stringify({disclosureId:d.id,sourceRef:d.sourceRef,reason:decision.reason}));this.run('INSERT INTO queue_members VALUES(?,?)',d.id,key);}
+    }
+   }
+   this.run('INSERT INTO checks VALUES(?,?,?)',d.id,now,decision.store&&withinBackfill?'stored':'filtered');
+  }
+  this.run('DELETE FROM gaps WHERE id=?',d.id);
+  if(advance)this.advance(lease,d.id);
+ });}
+ freeze(lease:Lease,now:number){this.transaction(()=>{
+  this.guard(lease,now);
+  // Close by the first member's wall clock window, independent of live cursor/edge.
+  for(let group=0;group<10;group++){
+   const first=this.row<{first_seen:number}>('SELECT first_seen FROM circuit_pending ORDER BY first_seen,disclosure_id LIMIT 1');if(!first||now<first.first_seen+12_000)break;
+   const members=this.rows<{disclosure_id:number;codes:string}>('SELECT disclosure_id,codes FROM circuit_pending WHERE first_seen<? ORDER BY first_seen,disclosure_id LIMIT 100',first.first_seen+12_000);
+   const ids=members.map(m=>m.disclosure_id),codes=[...new Set(members.flatMap(m=>JSON.parse(m.codes) as string[]))].sort(),key=`kap:circuit:${ids[0]}`;
+   this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart:first.first_seen,windowEnd:first.first_seen+12_000}));
+   for(const id of ids){this.run('INSERT INTO queue_members VALUES(?,?)',id,key);this.run('DELETE FROM circuit_pending WHERE disclosure_id=?',id);}
+  }
+ });}
+ health(now=Date.now()){
+  const indexes=this.get<Indices>('indices'),latest=this.latest(),live=this.row<{cursor:number}>("SELECT cursor FROM jobs WHERE name='live'")!.cursor;
+  const counts=(table:string)=>this.row<{n:number}>(`SELECT COUNT(*) AS n FROM ${table}`)!.n;
+  return {at:new Date(now).toISOString(),bootstrap:this.get('bootstrap'),notificationStart:this.get('notification_start'),jobs:this.rows('SELECT name,cursor,ceiling,next_at,lease_until,failures,last_ok,last_error FROM jobs'),
+   cursorLagIds:Math.max(0,latest-live),unresolvedGaps:counts('gaps'),oldestGap:this.row('SELECT id,first_seen,attempts,last_error FROM gaps ORDER BY first_seen LIMIT 1')??null,
+   sources:counts('disclosures'),feed:counts('feed'),queue:counts('queue'),circuitPending:counts('circuit_pending'),queueByState:this.rows('SELECT kind,state,COUNT(*) AS count,MIN(created_at) AS oldest FROM queue GROUP BY kind,state'),
+   indexCheckedAt:indexes?.checkedAt??null,indexAgeMs:indexes?now-Date.parse(indexes.checkedAt):null,discovery:this.get('last_listing'),deliveryEnabled:false};
+ }
+ close(){this.db.close();}
+}

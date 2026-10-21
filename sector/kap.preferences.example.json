@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "funds": "off",
+  "fundDigestTime": "19:00",
+  "priorityIndices": true,
+  "otherCompanies": "important",
+  "otherTopics": [],
+  "watchlist": [],
+  "excludedTitles": ["İhraç Belgesi", "Fon İhraç Sözleşmesi", "Kredi Kullanımı"]
+}

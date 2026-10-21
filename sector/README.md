@@ -82,3 +82,7 @@ Instagram projesi kullanıcının ek talebiyle kaldırıldı: Worker, workflow, 
 `npm test` XML/Atom, yönlendirme güvenliği, tam metin, kaynak kimliği, sayısal ölçek/para birimi, kanıtlar, olay tekrarları,
 beş PNG şablonu, Telegram yetkisi/onayları, SQLite işlemleri, iş kiralama ve tekrar sonuç teslimini test eder.
 Gerçek haber denemeleri `scripts/demo.ts`, erişim raporları `reports/` içindedir. Ham yayıncı metinleri/görselleri Git’e eklenmez.
+
+## Ayrı KAP toplama hattı
+
+KAP bildirimleri için ayrı cursor, kurallar, kalıcı kayıt ve kuyruk uygulaması: [KAP.md](KAP.md). Bu hat RSS/AI taslaklarına veri aktarmaz; dış servise gönderim yapmaz.

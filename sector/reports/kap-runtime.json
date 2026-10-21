@@ -1,0 +1,93 @@
+{
+  "at": "2026-10-21T13:36:17.907Z",
+  "bootstrap": {
+    "at": "2026-10-21T13:35:05.246Z",
+    "latest": 1685159,
+    "oldestListed": 1684689
+  },
+  "notificationStart": 1792589705246,
+  "jobs": [
+    {
+      "name": "live",
+      "cursor": 1685160,
+      "ceiling": null,
+      "next_at": 1792589796644,
+      "lease_until": 0,
+      "failures": 0,
+      "last_ok": 1792589766644,
+      "last_error": null
+    },
+    {
+      "name": "backfill",
+      "cursor": 1684691,
+      "ceiling": 1685159,
+      "next_at": 1792590305831,
+      "lease_until": 0,
+      "failures": 0,
+      "last_ok": 1792589705831,
+      "last_error": null
+    },
+    {
+      "name": "reconcile",
+      "cursor": 0,
+      "ceiling": null,
+      "next_at": 1792589795531,
+      "lease_until": 0,
+      "failures": 0,
+      "last_ok": 1792589765531,
+      "last_error": null
+    },
+    {
+      "name": "discovery",
+      "cursor": 0,
+      "ceiling": null,
+      "next_at": 1792589825531,
+      "lease_until": 0,
+      "failures": 0,
+      "last_ok": 1792589765531,
+      "last_error": null
+    },
+    {
+      "name": "indices",
+      "cursor": 0,
+      "ceiling": null,
+      "next_at": 1792676105388,
+      "lease_until": 0,
+      "failures": 0,
+      "last_ok": 1792589705388,
+      "last_error": null
+    },
+    {
+      "name": "groups",
+      "cursor": 0,
+      "ceiling": null,
+      "next_at": 1792589778570,
+      "lease_until": 0,
+      "failures": 0,
+      "last_ok": 1792589777570,
+      "last_error": null
+    }
+  ],
+  "cursorLagIds": 0,
+  "unresolvedGaps": 1,
+  "oldestGap": {
+    "id": 1685161,
+    "first_seen": 1792589766643,
+    "attempts": 1,
+    "last_error": "kap_http_404"
+  },
+  "sources": 4,
+  "feed": 4,
+  "queue": 0,
+  "circuitPending": 1,
+  "queueByState": [],
+  "indexCheckedAt": "2026-10-21T13:35:05.383Z",
+  "indexAgeMs": 72524,
+  "discovery": {
+    "at": 1792589765528,
+    "max": 1685160,
+    "count": 472,
+    "oldestPublished": "2026-10-20T21:11:26.000Z"
+  },
+  "deliveryEnabled": false
+}

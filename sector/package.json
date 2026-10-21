@@ -11,7 +11,10 @@
     "demo": "tsx scripts/demo.ts",
     "sources:check": "python3 scripts/probe_sources.py",
     "db:local": "wrangler d1 migrations apply DB --local",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "kap:status": "tsx scripts/kap_service.ts --status",
+    "kap:once": "tsx scripts/kap_service.ts --once",
+    "kap:probe": "tsx scripts/kap_probe.ts"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "2.6.2",

@@ -9,7 +9,8 @@ export function editorialPolicy(documents:Document[]){
  const fundWord=/(?:^|[^\p{L}\p{N}])(?:fon(?:lar(?:i(?:n(?:in)?)?|da|dan|a|in)?|un|u|a|da|dan|daki|unun)?|tefas|pblk)(?=$|[^\p{L}\p{N}])/u;
  // KAP templates contain empty "İlgili Fonlar" fields and buyback budget
  // labels. Neither makes a company's contract/buyback a fund story.
- const fund=documents.some(d=>d.source_id==='kap'
+ const kap=documents.find(d=>d.source_id==='kap');
+ const fund=(kap?[kap]:documents).some(d=>d.source_id==='kap'
   ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
   :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
@@ -39,4 +40,15 @@ export function invalidEmojiPlacement(draft:Draft):boolean {
  const headline=draft.headline.trim();
  const rest=headline.replace(/^(?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\uFE0F?\s+/u,'');
  return emoji.test(rest)||[draft.body,draft.card_headline,draft.card_body,...draft.hashtags].some(t=>emoji.test(t??''));
+}
+
+// These repairs select only source-backed category/ticker tags, never facts.
+// Run before the semantic audit as well as at the submission boundary.
+export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
+ if(!value||typeof value!=='object')return value;
+ const required=editorialPolicy(documents).required_hashtags;
+ const tags=Array.isArray(value.hashtags)?[...new Set(value.hashtags.filter((t):t is string=>typeof t==='string').map(t=>'#'+t.trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'')))]:[];
+ const valid=tags.filter(t=>/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));
+ const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,3):valid;
+ return {...value,headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags};
 }

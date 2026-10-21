@@ -41,3 +41,8 @@ test('rounded card quantities remain blocked with actionable preflight feedback'
  assert.match(numericIssues(d,[doc])[0],/card_body.*10,49 milyon/);
  assert.throws(()=>validateDraft(d,[doc]),/unsupported_number/);
 });
+test('written calendar ranges do not invent negative day quantities',()=>{
+ assert.deepEqual(numericTokens('1 Ocak–30 Eylül 2026'),['1','30','2026']);
+ assert.deepEqual(numericTokens('1 Ocak - 30 Eylül 2026'),['1','30','2026']);
+ assert.deepEqual(numericTokens('-30 TL zarar'),['-30 tl']);
+});

@@ -18,9 +18,9 @@ try{
   if(decide(JSON.parse(row.metadata) as Disclosure,kap.prefs(),null).action!=='instant'){
    counts.filtered++;if(apply){await db.prepare("UPDATE model_jobs SET state='paused' WHERE id=? AND state IN ('needs_review','queued')").bind(row.job_id).run();kap.run("UPDATE queue SET state='suppressed' WHERE id=?",row.id);}continue;
   }
-  const key='kap-numeric-retry-v1:'+row.job_id;
-  if(job.state==='needs_review'&&(!['unsupported_number_or_unit','claim_number_mismatch','subscription_turn_failed'].includes(job.error)||await db.prepare('SELECT value FROM system_state WHERE key=?').bind(key).first())){counts.unchanged++;continue;}
-  const docs=JSON.parse(job.documents);if(!docs.length||docs.some((d:{body?:string})=>!d.body)){counts.unchanged++;continue;}
+  const key='kap-practical-retry-v2:'+row.job_id;
+  if(job.state==='needs_review'&&(!['unsupported_number_or_unit','claim_number_mismatch','subscription_turn_failed','missing_market_hashtags','invented_evidence'].includes(job.error)||await db.prepare('SELECT value FROM system_state WHERE key=?').bind(key).first())){counts.unchanged++;continue;}
+  const docs=JSON.parse(job.documents);if(!docs.length||docs.some((d:{body?:string;passages?:unknown[];coverage?:{complete:boolean}})=>!d.body?.trim()||!d.passages?.length||d.coverage&&!d.coverage.complete)){counts.unchanged++;continue;}
   const input=JSON.stringify(withKapTableEvidence(docs));if(input.length>3_500_000){counts.unchanged++;continue;}
   counts[job.state==='queued'?'upgraded_queued':'retry']++;
   if(apply){

@@ -41,3 +41,19 @@ test('KAP empty fund fields and buyback budgets do not override company tags',()
  }
  assert.deepEqual(editorialPolicy([doc({source_id:'kap',title:'Özel Durum Açıklaması',body:'Yatırım fonlarının tasfiye sürecine ilişkin açıklama.',equity_codes:['TEST']})]).required_hashtags,['#Fon','#PBLK','#Tasfiye']);
 });
+
+import {repairDraftStyle} from '../src/style';
+test('KAP company attachments do not turn financial reports into fund stories',()=>{
+ const docs=[doc({source_id:'kap',official:true,title:'Finansal Rapor',equity_codes:['KLGYO']}),doc({source_id:'kap_pdf',official:true,title:'Bilanço eki',body:'Şirket fon kaynaklarını ve yatırım fonlarını muhasebe dipnotunda açıkladı.'})];
+ assert.deepEqual(editorialPolicy(docs).required_hashtags,['#Borsa','#BIST','#KLGYO']);
+ const original={headline:'Kiler finansal sonuçlarını açıkladı',body:'Faaliyet sonuçları duyuruldu.',hashtags:['#Fon','#PBLK','#Tasfiye']} as Draft;
+ const fixed=repairDraftStyle(original,docs);
+ assert.deepEqual(fixed.hashtags,['#Borsa','#BIST','#KLGYO']);assert.equal(fixed.body,original.body);
+ assert.deepEqual(repairDraftStyle(fixed,docs),fixed);assert.deepEqual(original.hashtags,['#Fon','#PBLK','#Tasfiye']);
+});
+test('missing mandatory tags are repaired without a model call or invented ticker',()=>{
+ const d={headline:'Yatırım açıklaması',hashtags:['#Yeni Yatırım','#İş-Dünyası']} as Draft;
+ assert.deepEqual(repairDraftStyle(d,[doc({equity_codes:['THYAO']})]).hashtags,['#Borsa','#BIST','#THYAO']);
+ assert.deepEqual(repairDraftStyle(d,[doc({title:'Fon tasfiyesi'})]).hashtags,['#Fon','#PBLK','#Tasfiye']);
+ assert.deepEqual(repairDraftStyle(d,[doc({title:'Tesla yatırım planlıyor'})]).hashtags,['#YeniYatırım','#İşDünyası']);
+});

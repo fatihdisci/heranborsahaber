@@ -49,7 +49,7 @@ async function modelLoop(){while(!stopping){let job:Awaited<ReturnType<typeof le
   const result=JSON.parse(output) as {draft:Draft;audit:unknown;runtime:unknown};
   await writeFile(directory+'/last-model-result.json',JSON.stringify({job_id:job.id,result}),{mode:0o600});
   await recordModelReview(env,job.id,result.audit);
-  const documents=job.documents as Document[];acceptHermes(result.draft,result.audit,documents);
+  const documents=job.documents as Document[];result.draft=acceptHermes(result.draft,result.audit,documents).draft;
   const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true,job.card_theme,job.card_layout);
   const delivered=await submitJob(env,{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
   await deliver(env);await status('model_health',{ok:true,at:new Date().toISOString(),draft_id:delivered.id,duration_ms:Date.now()-started});

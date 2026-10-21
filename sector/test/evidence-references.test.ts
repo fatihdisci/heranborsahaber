@@ -20,3 +20,14 @@ test('fabricated quote, short fragment, and cross-document match cannot be silen
  const issues=evidenceIssues(draft('body31',text.replace('Avro','dolar')),docs);
  assert.equal(issues.length,1);assert(issues[0].includes('Gerçek pasaj: '+text));
 });
+test('PDF whitespace can be mapped back to the verbatim source without changing facts',()=>{
+ const source='Şirket    765.000\n  Avro tutarında sözleşme imzaladı.';
+ const quote='Şirket 765.000 Avro tutarında sözleşme imzaladı.';
+ const documents=[{passages:[{id:'page1',text:source}]}] as Document[];
+ const original=draft('page1',quote),fixed=repairEvidenceReferences(original,documents);
+ assert.equal(fixed.claims[0].evidence[0].quote,source);assert.equal(fixed.claims[0].text,original.claims[0].text);
+ assert.deepEqual(evidenceIssues(fixed,documents),[]);
+ for(const changed of [quote.replace('765.000','900.000'),quote.replace('Avro','dolar')])assert.equal(repairEvidenceReferences(draft('page1',changed),documents).claims[0].evidence[0].quote,changed);
+ const ambiguous=[{passages:[{id:'a',text:source},{id:'b',text:source}]}] as Document[];
+ assert.deepEqual(repairEvidenceReferences(draft('missing',quote),ambiguous),draft('missing',quote));
+});

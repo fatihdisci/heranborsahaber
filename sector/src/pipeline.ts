@@ -1,3 +1,4 @@
+import {manualStatusId} from './manual-status';
 import {announceNews,refreshNewsRequests} from './news-inbox';
 import registry from '../sources.json';
 import type {Env,Source,Document,Draft} from './types';
@@ -95,7 +96,9 @@ export async function deliver(env:Env):Promise<void> {
  try {
   const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
   const previous=await env.DB.prepare('SELECT value FROM system_state WHERE key=?').bind('telegram_photo:'+row.id).first<{value:string}>();
-  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,previous?Number(previous.value):undefined);
+  const manual=await env.DB.prepare('SELECT m.update_id FROM manual_requests m JOIN model_jobs j ON j.id=m.job_id WHERE j.result_draft=? ORDER BY m.created_at LIMIT 1').bind(row.id).first<{update_id:number}>();
+  const statusMessage=manual?await manualStatusId(env,manual.update_id):undefined;
+  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,previous?Number(previous.value):statusMessage);
   await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id),
    env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_photo:'+row.id,String(message))]);

@@ -1,10 +1,11 @@
+import {ensureManualStatus,manualStatusId} from '../src/manual-status';
 import registry from '../sources.json';
 import {readDocument} from '../src/article';
 import {safeUrl} from '../src/network';
 import {kapDocuments} from '../src/kap-evidence';
 import {readPdf} from './pdf_reader';
 import {pdfBytes,boundedBytes} from '../src/pdf-transport';
-import {telegram} from '../src/telegram';
+import {telegram,sendDraft} from '../src/telegram';
 import {enqueueEvidence} from '../src/ingest';
 import type {Env,Document,Source} from '../src/types';
 export async function manualDocuments(env:Env,kind:string,input:string,messageId:number):Promise<Document[]> {
@@ -34,20 +35,31 @@ export async function manualDocuments(env:Env,kind:string,input:string,messageId
 }
 export async function runManual(env:Env):Promise<void> {
  const now=Math.floor(Date.now()/1000);
+ const active=await env.DB.prepare("SELECT update_id,message_id FROM manual_requests WHERE state IN ('queued','reading','model_queued') ORDER BY created_at LIMIT 10").all<{update_id:number;message_id:number}>();
+ for(const r of active.results??[])await ensureManualStatus(env,r.update_id,r.message_id);
  // The model's output is still subject to all source and uncertainty checks.
  const pending=await env.DB.prepare("SELECT update_id,job_id,message_id FROM manual_requests WHERE state='model_queued'").all<{update_id:number;job_id:string;message_id:number}>();
  for(const row of pending.results??[]){
   const j=await env.DB.prepare('SELECT state,error,result_draft FROM model_jobs WHERE id=?').bind(row.job_id).first<{state:string;error:string|null;result_draft:string|null}>();
-  const d=j?.result_draft?await env.DB.prepare('SELECT state,delivery_state,message_id FROM drafts WHERE id=?').bind(j.result_draft).first<{state:string;delivery_state:string;message_id:number}>():null;
-  if(d?.delivery_state==='sent')await env.DB.prepare("UPDATE manual_requests SET state='complete' WHERE update_id=?").bind(row.update_id).run();
+  const d=j?.result_draft?await env.DB.prepare('SELECT id,revision,content,documents,media_key,verification,state,delivery_state,message_id FROM drafts WHERE id=?').bind(j.result_draft).first<{id:string;revision:number;content:string;documents:string;media_key:string;verification:string;state:string;delivery_state:string;message_id:number}>():null;
+  if(d?.delivery_state==='sent'){
+   const statusId=await manualStatusId(env,row.update_id);
+   // Reusing an already prepared URL still completes this request's own status.
+   if(statusId&&statusId!==d.message_id){
+    const image=await env.MEDIA.get(d.media_key);if(!image)throw Error('draft_media_missing');
+    await sendDraft(env,d.id,d.revision,JSON.parse(d.content),JSON.parse(d.documents),new Uint8Array(await image.arrayBuffer()),d.verification,statusId);
+   }
+   await env.DB.prepare("UPDATE manual_requests SET state='complete' WHERE update_id=?").bind(row.update_id).run();
+  }
   else if(j?.state==='needs_review'||j?.state==='expired'||d?.state==='needs_review'||d?.delivery_state==='uncertain')await env.DB.prepare("UPDATE manual_requests SET state='needs_review',error=? WHERE update_id=?").bind(j?.error??'draft_review_required',row.update_id).run();
  }
  const failed=await env.DB.prepare("SELECT update_id,message_id,error FROM manual_requests WHERE state='needs_review' AND notified=0 LIMIT 1").first<{update_id:number;message_id:number;error:string}>();
  if(failed&&env.MODE==='telegram_review'){
   // Claim before sending an error reply; never flood on a delivery timeout.
   await env.DB.prepare('UPDATE manual_requests SET notified=1 WHERE update_id=?').bind(failed.update_id).run();
-  const text=failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
-  await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,reply_parameters:JSON.stringify({message_id:failed.message_id,allow_sending_without_reply:true})}));
+  const text=/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
+  const statusId=await manualStatusId(env,failed.update_id);
+  await telegram(env,statusId?'editMessageText':'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,...(statusId?{message_id:String(statusId)}:{reply_parameters:JSON.stringify({message_id:failed.message_id,allow_sending_without_reply:true})})}));
  }
  const busy=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state IN ('queued','leased')").first<{n:number}>();if((busy?.n??0)>=5)return;
  await env.DB.prepare("UPDATE manual_requests SET state='queued' WHERE state='reading' AND lease_until<?").bind(now).run();

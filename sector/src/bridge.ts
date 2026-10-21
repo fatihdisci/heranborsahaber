@@ -30,7 +30,7 @@ export async function ingestOfficial(env:Env,input:Record<string,unknown>):Promi
 export async function leaseJob(env:Env) {
  // Ambiguous jobs expire into review, rather than replaying model calls.
  await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error='lease_expired' WHERE state='leased' AND lease_until<?").bind(now()).run();
- const job=await env.DB.prepare("SELECT * FROM model_jobs WHERE state IN ('queued','retry_pending') AND created_at>? AND (kind NOT IN ('initial','news') OR EXISTS (SELECT 1 FROM news_cards c WHERE c.article_id=model_jobs.article_id AND c.state='model_queued')) ORDER BY CASE WHEN state='retry_pending' THEN 1 ELSE 0 END,CASE WHEN kind IN ('news','edit') THEN 0 ELSE 1 END,created_at LIMIT 1").bind(now()-24*3600).first<Job>();if(!job)return null;
+ const job=await env.DB.prepare("SELECT * FROM model_jobs WHERE state IN ('queued','retry_pending') AND created_at>? AND (kind NOT IN ('initial','news') OR EXISTS (SELECT 1 FROM news_cards c WHERE c.article_id=model_jobs.article_id AND c.state='model_queued')) ORDER BY CASE WHEN state='retry_pending' THEN 1 ELSE 0 END,CASE WHEN kind IN ('news','edit','manual') THEN 0 ELSE 1 END,created_at LIMIT 1").bind(now()-24*3600).first<Job>();if(!job)return null;
  const token=crypto.randomUUID();
  const lock=await env.DB.prepare("UPDATE model_jobs SET state='leased',lease_token=?,lease_until=? WHERE id=? AND state IN ('queued','retry_pending')").bind(token,now()+600,job.id).run();if(!lock.meta.changes)return null;
  const normalized=JSON.stringify(withKapUnitEvidence(JSON.parse(job.documents)));

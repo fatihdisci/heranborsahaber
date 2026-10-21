@@ -1,3 +1,4 @@
+import {ensureManualStatus} from './manual-status';
 import {isOwner,telegram} from './telegram';
 import type {Env} from './types';
 export interface InputMessage {message_id:number;text?:string;caption?:string;document?:{file_id:string;file_size?:number;file_name?:string;mime_type?:string};from?:{id:number};chat?:{id:number;type:string};reply_to_message?:{message_id:number};}
@@ -16,6 +17,7 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
  const kind=m.document?'pdf':url?'url':text.length>=100?'text':null;
  if(!kind)return false;
  const input=JSON.stringify({url,text,document:m.document??null});if(input.length>150_000)throw Error('manual_input_limit');
- await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,kind,input,Math.floor(Date.now()/1000)).run();
+ const inserted=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,kind,input,Math.floor(Date.now()/1000)).run();
+ if(inserted.meta.changes)await ensureManualStatus(env,updateId,m.message_id);
  return true;
 }

@@ -35,3 +35,9 @@ test('render failure preserves previous content, revision and image delivery sta
  const e=await env();await seed(e);await requestRedesign(e,`design:${id}:1`,90,1);await redesignOne(e,async()=>{throw Error('card_content_overflow');});
  const row=await e.DB.prepare('SELECT revision,delivery_state FROM drafts WHERE id=?').bind(id).first<any>();assert.equal(row.revision,1);assert.equal(row.delivery_state,'sent');assert.equal(await savedLayout(e,'draft:'+id),null);
 });
+
+test('explicit redesign renews the old card delivery window without changing its content',async()=>{
+ const e=await env();await seed(e);await e.DB.prepare('UPDATE drafts SET expires_at=1 WHERE id=?').bind(id).run();
+ await requestRedesign(e,`design:${id}:1`,90,1);await redesignOne(e,async()=>new Uint8Array([1]));
+ const row=await e.DB.prepare('SELECT expires_at,content FROM drafts WHERE id=?').bind(id).first<any>();assert(row.expires_at>Date.now()/1000);assert.equal(row.content,JSON.stringify(content));
+});

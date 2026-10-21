@@ -25,7 +25,7 @@ export async function redesignOne(env:Env,render:(svg:string)=>Promise<Uint8Arra
   await env.MEDIA.put(media,bytes,{httpMetadata:{contentType:'image/png'}});
   // Keep old media for recovery. Content/evidence never change in a redesign.
   const result=await env.DB.batch([
-   env.DB.prepare("UPDATE drafts SET revision=?,media_key=?,delivery_state='waiting',next_delivery=0 WHERE id=? AND revision=? AND delivery_state='sent' AND state='pending'").bind(revision,media,job.draft_id,row.revision),
+   env.DB.prepare("UPDATE drafts SET revision=?,media_key=?,delivery_state='waiting',next_delivery=0,expires_at=MAX(expires_at,?) WHERE id=? AND revision=? AND delivery_state='sent' AND state='pending'").bind(revision,media,time+86400,job.draft_id,row.revision),
    env.DB.prepare("INSERT INTO system_state(key,value) SELECT ?,? WHERE EXISTS(SELECT 1 FROM drafts WHERE id=? AND media_key=?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind('card_layout:draft:'+job.draft_id,job.layout,job.draft_id,media),
    env.DB.prepare("UPDATE card_redesigns SET state='complete',lease_until=0 WHERE update_id=?").bind(job.update_id)
   ]);

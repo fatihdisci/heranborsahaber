@@ -1,3 +1,4 @@
+import {awaitActivation} from './startup_gate';
 import {saveTelegramUpdates,processTelegramUpdates} from '../src/telegram-inbox';
 import {redesignOne} from '../src/card-redesign';
 import {recordModelReview} from '../src/model-recovery';
@@ -29,6 +30,7 @@ await seed(env);
 const lockPath=directory+'/service.lock';let lock;
 try{lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}
 catch{try{const pid=Number(await readFile(lockPath,'utf8'));process.kill(pid,0);throw new Error('service_already_running');}catch(e){if((e as NodeJS.ErrnoException).code!=='ESRCH')throw e;await unlink(lockPath);lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}}
+await writeFile(directory+'/service-ready.json',JSON.stringify({pid:process.pid,release:process.env.SECTOR_RELEASE_ID??'',started_at:new Date().toISOString()}),{mode:0o600});
 let stopping=false;const pause=(ms:number)=>new Promise(r=>setTimeout(r,ms));
 process.on('SIGTERM',()=>{stopping=true;});process.on('SIGINT',()=>{stopping=true;});
 async function status(key:string,value:unknown){await env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,JSON.stringify(value)).run();}
@@ -78,7 +80,8 @@ async function telegramLoop(){
   await status('telegram_health',{ok:true,at:new Date().toISOString()});
  }catch(e){await status('telegram_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});await pause(10_000);}}
 }
-if(process.argv.includes('--prepare-once')){try{await tick(env);console.log('Sources scanned and model jobs prepared.');}finally{await lock.close();await unlink(lockPath);}}
+if(!await awaitActivation(directory,process.env.SECTOR_RELEASE_ID,()=>stopping)){await lock.close();await unlink(lockPath);}
+else if(process.argv.includes('--prepare-once')){try{await tick(env);console.log('Sources scanned and model jobs prepared.');}finally{await lock.close();await unlink(lockPath);}}
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}

@@ -1,35 +1,134 @@
-"""Install only this project's service. Never restart the main Hermes gateway."""
-import json,os,pathlib,plistlib,shutil,subprocess,time,sys
-source=pathlib.Path(__file__).resolve().parents[1]
-runtime=pathlib.Path.home()/'Library/Application Support/sector-haber'
-app=runtime/'app';app.mkdir(parents=True,exist_ok=True)
-pdf_python=runtime/'pdf-venv/bin/python'
-if not pdf_python.exists():
-    subprocess.run([sys.executable,'-m','venv',str(runtime/'pdf-venv')],check=True)
-    subprocess.run([str(pdf_python),'-m','pip','install','-r',str(source/'requirements-pdf.txt')],check=True)
-domain=f'gui/{os.getuid()}'
-if '--update' in sys.argv:
-    subprocess.run(['launchctl','bootout',domain+'/com.sectorhaber.news'],capture_output=True)
-    deadline=time.monotonic()+150
-    while subprocess.run(['launchctl','print',domain+'/com.sectorhaber.news'],capture_output=True).returncode==0:
-        if time.monotonic()>deadline:raise RuntimeError('previous_sector_service_still_stopping')
-        time.sleep(0.5)
-for name in ['src','scripts','assets','migrations']:
-    shutil.copytree(source/name,app/name,dirs_exist_ok=True)
-for name in ['sources.json','package.json','package-lock.json']:
-    shutil.copy2(source/name,app/name)
-subprocess.run(['npm','ci','--omit=dev','--ignore-scripts'],cwd=app,check=True)
-ocr=runtime/'bin/pdf-ocr';ocr.parent.mkdir(exist_ok=True,mode=0o700)
-subprocess.run(['/usr/bin/xcrun','swiftc','-O',str(app/'scripts/pdf_ocr.swift'),'-o',str(ocr)],check=True)
-ocr.chmod(0o700)
-node=shutil.which('node')
-if not node:raise RuntimeError('node_required')
-logs=runtime/'logs';logs.mkdir(exist_ok=True)
-plist=pathlib.Path.home()/'Library/LaunchAgents/com.sectorhaber.news.plist'
-payload={'Label':'com.sectorhaber.news','ProgramArguments':[node,str(app/'node_modules/tsx/dist/cli.mjs'),str(app/'scripts/local_service.ts')],
- 'WorkingDirectory':str(app),'RunAtLoad':True,'KeepAlive':True,'ThrottleInterval':30,'ExitTimeOut':120,
- 'EnvironmentVariables':{'HOME':str(pathlib.Path.home()),'PATH':str(pathlib.Path(node).parent)+':/opt/homebrew/bin:/usr/bin:/bin','NODE_NO_WARNINGS':'1'},
- 'StandardOutPath':str(logs/'service.log'),'StandardErrorPath':str(logs/'service.error.log')}
-plist.parent.mkdir(exist_ok=True);plist.write_bytes(plistlib.dumps(payload));plist.chmod(0o644)
-subprocess.run(['launchctl','bootstrap',domain,str(plist)],check=True)
-print('SECTOR HABER service installed. Existing Hermes gateway unchanged.')
+"""Stage and verify a release before stopping only the SECTOR news service.
+
+Importing this module has no side effects. Tests use temporary roots and fake
+process commands. Secrets, databases and the main Hermes gateway are not managed
+here. Previous application/OCR/plist paths remain in the rollback directory.
+"""
+import json,os,pathlib,plistlib,shutil,subprocess,time,sys,uuid,platform
+
+class Installer:
+    def __init__(self,source,runtime,plist,node,run=subprocess.run):
+        self.source=pathlib.Path(source);self.runtime=pathlib.Path(runtime);self.plist=pathlib.Path(plist);self.node=node;self.run=run
+        self.domain=f'gui/{os.getuid()}';self.service=self.domain+'/com.sectorhaber.news'
+        self.release_id=uuid.uuid4().hex
+        self.release=self.runtime/'releases'/self.release_id
+        self.backup=self.runtime/'backups'/('update-'+self.release_id)
+        self.swapped=[]
+    def command(self,args,**kwargs):
+        return self.run([str(a) for a in args],check=True,capture_output=True,text=True,timeout=660,**kwargs)
+    def loaded(self):
+        return self.run(['launchctl','print',self.service],capture_output=True,text=True).returncode==0
+    def process_alive(self):
+        try:pid=int((self.runtime/'service.lock').read_text());os.kill(pid,0);return True
+        except (FileNotFoundError,ValueError,ProcessLookupError):return False
+    def stop(self):
+        if self.loaded():self.command(['launchctl','bootout',self.service])
+        deadline=time.monotonic()+650
+        while self.loaded() or self.process_alive():
+            if time.monotonic()>deadline:raise RuntimeError('sector_service_did_not_stop')
+            time.sleep(.5)
+    def wait_ready(self,release=None):
+        # Sustained process readiness, not a remote API or a real Telegram test.
+        deadline=time.monotonic()+45;stable=None
+        while time.monotonic()<deadline:
+            ready=self.loaded() and self.process_alive()
+            if ready and release:
+                try:
+                    value=json.loads((self.runtime/'service-ready.json').read_text())
+                    ready=value.get('release')==release and value.get('pid')==int((self.runtime/'service.lock').read_text())
+                except (FileNotFoundError,ValueError):ready=False
+            stable=(stable or time.monotonic()) if ready else None
+            if stable and time.monotonic()-stable>=5:return
+            time.sleep(.5)
+        raise RuntimeError('sector_startup_not_ready')
+    def prepare(self):
+        app=self.release/'app';app.mkdir(parents=True,mode=0o700)
+        for name in ['src','scripts','assets','migrations','test']:
+            shutil.copytree(self.source/name,app/name,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+        for name in ['sources.json','package.json','package-lock.json','tsconfig.json','requirements-pdf.txt']:
+            shutil.copy2(self.source/name,app/name)
+        # Install scripts are disabled, just as in CI. All checks precede bootout.
+        self.command(['npm','ci','--ignore-scripts'],cwd=app)
+        for check in ['check','test','build']:self.command(['npm','run',check],cwd=app)
+        pdf=self.runtime/'pdf-venv/bin/python'
+        if not pdf.exists():
+            pdf=self.release/'pdf-venv/bin/python'
+            self.command([sys.executable,'-m','venv',pdf.parent.parent])
+            self.command([pdf,'-m','pip','install','-r',app/'requirements-pdf.txt'])
+        self.command([pdf,'-c','import pdfplumber,pypdfium2'])
+        self.command([pdf,'-m','unittest','discover','-s','test','-p','test_*.py'],cwd=app)
+        ocr=self.release/'pdf-ocr'
+        self.command(['/usr/bin/xcrun','swiftc','-O',app/'scripts/pdf_ocr.swift','-o',ocr])
+        ocr.chmod(0o700)
+        # The release stays at this path; virtualenv and node paths never move.
+        self.command(['npm','prune','--omit=dev','--ignore-scripts'],cwd=app)
+        logs=self.runtime/'logs'
+        payload={'Label':'com.sectorhaber.news','ProgramArguments':[self.node,str(self.runtime/'app/node_modules/tsx/dist/cli.mjs'),str(self.runtime/'app/scripts/local_service.ts')],
+          'WorkingDirectory':str(self.runtime/'app'),'RunAtLoad':True,'KeepAlive':True,'ThrottleInterval':30,'ExitTimeOut':600,
+          'EnvironmentVariables':{'HOME':str(pathlib.Path.home()),'PATH':str(pathlib.Path(self.node).parent)+':/opt/homebrew/bin:/usr/bin:/bin','NODE_NO_WARNINGS':'1','SECTOR_RELEASE_ID':self.release_id},
+          'StandardOutPath':str(logs/'service.log'),'StandardErrorPath':str(logs/'service.error.log')}
+        (self.release/'service.plist').write_bytes(plistlib.dumps(payload))
+    def record(self,state):
+        self.backup.mkdir(parents=True,exist_ok=True,mode=0o700)
+        data={'state':state,'release':str(self.release),'paths':[{'live':str(p),'previous':str(old),'existed':had} for p,old,had in self.swapped]}
+        temp=self.backup/'rollback.next';temp.write_text(json.dumps(data,indent=2));temp.chmod(0o600);os.replace(temp,self.backup/'rollback.json')
+    def replace(self,path,target,symlink=True):
+        path=pathlib.Path(path);path.parent.mkdir(parents=True,exist_ok=True)
+        previous=self.backup/str(len(self.swapped));had=path.exists() or path.is_symlink()
+        self.swapped.append((path,previous,had));self.record('switching')
+        if had:os.replace(path,previous)
+        staged=path.with_name(path.name+'.next-'+self.release_id)
+        if symlink:staged.symlink_to(target)
+        else:shutil.copy2(target,staged)
+        os.replace(staged,path)
+    def restore(self):
+        for path,previous,had in reversed(self.swapped):
+            # If moving the old path failed it is still the live one; keep it.
+            if had and not (previous.exists() or previous.is_symlink()):continue
+            if path.is_symlink() or path.is_file():path.unlink()
+            if had:os.replace(previous,path)
+        self.record('rolled_back')
+    def install(self,update=False):
+        self.runtime.mkdir(parents=True,exist_ok=True,mode=0o700)
+        lock=self.runtime/'.install.lock'
+        fd=os.open(lock,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+        try:
+            was_running=self.loaded()
+            if not update and (was_running or (self.runtime/'app').exists() or (self.runtime/'app').is_symlink()):raise RuntimeError('existing_installation_requires_update')
+            if not was_running and self.process_alive():raise RuntimeError('unmanaged_sector_process_running')
+            self.prepare()
+            # Detect a service started by somebody else while staging.
+            if not update and (self.loaded() or self.process_alive()):raise RuntimeError('sector_started_during_staging')
+            self.record('prepared')
+            if was_running:self.stop()
+            try:
+                self.replace(self.runtime/'app',self.release/'app')
+                self.replace(self.runtime/'bin/pdf-ocr',self.release/'pdf-ocr')
+                if (self.release/'pdf-venv').exists():self.replace(self.runtime/'pdf-venv',self.release/'pdf-venv')
+                self.replace(self.plist,self.release/'service.plist',symlink=False)
+                (self.runtime/'logs').mkdir(exist_ok=True)
+                self.command(['launchctl','bootstrap',self.domain,self.plist])
+                self.wait_ready(self.release_id)
+                self.record('active')
+                # This is the last switch operation: no Telegram/model loop ran
+                # while startup was being verified or could still roll back.
+                activation=self.release/'active.next';activation.touch(mode=0o600)
+                os.replace(activation,self.release/'active')
+            except Exception:
+                # Never swap files underneath a process that has not stopped.
+                self.stop();self.restore()
+                if was_running:
+                    self.command(['launchctl','bootstrap',self.domain,self.plist]);self.wait_ready()
+                raise
+        finally:
+            os.close(fd);lock.unlink()
+
+def main():
+    if platform.system()!='Darwin':raise RuntimeError('local_installer_requires_macos')
+    node=shutil.which('node')
+    if not node:raise RuntimeError('node_required')
+    home=pathlib.Path.home()
+    Installer(pathlib.Path(__file__).resolve().parents[1],home/'Library/Application Support/sector-haber',home/'Library/LaunchAgents/com.sectorhaber.news.plist',node,run=subprocess.run).install('--update' in sys.argv)
+    print('SECTOR HABER release verified and activated. Rollback files retained; main Hermes gateway unchanged.')
+
+if __name__=='__main__':main()

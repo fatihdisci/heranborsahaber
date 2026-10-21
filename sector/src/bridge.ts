@@ -1,3 +1,4 @@
+import {chooseLayout,savedLayout} from './card-layout';
 import {withKapUnitEvidence} from './kap-unit-evidence';
 import {chooseTheme,savedTheme,legacyTheme} from './card-theme';
 import {editorialPolicy} from './style';
@@ -37,9 +38,10 @@ export async function leaseJob(env:Env) {
  if(normalized!==job.documents){job.documents=normalized;job.input_hash=await sha256(normalized);await env.DB.prepare('UPDATE model_jobs SET documents=?,input_hash=? WHERE id=? AND lease_token=?').bind(normalized,job.input_hash,job.id,token).run();}
  const editing=job.kind==='edit'?await env.DB.prepare('SELECT content FROM drafts WHERE id=?').bind(job.draft_id).first<{content:string}>():null;
  const theme=editing?(await savedTheme(env,'draft:'+job.draft_id)??legacyTheme((JSON.parse(editing.content) as Draft).template)):await chooseTheme(env,job.article_id);
+ const layout=editing?(await savedLayout(env,'draft:'+job.draft_id)??'editorial'):await chooseLayout(env,job.article_id);
  const previous=await env.DB.prepare('SELECT id,content FROM drafts WHERE created_at>? ORDER BY created_at DESC LIMIT 40').bind(now()-48*3600).all<{id:string;content:string}>();
  const existing_events=(previous.results??[]).map(r=>{const d=JSON.parse(r.content) as Draft;return {id:r.id,headline:d.headline,event_key:d.event_key,entities:d.entities};});
- return {id:job.id,card_theme:theme,lease_token:token,input_hash:job.input_hash,deadline:now()+600,model:env.AI_MODEL,effort:env.AI_EFFORT,provider:'openai-codex',allowed_tools:[],documents:JSON.parse(job.documents),editorial_policy:editorialPolicy(JSON.parse(job.documents)),existing_events,edit_request:job.edit_request,prompt:EDITOR_PROMPT,schema:DRAFT_SCHEMA,audit_prompt:AUDIT_PROMPT};
+ return {id:job.id,card_theme:theme,card_layout:layout,lease_token:token,input_hash:job.input_hash,deadline:now()+600,model:env.AI_MODEL,effort:env.AI_EFFORT,provider:'openai-codex',allowed_tools:[],documents:JSON.parse(job.documents),editorial_policy:editorialPolicy(JSON.parse(job.documents)),existing_events,edit_request:job.edit_request,prompt:EDITOR_PROMPT,schema:DRAFT_SCHEMA,audit_prompt:AUDIT_PROMPT};
 }
 export async function enqueueEdit(env:Env,id:string,revision:number,request:string):Promise<void> {
  if(!request.trim()||request.length>12_000)throw new Error('invalid_edit_request');
@@ -74,7 +76,8 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
  draft.importance=Math.min(draft.importance,topicScore(documents[0].title,documents[0].body,documents[0].official).score+10);
  const existingCard=job.kind==='edit'?await env.DB.prepare('SELECT content FROM drafts WHERE id=?').bind(job.draft_id).first<{content:string}>():null;
  const theme=existingCard?(await savedTheme(env,'draft:'+job.draft_id)??legacyTheme((JSON.parse(existingCard.content) as Draft).template)):(await savedTheme(env,job.article_id)??legacyTheme(draft.template));
- const svg=draftCard(draft,documents.map(d=>d.source_name),String(input.card_date),true,theme);
+ const layout=await savedLayout(env,job.kind==='edit'?'draft:'+job.draft_id:job.article_id)??'editorial';
+ const svg=draftCard(draft,documents.map(d=>d.source_name),String(input.card_date),true,theme,layout);
  if(input.svg_hash!==await sha256(svg))throw new Error('card_content_mismatch');
  const image=pngBytes(input.png_base64),time=now();
  if(job.kind==='edit') {
@@ -85,7 +88,8 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
   const result=await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending'").bind(JSON.stringify(draft),JSON.stringify(documents),checked.verification,revision,media,job.draft_id,job.expected_revision),
    env.DB.prepare("UPDATE model_jobs SET state='complete',documents='[]',result_draft=? WHERE id=?").bind(job.draft_id,job.id),
-   env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+job.draft_id,theme)
+   env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+job.draft_id,theme),
+   env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_layout:draft:'+job.draft_id,layout)
   ]);
   if(!result[0].meta.changes){await env.MEDIA.delete(media);throw new Error('stale_edit');}
   return {id:job.draft_id!,duplicate:false};
@@ -102,6 +106,7 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
   env.DB.prepare('INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,media_key) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id,key,await sha256(draft.headline+'\n'+draft.body),JSON.stringify(draft),JSON.stringify(cited),checked.verification,checked.verification==='needs_review'||job.kind==='initial'&&draft.importance<MIN_DRAFT_IMPORTANCE?'needs_review':'pending',time,time+24*3600,media),
   env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft=?,documents='[]' WHERE id=? AND state='leased'").bind(id,job.id),
   env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+id,theme),
+  env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_layout:draft:'+id,layout),
   env.DB.prepare("UPDATE articles SET status='prepared',draft_id=? WHERE id=?").bind(id,job.article_id),
   ...(JSON.parse(job.related_ids) as string[]).map(other=>env.DB.prepare("UPDATE articles SET status='duplicate',draft_id=? WHERE id=? AND status='queued'").bind(id,other))
  ]);}catch(e){await env.MEDIA.delete(media);throw e;}

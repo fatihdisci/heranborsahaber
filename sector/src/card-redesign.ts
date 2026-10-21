@@ -1,0 +1,34 @@
+import {savedLayout,nextLayout,type CardLayout} from './card-layout';
+import {savedTheme,legacyTheme} from './card-theme';
+import {draftCard} from './card';
+import type {Draft,Env} from './types';
+const now=()=>Math.floor(Date.now()/1000);
+export async function requestRedesign(env:Env,data:string,messageId:number,updateId:number):Promise<string>{
+ const match=/^design:([a-f0-9-]{36}):(\d+)$/.exec(data);if(!match)return 'Bu kart kullanılamıyor.';
+ const row=await env.DB.prepare("SELECT id,revision,delivery_state FROM drafts WHERE id=? AND revision=? AND message_id=? AND state='pending'").bind(match[1],Number(match[2]),messageId).first<{id:string;revision:number;delivery_state:string}>();
+ if(!row||row.delivery_state!=='sent')return 'Kart güncellenmiş veya hazırlanıyor. Güncel karttan tekrar deneyebilirsin.';
+ const busy=await env.DB.prepare("SELECT id FROM model_jobs WHERE draft_id=? AND state IN ('queued','leased','retry_pending') UNION ALL SELECT CAST(update_id AS TEXT) id FROM card_redesigns WHERE draft_id=? AND state IN ('queued','rendering') LIMIT 1").bind(row.id,row.id).first();
+ if(busy)return 'Kartın düzenlemesi zaten sırada.';
+ const layout=nextLayout(await savedLayout(env,'draft:'+row.id)??'editorial');
+ await env.DB.prepare('INSERT OR IGNORE INTO card_redesigns(update_id,draft_id,revision,message_id,layout,created_at) VALUES(?,?,?,?,?,?)').bind(updateId,row.id,row.revision,messageId,layout,now()).run();
+ return 'Kart başka bir tasarımla yenileniyor. Tweet metni aynı kalacak.';
+}
+export async function redesignOne(env:Env,render:(svg:string)=>Promise<Uint8Array>):Promise<void>{
+ const time=now();
+ await env.DB.prepare("UPDATE card_redesigns SET state='queued' WHERE state='rendering' AND lease_until<?").bind(time).run();
+ const job=await env.DB.prepare("SELECT * FROM card_redesigns WHERE state='queued' ORDER BY created_at LIMIT 1").first<{update_id:number;draft_id:string;revision:number;message_id:number;layout:CardLayout}>();if(!job)return;
+ const lock=await env.DB.prepare("UPDATE card_redesigns SET state='rendering',lease_until=? WHERE update_id=? AND state='queued'").bind(time+120,job.update_id).run();if(!lock.meta.changes)return;
+ try{
+  const row=await env.DB.prepare("SELECT content,documents,revision FROM drafts WHERE id=? AND revision=? AND message_id=? AND delivery_state='sent' AND state='pending'").bind(job.draft_id,job.revision,job.message_id).first<{content:string;documents:string;revision:number}>();if(!row)throw Error('stale_card');
+  const d=JSON.parse(row.content) as Draft,theme=await savedTheme(env,'draft:'+job.draft_id)??legacyTheme(d.template);
+  const svg=draftCard(d,[],'',false,theme,job.layout),bytes=await render(svg),revision=row.revision+1,media=`drafts/${job.draft_id}/design-${job.update_id}.png`;
+  await env.MEDIA.put(media,bytes,{httpMetadata:{contentType:'image/png'}});
+  // Keep old media for recovery. Content/evidence never change in a redesign.
+  const result=await env.DB.batch([
+   env.DB.prepare("UPDATE drafts SET revision=?,media_key=?,delivery_state='waiting',next_delivery=0 WHERE id=? AND revision=? AND delivery_state='sent' AND state='pending'").bind(revision,media,job.draft_id,row.revision),
+   env.DB.prepare("INSERT INTO system_state(key,value) SELECT ?,? WHERE EXISTS(SELECT 1 FROM drafts WHERE id=? AND media_key=?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind('card_layout:draft:'+job.draft_id,job.layout,job.draft_id,media),
+   env.DB.prepare("UPDATE card_redesigns SET state='complete',lease_until=0 WHERE update_id=?").bind(job.update_id)
+  ]);
+  if(!result[0].meta.changes){await env.MEDIA.delete(media);throw Error('stale_card');}
+ }catch(e){await env.DB.prepare("UPDATE card_redesigns SET state='failed',lease_until=0,error=? WHERE update_id=?").bind(e instanceof Error&&/^[a-z_]+$/.test(e.message)?e.message:'render_failed',job.update_id).run();}
+}

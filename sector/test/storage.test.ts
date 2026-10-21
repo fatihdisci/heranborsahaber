@@ -40,12 +40,13 @@ test('job lease is exclusive, result is idempotent, publication remains absent',
  sql.prepare('INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at) VALUES(?,?,?,?,?)').run('job','a',input,hash,Date.now()/1000);
  sql.prepare("INSERT INTO news_cards(id,article_id,state,created_at) VALUES('card','a','model_queued',?)").run(Date.now()/1000);
  const job=await leaseJob(env);assert(job);assert.equal(await leaseJob(env),null);
- const date='21.10.2026',svg=draftCard(draft,[document.source_name],date,true,job.card_theme);
+ const date='21.10.2026',svg=draftCard(draft,[document.source_name],date,true,job.card_theme,job.card_layout);
  const payload={id:'job',lease_token:job.lease_token,input_hash:hash,draft,audit:{supported:true,issues:[]},runtime:{model:'gpt-6-luna',effort:'high',provider:'openai-codex',tool_count:0,fallback_count:0},card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')};
  await assert.rejects(()=>submitJob(env,{...payload,input_hash:'changed'}),/invalid_job_lease/);
  await assert.rejects(()=>submitJob(env,{...payload,svg_hash:'wrong'}),/card_content_mismatch/);
  const result=await submitJob(env,payload);assert(!result.duplicate);assert.equal(objects.size,1);
  assert.equal(sql.prepare('SELECT value FROM system_state WHERE key=?').get('card_theme:draft:'+result.id)!.value,job.card_theme);
+ assert.equal(sql.prepare('SELECT value FROM system_state WHERE key=?').get('card_layout:draft:'+result.id)!.value,job.card_layout);
  assert.equal(sql.prepare('SELECT COUNT(*) AS count FROM drafts').get()!.count,1);
  assert.equal(sql.prepare('SELECT state FROM drafts').get()!.state,'pending'); // Verified 50–59-point stories are deliverable.
  const repeat=await submitJob(env,payload);assert.equal(repeat.id,result.id);assert(repeat.duplicate);

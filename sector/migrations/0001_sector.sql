@@ -53,3 +53,11 @@ CREATE TABLE IF NOT EXISTS news_cards (
  requested_at INTEGER,next_try INTEGER NOT NULL DEFAULT 0,parent_id TEXT REFERENCES news_cards(id)
 );
 CREATE INDEX IF NOT EXISTS news_cards_state ON news_cards(state,requested_at);
+-- Local render work is separate from model jobs and consumes no AI calls.
+CREATE TABLE IF NOT EXISTS card_redesigns (
+ update_id INTEGER PRIMARY KEY,draft_id TEXT NOT NULL REFERENCES drafts(id),
+ revision INTEGER NOT NULL,message_id INTEGER NOT NULL,layout TEXT NOT NULL,
+ state TEXT NOT NULL DEFAULT 'queued',created_at INTEGER NOT NULL,lease_until INTEGER NOT NULL DEFAULT 0,error TEXT
+);
+CREATE INDEX IF NOT EXISTS card_redesigns_state ON card_redesigns(state,created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS card_redesigns_active ON card_redesigns(draft_id) WHERE state IN ('queued','rendering');

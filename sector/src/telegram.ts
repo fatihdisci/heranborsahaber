@@ -21,7 +21,7 @@ export function keyboard(id:string,revision:number,docs:Document[],caption:strin
  // Telegram's native clipboard button accepts at most 256 characters. Never
  // truncate a post to fit it; longer posts use a copyable preformatted message.
  const copy=caption.length<=256?{text:'Tweet’i kopyala',copy_text:{text:caption}}:{text:'Tweet’i kopyala',callback_data:`asset:text:${id}:${revision}`};
- return {inline_keyboard:[...sourceKeyboard(docs),[copy],[{text:'Düzenle',callback_data:callback('edit',id,revision)}]]};
+ return {inline_keyboard:[...sourceKeyboard(docs),[copy],[{text:'Kartı yeniden tasarla',callback_data:`design:${id}:${revision}`}],[{text:'Düzenle',callback_data:callback('edit',id,revision)}]]};
 }
 export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
  if(env.MODE!=='telegram_review')throw new Error('telegram_dry_run');

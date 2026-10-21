@@ -1,3 +1,4 @@
+import {redesignOne} from '../src/card-redesign';
 import {readFile,writeFile,open,unlink,access} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 import {homedir} from 'node:os';
@@ -44,12 +45,13 @@ async function modelLoop(){while(!stopping){let job:Awaited<ReturnType<typeof le
   const result=JSON.parse(output) as {draft:Draft;audit:unknown;runtime:unknown};
   await writeFile(directory+'/last-model-result.json',JSON.stringify({job_id:job.id,result}),{mode:0o600});
   const documents=job.documents as Document[];acceptHermes(result.draft,result.audit,documents);
-  const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true,job.card_theme);
+  const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true,job.card_theme,job.card_layout);
   const delivered=await submitJob(env,{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
   await deliver(env);await status('model_health',{ok:true,at:new Date().toISOString(),draft_id:delivered.id,duration_ms:Date.now()-started});
  }catch(e){if(job)await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error=? WHERE id=? AND state='leased'").bind(errorCode(e),job.id).run();await status('model_health',{ok:false,at:new Date().toISOString(),code:errorCode(e),duration_ms:Date.now()-started});if(e instanceof Error&&['quota_paused','hermes_auth_unavailable'].includes(e.message))await status('model_paused_until',Date.now()+3600_000);await pause(e instanceof Error&&['quota_paused','hermes_auth_unavailable','subscription_turn_failed','hermes_job_failed'].includes(e.message)?60_000:2_000);}
 }}
 async function newsLoop(){let official=0;while(!stopping){try{await tick(env);await status('collector_health',{ok:true,at:new Date().toISOString()});if(Date.now()-official>10*60_000){try{await scanOfficial(async(_path,value)=>ingestOfficial(env,value as Record<string,unknown>),directory+'/official-state.json');official=Date.now();await status('official_health',{ok:true,at:new Date().toISOString()});}catch(e){await status('official_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}}catch(e){await status('collector_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(60_000);}}
+async function designLoop(){while(!stopping){try{await redesignOne(env,png);}catch(e){await status('design_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(1000);}}
 async function deliveryLoop(){while(!stopping){try{await deliver(env);}catch(e){await status('delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
 async function kapLoop(){
  // Absence of the separate KAP database must not create/bootstrap one here.
@@ -76,4 +78,4 @@ if(process.argv.includes('--prepare-once')){try{await tick(env);console.log('Sou
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}
-}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),requestsLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}
+}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),requestsLoop(),designLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}

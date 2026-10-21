@@ -1,3 +1,4 @@
+import {requestRedesign} from './card-redesign';
 import {requestNews} from './news-inbox';
 import {sendDraftAsset} from './draft-assets';
 import registry from '../sources.json';
@@ -34,6 +35,11 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;
  if(!cb||!cb.message||!isOwner(env,String(cb.from?.id),String(cb.message.chat?.id),cb.message.chat?.type))return json({ok:true});
+ if(cb.data?.startsWith('design:')){
+  const answer=await requestRedesign(env,cb.data,cb.message.message_id,Number(id));
+  await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});
+  return json({ok:true});
+ }
  if(cb.data?.startsWith('asset:')){
   await sendDraftAsset(env,cb.data,cb.message.message_id,Number(id),cb.id);
   return json({ok:true});

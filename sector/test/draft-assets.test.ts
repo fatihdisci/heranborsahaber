@@ -21,6 +21,8 @@ test('native copy preserves 256 characters; longer captions never truncate',()=>
  assert.deepEqual(keyboard(id,1,docs,'a'.repeat(256)).inline_keyboard[1][0],{text:'Tweet’i kopyala',copy_text:{text:'a'.repeat(256)}});
  const long=keyboard(id,2,docs,'a'.repeat(257)).inline_keyboard[1];
  assert.equal('copy_text' in long[0],false);
+ assert.equal(long.length,1);
+ assert(!JSON.stringify(keyboard(id,2,docs,'a'.repeat(257))).includes('Görseli al'));
  assert.equal((long[0] as {callback_data:string}).callback_data,`asset:text:${id}:2`);
  for(const button of long)assert(Buffer.byteLength((button as {callback_data:string}).callback_data)<=64);
 });

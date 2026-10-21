@@ -83,7 +83,7 @@ export function numericTokens(text:string):string[] {
  text=text.replace(/(?<![\d.,])(\d{1,9})\s+bin\s+(\d{1,3})(?![\d.,])/giu,(_m,a,b)=>String(BigInt(a)*1000n+BigInt(b)));
  const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
  text=text.replace(/\b(0?[1-9]|[12]\d|3[01])\.(0?[1-9]|1[0-2])\.((?:19|20)\d{2})\b/g,(_m,d,m,y)=>`${Number(d)} ${months[Number(m)-1]} ${y}`);
- return [...text.matchAll(/(?:(?:[%$€₺]|yüzde)\s*)?[-+]?\d+(?:[.,]\d+)*(?:\s*(?:milyar|milyon|trilyon|billion|million|trillion|bin|thousand))?(?:\s*(?:TL|TRY|USD|EUR|dolar|dollars?|lira|euros?|avro|yüzde|percent|per cent|puan|basis points|%))?/giu)].map(m=>norm(m[0]));
+ return [...text.matchAll(/(?:(?:[%$€₺]|yüzde)\s*)?[-+]?\d+(?:[.,]\d+)*(?:\s*(?:milyar|milyon|trilyon|billion|million|trillion|bin|thousand))?(?:\s*(?:TL|TRY|USD|EUR|dolar|dollars?|lira|euros?|avro|percent|per cent|puan|basis points|%))?/giu)].map(m=>norm(m[0]));
 }
 // Format equivalents only; this does not invent a currency or convert scales.
 function quantity(token:string,language='tr',context=''):{value:string;unit:string|null} {

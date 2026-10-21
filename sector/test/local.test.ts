@@ -16,7 +16,7 @@ test('local production adapter preserves atomic batches and media path isolation
   await assert.rejects(()=>media.put('../outside.png',new Uint8Array()));
  }finally{await rm(dir,{recursive:true,force:true});}
 });
-test('startup archive stays out of live jobs and an important older item outranks routine fresh news',async()=>{
+test('unrequested archive stays out of jobs and explicit requests retain importance ordering',async()=>{
  const dir=await mkdtemp(tmpdir()+'/sector-queue-'),original=globalThis.fetch;
  try {
   const db=await localDatabase(dir+'/sector.sqlite',await readFile('migrations/0001_sector.sql','utf8'));
@@ -25,6 +25,7 @@ test('startup archive stays out of live jobs and an important older item outrank
   await db.prepare("INSERT INTO system_state VALUES('live_since',?)").bind(new Date(Date.now()-10*60_000).toISOString()).run();
   const articles=[['archive','TCMB eski faiz kararı',-24*3600_000],['important','TCMB yeni faiz kararını açıkladı',-5*60_000],['fresh1','Örnek şirket yatırım planlıyor',-1000],['fresh2','Farklı şirket yatırım duyurdu',-2000]] as const;
   for(const [id,title,age] of articles)await db.prepare('INSERT INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').bind(id,'test','https://test.example.org/'+id,title,'',new Date(Date.now()+age).toISOString(),Date.now()/1000).run();
+  for(const id of ['important','fresh1','fresh2'])await db.prepare("INSERT INTO news_cards(id,article_id,state,created_at,requested_at) VALUES(?,?,'requested',?,?)").bind(id,id,Date.now()/1000,Date.now()/1000).run();
   globalThis.fetch=(async(input:RequestInfo|URL)=>{const id=String(input).split('/').at(-1),title=articles.find(a=>a[0]===id)![1];return new Response('<article><h1>'+title+'</h1><p>Kurum, yatırım hazırlıklarının sürdüğünü ve gelişmelerin kamuoyuyla paylaşılacağını bildirdi. İlgili süreç için gerekli değerlendirmeler devam ediyor.</p></article>',{headers:{'content-type':'text/html'}});}) as typeof fetch;
   await prepare({DB:db,MEDIA:await localMedia(dir+'/media'),AI_DAILY_DRAFT_LIMIT:'10'} as Env);
   const jobs=await db.prepare('SELECT article_id FROM model_jobs').all<{article_id:string}>();const ids=jobs.results.map(r=>r.article_id);

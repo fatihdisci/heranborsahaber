@@ -13,7 +13,7 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 
 ## Akış
 
-`RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → tek fotoğraflı Telegram mesajı`
+`RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → Telegram başlık/özet → sahibin oluştur düğmesi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → tek fotoğraflı Telegram mesajı`
 
 Yazım ve kart metinleri `gpt-6.1-sol`, `low` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
 Araç, MCP, bellek enjeksiyonu, alternatif model ve ücretli API sağlayıcısı kapalıdır.
@@ -97,7 +97,7 @@ KAP bildirimleri için ayrı cursor, kurallar, kalıcı kayıt ve kuyruk uygulam
 
 ## Tek mesaj ve sade kartlar
 
-Her yeni haber bir PNG ve açıklamasındaki tweet metniyle tek Telegram mesajıdır. Kaynak, önem puanı ve teknik durum için ikinci mesaj gönderilmez. “Kaynağı aç” birincil belgeyi açar; “Düzenle” kaynak denetimli revizyon ister. Yeni biçimde teslim edilmiş bir taslağın revizyonu aynı fotoğraflı mesajı günceller. Eski iki mesajlı geçmiş silinmez.
+Haberler önce metin önizlemesi olarak gelir. Sahibin istediği taslak bir PNG ve açıklamasındaki tweet metniyle tek Telegram mesajıdır. KAP bu taslağı otomatik hazırlar. Kaynak, önem puanı ve teknik durum için ikinci mesaj gönderilmez. “Kaynağı aç” birincil belgeyi açar; “Düzenle” kaynak denetimli revizyon ister. Yeni biçimde teslim edilmiş bir taslağın revizyonu aynı fotoğraflı mesajı günceller. Eski iki mesajlı geçmiş silinmez.
 
 Telegram fotoğraf açıklamasının teknik sınırı 1024 UTF-16 karakterdir. Başlık/gövde/etiketler bu sınırı aşarsa Hermes aynı sınırlı düzeltme turunda anlamı koruyarak yeniden yazar ve tekrar denetlenir. Metin kesilmez, ikinci mesaja bölünmez; sığmayan doğrulanmamış sonuç gönderilmez. [Telegram sözleşmesi](https://core.telegram.org/bots/api#sendphoto).
 
@@ -105,10 +105,16 @@ Telegram fotoğraf açıklamasının teknik sınırı 1024 UTF-16 karakterdir. B
 
 ## Akış kapasitesi ve KAP teslimatı
 
-Kaynak filtresi 60 puan ve üzeri ekonomi/şirket adaylarını toplar; doğrulanmış taslakların gönderim eşiği 50 puandır. Kaynak denetimi, sayı/kanıt kontrolleri ve çözümlenmemiş belirsizlik engeli korunur. Günlük 240 model adayı sınırı teslim edilmiş mesaj sayısı değildir; başarısız adaylar da bu bütçeyi kullanır. ChatGPT kota sınırında otomatik bekleme devam eder.
+Kaynak filtresi 60 puan ve üzeri ekonomi/şirket adaylarını toplar; haber üretimi artık yalnız sahibin isteğiyle başlar; açıkça istenen taslakta ek bir önem puanı engeli uygulanmaz. Kaynak denetimi, sayı/kanıt kontrolleri ve çözümlenmemiş belirsizlik engeli korunur. Günlük 240 model adayı sınırı teslim edilmiş mesaj sayısı değildir; başarısız adaylar da bu bütçeyi kullanır. ChatGPT kota sınırında otomatik bekleme devam eder.
 
 Haber teslimatı kaynak taramasından ayrı 10 saniyelik döngüde çalışır. KAP tüketicisi tam metni, tabloları ve tüm PDF eklerini okur. Taranmış ekler OCR ve sayfa görüntüsüyle modele ve denetçiye iletilir. Eksik/okunamayan ek varsa özetten taslak üretilmez. KAP için ayrı günlük model bütçesi uygulanır; aynı Hermes abonelik kotası paylaşılır. Telegram'a bir görsel, tweet metni ve Kaynağı aç düğmesi tek mesajda gelir.
 
 ## Kendi haberini gönder
 
 @habernewssbot özel sohbetine desteklenen kaynaklardan haber bağlantısı, KAP bağlantısı, PDF dosyası veya en az 100 karakterlik haber metni gönder. Yalnız kayıtlı hesap sahibi kabul edilir. Aynı kaynak denetimi ve görsel üretimi uygulanır; X yayını yoktur. @Minihermesimbot genel Hermes sohbetidir. Bilinmeyen sitelerde tam metni veya PDF'yi gönder. Dosya/metin taslaklarının kaynak düğmesi orijinal Telegram gönderisini açmak için bot bağlantısını kullanır.
+
+## Haberler: önce önizleme, sonra istek üzerine üretim
+
+RSS ve SPK haberleri önce kaynak adı, başlık ve kaynak özetiyle Telegram'a gelir. Bu aşamada model çağrısı, görsel üretimi ve AI bütçe rezervasyonu yapılmaz. `Tweet ve görsel oluştur` düğmesi yalnız kayıtlı sahibin özel sohbetinde çalışır. Basıldığında tam kaynak okunur; aynı kanıt/denetim ve tek fotoğraflı taslak akışı çalışır. Tekrarlanan tıklamalar aynı işi kullanır. Çok benzer başlıklar 6 saatlik pencerede ilk iki sözcük ve rakamlar eşleşiyorsa kota harcamadan gruplanır; farklı rakamlı gelişmeler korunur. Anlamı aynı fakat başlığı farklı haberler yine gelebilir; otomatik model harcaması yapmazlar.
+
+KAP'ın otomatik belge/PDF okuma ve üretim akışı ile sahibin doğrudan gönderdiği haberler değişmez. Eski otomatik haber işlerinin bekleyenleri geçişte silinmeden duraklatılır. Yeni kurulumda önceki bütün haberleri bildirim olarak yığmamak için önizleme başlangıcı ayrıca saklanır. İstekler ayrı 5 saniyelik döngüde hazırlanır. Geçici Telegram belirsizlikleri otomatik yeniden gönderilmez.

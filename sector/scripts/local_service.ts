@@ -2,6 +2,8 @@ import {readFile,writeFile,open,unlink,access} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 import {homedir} from 'node:os';
 import {localDatabase,localMedia} from '../src/local-adapters';
+import {prepare} from '../src/pipeline';
+import {refreshNewsRequests} from '../src/news-inbox';
 import {tick,seed,deliver,errorCode} from '../src/pipeline';
 import {leaseJob,submitJob,ingestOfficial} from '../src/bridge';
 import {telegram} from '../src/telegram';
@@ -58,6 +60,7 @@ async function kapLoop(){
  await pause(5_000);}
  store?.close();
 }
+async function requestsLoop(){while(!stopping){try{await refreshNewsRequests(env);await prepare(env);}catch(e){await status('news_requests_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}
 async function manualLoop(){while(!stopping){try{await runManual(env);}catch(e){await status('manual_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}
 async function telegramLoop(){
  let offset=Number((await env.DB.prepare("SELECT value FROM system_state WHERE key='telegram_offset'").first<{value:string}>())?.value??0);
@@ -72,4 +75,4 @@ if(process.argv.includes('--prepare-once')){try{await tick(env);console.log('Sou
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}
-}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}
+}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),requestsLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}

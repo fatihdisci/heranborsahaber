@@ -46,3 +46,10 @@ CREATE TABLE IF NOT EXISTS manual_requests (
  state TEXT NOT NULL DEFAULT 'queued',created_at INTEGER NOT NULL,lease_until INTEGER NOT NULL DEFAULT 0,
  attempts INTEGER NOT NULL DEFAULT 0,job_id TEXT,error TEXT,notified INTEGER NOT NULL DEFAULT 0
 );
+-- News previews never reserve model quota. Only an authenticated button click does.
+CREATE TABLE IF NOT EXISTS news_cards (
+ id TEXT PRIMARY KEY,article_id TEXT NOT NULL UNIQUE REFERENCES articles(id),
+ state TEXT NOT NULL DEFAULT 'waiting',message_id INTEGER,created_at INTEGER NOT NULL,
+ requested_at INTEGER,next_try INTEGER NOT NULL DEFAULT 0,parent_id TEXT REFERENCES news_cards(id)
+);
+CREATE INDEX IF NOT EXISTS news_cards_state ON news_cards(state,requested_at);

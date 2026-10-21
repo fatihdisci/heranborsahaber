@@ -38,6 +38,7 @@ test('job lease is exclusive, result is idempotent, publication remains absent',
  sql.prepare('INSERT INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').run('a','test',document.url,document.title,'',document.published_at!,Date.now()/1000);
  const input=JSON.stringify([document]),hash=await sha256(input);
  sql.prepare('INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at) VALUES(?,?,?,?,?)').run('job','a',input,hash,Date.now()/1000);
+ sql.prepare("INSERT INTO news_cards(id,article_id,state,created_at) VALUES('card','a','model_queued',?)").run(Date.now()/1000);
  const job=await leaseJob(env);assert(job);assert.equal(await leaseJob(env),null);
  const date='21.10.2026',svg=draftCard(draft,[document.source_name],date,true);
  const payload={id:'job',lease_token:job.lease_token,input_hash:hash,draft,audit:{supported:true,issues:[]},runtime:{model:'gpt-6.1-sol',effort:'low',provider:'openai-codex',tool_count:0,fallback_count:0},card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')};

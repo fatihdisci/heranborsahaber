@@ -17,17 +17,17 @@ export async function ingestOfficial(env:Env,input:Record<string,unknown>):Promi
  const pdf=await readPublic(doc.url,source.allowed_hosts,{Accept:'application/pdf'},fetch,true);
  const actual=[...new Uint8Array(await crypto.subtle.digest('SHA-256',pdf.bytes! as BufferSource))].map(n=>n.toString(16).padStart(2,'0')).join('');
  if(input.pdf_hash!==actual)throw new Error('official_document_changed');
- const id=await sha256(doc.url),documents=JSON.stringify([{...doc,source_name:'SPK',family:'spk',official:true}]);
+ const id=await sha256(doc.url),document=JSON.stringify({...doc,source_name:'SPK',family:'spk',official:true});
  await env.DB.batch([
-  env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,status) VALUES(?,?,?,?,?,?,?,?)').bind(id,'spk',doc.url,doc.title,'',doc.published_at,now(),'model_queued'),
-  env.DB.prepare('INSERT OR IGNORE INTO model_jobs(id,article_id,documents,input_hash,created_at) VALUES(?,?,?,?,?)').bind(crypto.randomUUID(),id,documents,await sha256(documents),now()),
+  env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,status) VALUES(?,?,?,?,?,?,?,?)').bind(id,'spk',doc.url,doc.title,'',doc.published_at,now(),'queued'),
+  env.DB.prepare('UPDATE articles SET document=?,document_expires=?,summary=? WHERE id=?').bind(document,now()+7*24*3600,doc.passages[0]?.text.slice(0,700)??'',id),
   env.DB.prepare('UPDATE sources SET last_ok=?,last_error=NULL WHERE id=?').bind(now(),'spk')]);
  return {accepted:true};
 }
 export async function leaseJob(env:Env) {
  // Ambiguous jobs expire into review, rather than replaying model calls.
  await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error='lease_expired' WHERE state='leased' AND lease_until<?").bind(now()).run();
- const job=await env.DB.prepare("SELECT * FROM model_jobs WHERE state='queued' AND created_at>? ORDER BY created_at LIMIT 1").bind(now()-24*3600).first<Job>();if(!job)return null;
+ const job=await env.DB.prepare("SELECT * FROM model_jobs WHERE state='queued' AND created_at>? AND (kind NOT IN ('initial','news') OR EXISTS (SELECT 1 FROM news_cards c WHERE c.article_id=model_jobs.article_id AND c.state='model_queued')) ORDER BY created_at LIMIT 1").bind(now()-24*3600).first<Job>();if(!job)return null;
  const token=crypto.randomUUID();
  const lock=await env.DB.prepare("UPDATE model_jobs SET state='leased',lease_token=?,lease_until=? WHERE id=? AND state='queued'").bind(token,now()+600,job.id).run();if(!lock.meta.changes)return null;
  const previous=await env.DB.prepare('SELECT id,content FROM drafts WHERE created_at>? ORDER BY created_at DESC LIMIT 40').bind(now()-48*3600).all<{id:string;content:string}>();

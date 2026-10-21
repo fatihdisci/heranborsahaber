@@ -1,3 +1,4 @@
+import {announceNews,refreshNewsRequests} from './news-inbox';
 import registry from '../sources.json';
 import type {Env,Source,Document,Draft} from './types';
 import {parseFeed} from './feed';
@@ -12,6 +13,7 @@ export type DraftRow={id:string;content:string;documents:string;verification:str
 const now=()=>Math.floor(Date.now()/1000);
 export const errorCode=(e:unknown)=>e instanceof Error&&/^[a-z][a-z\d_]{2,70}$/.test(e.message)?e.message:'operation_failed';
 export async function seed(env:Env):Promise<void> {
+ await env.DB.prepare("INSERT OR IGNORE INTO system_state(key,value) VALUES('news_preview_since',?)").bind(new Date(Date.now()-300_000).toISOString()).run();
  // Source state survives deployments. Registry changes never silently turn a
  // source back on after the owner disabled it.
  await env.DB.batch((registry as Source[]).map(s=>env.DB.prepare('INSERT INTO sources(id,config,enabled) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET config=excluded.config').bind(s.id,JSON.stringify(s),Number(s.enabled))));
@@ -51,18 +53,16 @@ export async function quota(env:Env,bucket='ai-budget'):Promise<boolean> {
  return !!result.meta.changes;
 }
 export async function prepare(env:Env):Promise<void> {
- const pending=await env.DB.prepare("SELECT COUNT(*) AS count FROM drafts WHERE state IN ('pending','deferred') AND delivery_state!='sent'").first<{count:number}>();if((pending?.count??0)>=12)return;
+ const pending=await env.DB.prepare("SELECT COUNT(*) AS count FROM drafts WHERE state IN ('pending','deferred') AND delivery_state IN ('waiting','sending')").first<{count:number}>();if((pending?.count??0)>=12)return;
  const time=now();
- const started=(await env.DB.prepare("SELECT value FROM system_state WHERE key='live_since'").first<{value:string}>())?.value??'1970';
- const cutoff=[started,new Date(Date.now()-24*3600_000).toISOString()].sort().at(-1)!;
- const queue=await env.DB.prepare("SELECT a.*,s.config FROM articles a JOIN sources s ON s.id=a.source_id WHERE s.enabled=1 AND a.status='queued' AND a.next_try<=? AND a.lease_until<? AND a.published_at>=? ORDER BY a.published_at DESC LIMIT 80").bind(time,time,cutoff).all<{id:string;url:string;title:string;summary:string;published_at:string;attempts:number;config:string}>();
+ const queue=await env.DB.prepare("SELECT a.*,s.config FROM articles a JOIN sources s ON s.id=a.source_id JOIN news_cards c ON c.article_id=a.id WHERE c.state='requested' AND a.status='queued' AND a.next_try<=? AND a.lease_until<? ORDER BY c.requested_at LIMIT 80").bind(time,time).all<{id:string;url:string;title:string;summary:string;published_at:string;attempts:number;config:string;document:string|null}>();
  const priority=(a:{title:string;summary:string;published_at:string;config:string})=>topicScore(a.title,a.summary,JSON.parse(a.config).official).score-(Date.now()-Date.parse(a.published_at))/3600_000*2;
  const selected=(queue.results??[]).sort((a,b)=>priority(b)-priority(a)).slice(0,2);
  for(const article of selected) {
   const lock=await env.DB.prepare('UPDATE articles SET lease_until=? WHERE id=? AND lease_until<?').bind(time+360,article.id,time).run();if(!lock.meta.changes)continue;
   try {
    const source=JSON.parse(article.config) as Source;
-   const doc=await readDocument(article,source);doc.family=evidenceFamily(doc);
+   const doc=source.method==='bridge_pdf'&&article.document?JSON.parse(article.document) as Document:await readDocument(article,source);doc.family=evidenceFamily(doc);
    const documents=[doc];
    const kap=(registry as Source[]).find(s=>s.id==='kap');
    for(const url of doc.primary_urls??[])if(kap)try{documents.push(await readDocument({title:doc.title,url,summary:'',published_at:doc.published_at},kap));}catch{/* Missing primary document leaves attribution intact, never an invented official confirmation. */}
@@ -73,11 +73,12 @@ export async function prepare(env:Env):Promise<void> {
    const relatedIds:string[]=[];
    for(const r of matched)try {const extra=await readDocument(r,JSON.parse(r.config));extra.family=evidenceFamily(extra);documents.push(extra);relatedIds.push(r.id);}catch{/* A failed corroborating page never replaces the primary evidence. */}
    const jobs=await env.DB.prepare("SELECT COUNT(*) AS count FROM model_jobs WHERE state IN ('queued','leased')").first<{count:number}>();
-   if((jobs?.count??0)>=4||!await quota(env)){await env.DB.prepare('UPDATE articles SET lease_until=0,next_try=? WHERE id=?').bind(time+1800,article.id).run();break;}
+   if((jobs?.count??0)>=4||!await quota(env,'news-request-budget')){await env.DB.prepare('UPDATE articles SET lease_until=0,next_try=? WHERE id=?').bind(time+30,article.id).run();break;}
    const jobId=crypto.randomUUID(),input=JSON.stringify(documents);
    await env.DB.batch([
-    env.DB.prepare('INSERT OR IGNORE INTO model_jobs(id,article_id,documents,related_ids,input_hash,created_at) VALUES(?,?,?,?,?,?)').bind(jobId,article.id,input,JSON.stringify(relatedIds),await sha256(input),time),
-    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(JSON.stringify(doc),time+24*3600,article.id)
+    env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,related_ids,input_hash,created_at,kind) VALUES(?,?,?,?,?,?,'news') ON CONFLICT(article_id,expected_revision) DO UPDATE SET documents=excluded.documents,related_ids=excluded.related_ids,input_hash=excluded.input_hash,created_at=excluded.created_at,kind='news',state='queued',error=NULL,lease_until=0 WHERE model_jobs.state IN ('needs_review','expired','paused')").bind(jobId,article.id,input,JSON.stringify(relatedIds),await sha256(input),time),
+    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(JSON.stringify(doc),time+7*24*3600,article.id),
+    env.DB.prepare("UPDATE news_cards SET state='model_queued' WHERE article_id=? AND state='requested'").bind(article.id)
    ]);
   } catch(e) {
    const count=article.attempts+1;
@@ -89,7 +90,7 @@ export async function deliver(env:Env):Promise<void> {
  if(env.MODE!=='telegram_review'||!env.TELEGRAM_BOT_TOKEN||!env.TELEGRAM_CHAT_ID)return;
  const time=now();
  await env.DB.prepare("UPDATE drafts SET state='pending',delivery_state='waiting',revision=revision+1 WHERE state='deferred' AND defer_until<=? AND expires_at>?").bind(time,time).run();
- const row=await env.DB.prepare("SELECT * FROM drafts WHERE state='pending' AND delivery_state='waiting' AND next_delivery<=? AND expires_at>? AND lease_until<? ORDER BY created_at LIMIT 1").bind(time,time,time).first<DraftRow>();if(!row)return;
+ const row=await env.DB.prepare("SELECT * FROM drafts WHERE state='pending' AND delivery_state='waiting' AND next_delivery<=? AND expires_at>? AND lease_until<? AND NOT EXISTS (SELECT 1 FROM model_jobs j WHERE j.result_draft=drafts.id AND j.kind='initial' AND NOT EXISTS (SELECT 1 FROM news_cards c WHERE c.article_id=j.article_id AND c.state IN ('requested','model_queued'))) ORDER BY created_at LIMIT 1").bind(time,time,time).first<DraftRow>();if(!row)return;
  const lock=await env.DB.prepare("UPDATE drafts SET lease_until=?,delivery_state='sending',delivery_attempts=delivery_attempts+1 WHERE id=? AND lease_until<? AND delivery_state='waiting'").bind(time+120,row.id,time).run();if(!lock.meta.changes)return;
  try {
   const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
@@ -109,7 +110,7 @@ export async function tick(env:Env):Promise<void> {
  const time=now();
  const lease=await env.DB.prepare("INSERT INTO system_state(key,value) VALUES('tick_lease',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE CAST(value AS INTEGER)<?").bind(String(time+300),time).run();
  if(!lease.meta.changes)return;
- try {await seed(env);await poll(env);await prepare(env);await deliver(env);}
+ try {await seed(env);await poll(env);await announceNews(env);await refreshNewsRequests(env);await prepare(env);await deliver(env);}
  finally {await env.DB.prepare("UPDATE system_state SET value='0' WHERE key='tick_lease'").run();}
  await env.DB.batch([
   env.DB.prepare('UPDATE articles SET document=NULL WHERE document_expires<? AND document IS NOT NULL').bind(now()),

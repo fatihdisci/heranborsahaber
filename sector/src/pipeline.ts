@@ -97,6 +97,14 @@ export async function deliver(env:Env):Promise<void> {
   const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
   const target=await deliveryTarget(env,row.id,row.message_id);
   if(target)await env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_target:'+row.id,String(target)).run();
+  const automaticKap=await env.DB.prepare("SELECT 1 FROM model_jobs WHERE result_draft=? AND kind='kap' LIMIT 1").bind(row.id).first();
+  if(automaticKap){
+   const decision=env.KAP_DELIVERY_CHECK?.(JSON.parse(row.documents))??'hold';
+   if(decision!=='allow'){
+    await env.DB.prepare('UPDATE drafts SET delivery_state=?,lease_until=0,delivery_attempts=delivery_attempts-1,next_delivery=? WHERE id=?').bind(decision==='suppress'?'suppressed':'waiting',time+30,row.id).run();
+    return;
+   }
+  }
   const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,target);
   await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id),

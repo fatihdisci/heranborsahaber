@@ -23,6 +23,7 @@ export interface Env {
   ADMIN_TOKEN?:string; BRIDGE_TOKEN?:string; AI_MODEL:string; AI_EFFORT:'medium';
   TELEGRAM_BOT_TOKEN?:string; TELEGRAM_CHAT_ID?:string; TELEGRAM_USER_ID?:string;
   TELEGRAM_UPDATE_ID?:number;
+  KAP_DELIVERY_CHECK?:(documents:Document[])=>'allow'|'suppress'|'hold';
   TELEGRAM_WEBHOOK_SECRET?:string; TELEGRAM_VERIFIED_BOT_ID?:string;
   AI_DAILY_DRAFT_LIMIT:string;
 }

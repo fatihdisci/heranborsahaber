@@ -39,14 +39,14 @@ export class KapStore {
  prefs(){return preferences(this.get('preferences'));}
  configure(value:unknown){const p=preferences(value);this.transaction(()=>{
   this.set('preferences',p);if(!p.circuitNotifications)this.suppressCircuits();
-  // Re-evaluate already collected, not-yet-started notifications. Keep source
+  // Re-evaluate already collected, not-yet-delivered notifications. Keep source
   // records and delivered messages; a preference change must not replay history.
-  for(const row of this.rows<{id:string;metadata:string}>("SELECT q.id,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE q.kind='instant' AND q.state='ready'")){
-   if(decide(JSON.parse(row.metadata),p,this.get<Indices>('indices')).action==='off')this.run("UPDATE queue SET state='suppressed' WHERE id=? AND state='ready'",row.id);
+  for(const row of this.rows<{id:string;metadata:string}>("SELECT q.id,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE q.kind='instant' AND q.sent_at IS NULL AND q.state IN ('ready','preparing','model_queued','needs_review')")){
+   if(decide(JSON.parse(row.metadata),p,this.get<Indices>('indices')).action!=='instant')this.run("UPDATE queue SET state='suppressed' WHERE id=? AND sent_at IS NULL",row.id);
   }
  });}
  private suppressCircuits(){
-  this.run("UPDATE queue SET state='suppressed' WHERE sent_at IS NULL AND state='ready' AND (kind='circuit' OR EXISTS(SELECT 1 FROM queue_members m JOIN disclosures d ON d.id=m.disclosure_id JOIN json_each(d.decision,'$.topics') t WHERE m.queue_id=queue.id AND t.value='circuit'))");
+  this.run("UPDATE queue SET state='suppressed' WHERE sent_at IS NULL AND state IN ('ready','preparing','model_queued','needs_review') AND (kind='circuit' OR EXISTS(SELECT 1 FROM queue_members m JOIN disclosures d ON d.id=m.disclosure_id JOIN json_each(d.decision,'$.topics') t WHERE m.queue_id=queue.id AND t.value='circuit'))");
  }
  claim(job:Job,now:number):Lease|null {
   const token=randomUUID();const changed=this.run('UPDATE jobs SET lease_token=?,lease_until=? WHERE name=? AND next_at<=? AND lease_until<=?',token,now+120_000,job,now,now).changes;

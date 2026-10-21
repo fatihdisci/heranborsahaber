@@ -121,3 +121,31 @@ test('KAP reconciliation recognizes a delivered draft even after queue entered r
   await c.run();assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'sent');assert.equal(s.row<{message_id:number}>('SELECT message_id FROM kap_model_jobs')!.message_id,123);
  }finally{s.close();}
 });
+import {deliver} from '../src/pipeline';
+test('closing a KAP topic while AI runs blocks the final photo, retains the evidence and never replays on re-enable',async()=>{
+ const {s,env,docs}=await setup(),old=globalThis.fetch;let sends=0;
+ try{
+  // Business topic: the established share-transaction override is unchanged.
+  const metadata=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);metadata.title='Yeni İş İlişkisi';metadata.summary='Yeni sözleşme';s.run('UPDATE disclosures SET metadata=?',JSON.stringify(metadata));
+  const consumer=new KapDelivery(s,env,async()=>docs,()=>NOW);await consumer.run();
+  await env.DB.prepare("UPDATE model_jobs SET state='leased'").run();
+  s.configure({...s.prefs(),priorityIndices:false,otherCompanies:'off'});
+  const sec=Math.floor(NOW/1000);
+  await env.DB.prepare("INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,created_at,expires_at,media_key) VALUES('closed','e','f',?,?,'official',?,?,'card.png')").bind(JSON.stringify({headline:'📢 Yeni iş',body:'Sözleşme açıklandı.',hashtags:['#Borsa','#BIST']}),JSON.stringify(docs),sec,sec+3600).run();
+  await env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft='closed'").run();
+  Object.assign(env,{TELEGRAM_BOT_TOKEN:'123:test',TELEGRAM_VERIFIED_BOT_ID:'123',MEDIA:{get:async()=>({arrayBuffer:async()=>new Uint8Array([1]).buffer})},KAP_DELIVERY_CHECK:(documents:Document[])=>consumer.deliveryDecision(documents)});
+  globalThis.fetch=async()=>{sends++;return Response.json({ok:true,result:{message_id:88}});};
+  await deliver(env);assert.equal(sends,0);assert.equal((await env.DB.prepare("SELECT delivery_state FROM drafts WHERE id='closed'").first<any>()).delivery_state,'suppressed');
+  s.configure({...s.prefs(),otherCompanies:'important'});await consumer.run();await deliver(env);assert.equal(sends,0);assert.equal(s.rows('SELECT * FROM disclosures').length,1);assert.equal(s.rows('SELECT * FROM feed').length,1);
+ }finally{s.close();globalThis.fetch=old;}
+});
+test('KAP preference changes during source reading remain suppressed after re-enabling',async()=>{
+ const {s,env,docs}=await setup();try{
+  const d=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);d.title='Yeni İş İlişkisi';s.run('UPDATE disclosures SET metadata=?',JSON.stringify(d));
+  const consumer=new KapDelivery(s,env,async()=>{
+   s.configure({...s.prefs(),priorityIndices:false,otherCompanies:'off'});
+   s.configure({...s.prefs(),otherCompanies:'important'});return docs;
+  },()=>NOW);
+  assert.equal((await consumer.run()).state,'suppressed');assert.equal((await env.DB.prepare('SELECT COUNT(*) n FROM model_jobs').first<any>()).n,0);
+ }finally{s.close();}
+});

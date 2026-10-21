@@ -60,11 +60,11 @@ async function kapLoop(){
  // Absence of the separate KAP database must not create/bootstrap one here.
  const path=directory+'/kap/kap.sqlite';let store:KapStore|undefined,consumer:KapDelivery|undefined;
  while(!stopping){try{
-  if(!store){await access(path);store=new KapStore(path);consumer=new KapDelivery(store,env,id=>kapDocuments(id,readPdf));}
+  if(!store){await access(path);store=new KapStore(path);consumer=new KapDelivery(store,env,id=>kapDocuments(id,readPdf));env.KAP_DELIVERY_CHECK=documents=>consumer!.deliveryDecision(documents);}
   const result=await consumer!.run();await status('kap_delivery_health',{ok:!['uncertain','needs_review'].includes(result.state),at:new Date().toISOString(),...result});
  }catch(e){await status('kap_delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}
  await pause(5_000);}
- store?.close();
+ delete env.KAP_DELIVERY_CHECK;store?.close();
 }
 async function requestsLoop(){while(!stopping){try{await refreshNewsRequests(env);await prepare(env);}catch(e){await status('news_requests_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}
 async function manualLoop(){while(!stopping){try{await runManual(env);}catch(e){await status('manual_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}

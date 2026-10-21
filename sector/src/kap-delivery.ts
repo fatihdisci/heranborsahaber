@@ -12,16 +12,29 @@ export class KapDelivery {
   store.db.exec(`CREATE TABLE IF NOT EXISTS kap_model_jobs(queue_id TEXT PRIMARY KEY REFERENCES queue(id),job_id TEXT,attempts INTEGER NOT NULL DEFAULT 0,lease_until INTEGER NOT NULL DEFAULT 0,last_error TEXT,message_id INTEGER);`);
  }
  private allowed(d:Disclosure){return decide(d,this.store.prefs(),this.store.get<Indices>('indices')).action==='instant';}
+ // Called synchronously immediately before the sender invokes Telegram. A
+ // preference change during AI/rendering cannot rely on an old enqueue decision.
+ deliveryDecision(documents:Document[]):'allow'|'suppress'|'hold'{
+  const id=documents[0]?.source_id==='kap'?documents[0].url.match(/^https:\/\/www\.kap\.org\.tr\/tr\/Bildirim\/(\d+)$/)?.[1]:undefined;
+  if(!id)return 'hold';
+  return this.store.transaction(()=>{
+   const row=this.store.row<{id:string;state:string;metadata:string}>("SELECT q.id,q.state,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE d.id=?",Number(id));
+   if(!row)return 'hold';
+   if(row.state==='suppressed')return 'suppress';
+   if(!this.allowed(JSON.parse(row.metadata))){this.store.run("UPDATE queue SET state='suppressed' WHERE id=? AND sent_at IS NULL",row.id);return 'suppress';}
+   return 'allow';
+  });
+ }
  async run():Promise<{state:string;id?:string}> {
   if(this.env.MODE!=='telegram_review')return {state:'disabled'};
   const s=this.store,now=this.clock();s.set('telegram_delivery',{enabled:true,heartbeatAt:now});
   // A completed AI job is not a delivery receipt. Wait for the photo sender.
-  for(const pending of s.rows<{queue_id:string;job_id:string}>("SELECT m.queue_id,m.job_id FROM kap_model_jobs m JOIN queue q ON q.id=m.queue_id WHERE q.state IN ('model_queued','needs_review')")){
+  for(const pending of s.rows<{queue_id:string;job_id:string}>("SELECT m.queue_id,m.job_id FROM kap_model_jobs m JOIN queue q ON q.id=m.queue_id WHERE q.state IN ('model_queued','needs_review','suppressed')")){
    const job=await this.env.DB.prepare('SELECT state,error,result_draft FROM model_jobs WHERE id=?').bind(pending.job_id).first<{state:string;error:string|null;result_draft:string|null}>();
    const draft=job?.result_draft?await this.env.DB.prepare('SELECT state,delivery_state,delivered_at,message_id FROM drafts WHERE id=?').bind(job.result_draft).first<{state:string;delivery_state:string;delivered_at:number;message_id:number}>():null;
    if(draft?.delivery_state==='sent'){s.transaction(()=>{s.run("UPDATE queue SET state='sent',sent_at=? WHERE id=?",draft.delivered_at*1000,pending.queue_id);s.run('UPDATE kap_model_jobs SET message_id=?,last_error=NULL WHERE queue_id=?',draft.message_id,pending.queue_id);});}
-   else if(job&&['queued','leased','retry_pending'].includes(job.state))s.run("UPDATE queue SET state='model_queued' WHERE id=?",pending.queue_id);
-   else if(job?.state==='needs_review'||job?.state==='expired'||draft?.state==='needs_review'||draft?.delivery_state==='uncertain'){s.run("UPDATE queue SET state='needs_review' WHERE id=?",pending.queue_id);s.run('UPDATE kap_model_jobs SET last_error=? WHERE queue_id=?',job?.error??'draft_review_required',pending.queue_id);}
+   else if(job&&['queued','leased','retry_pending'].includes(job.state))s.run("UPDATE queue SET state='model_queued' WHERE id=? AND state!='suppressed'",pending.queue_id);
+   else if(job?.state==='needs_review'||job?.state==='expired'||draft?.state==='needs_review'||draft?.delivery_state==='uncertain'){s.run("UPDATE queue SET state='needs_review' WHERE id=? AND state!='suppressed'",pending.queue_id);s.run('UPDATE kap_model_jobs SET last_error=? WHERE queue_id=?',job?.error??'draft_review_required',pending.queue_id);}
   }
   const waiting=await this.env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state IN ('queued','leased','retry_pending') AND kind='kap'").first<{n:number}>();
   const total=await this.env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state IN ('queued','leased','retry_pending')").first<{n:number}>();
@@ -48,15 +61,15 @@ export class KapDelivery {
   }
   try{
    const docs=await this.load(row.disclosure.id);
-   if(!this.allowed(row.disclosure)){s.run("UPDATE queue SET state='suppressed' WHERE id=?",row.id);return {state:'suppressed',id:row.id};}
+   if(!this.allowed(row.disclosure)||s.row<{state:string}>('SELECT state FROM queue WHERE id=?',row.id)?.state==='suppressed'){s.run("UPDATE queue SET state='suppressed' WHERE id=?",row.id);return {state:'suppressed',id:row.id};}
    if(!await quota(this.env,'kap-ai-budget')){s.run("UPDATE queue SET state='ready',available_at=? WHERE id=?",now+1800_000,row.id);return {state:'budget_wait',id:row.id};}
    const jobId=await enqueueEvidence(this.env,docs,'kap');
-   s.transaction(()=>{s.run('UPDATE kap_model_jobs SET job_id=?,lease_until=0,last_error=NULL WHERE queue_id=?',jobId,row.id);s.run("UPDATE queue SET state='model_queued' WHERE id=?",row.id);});
+   s.transaction(()=>{s.run('UPDATE kap_model_jobs SET job_id=?,lease_until=0,last_error=NULL WHERE queue_id=?',jobId,row.id);s.run("UPDATE queue SET state='model_queued' WHERE id=? AND state='preparing'",row.id);});
    return {state:'model_queued',id:row.id};
   }catch(e){
    const attempts=s.row<{attempts:number}>('SELECT attempts FROM kap_model_jobs WHERE queue_id=?',row.id)!.attempts;
    const error=e instanceof Error&&/^[a-z_]{3,70}$/.test(e.message)?e.message:'kap_evidence_failed';
-   s.transaction(()=>{s.run("UPDATE queue SET state=?,available_at=? WHERE id=?",attempts<3?'ready':'needs_review',now+Math.min(300_000,30_000*2**attempts),row.id);s.run('UPDATE kap_model_jobs SET lease_until=0,last_error=? WHERE queue_id=?',error,row.id);});
+   s.transaction(()=>{s.run("UPDATE queue SET state=?,available_at=? WHERE id=? AND state='preparing'",attempts<3?'ready':'needs_review',now+Math.min(300_000,30_000*2**attempts),row.id);s.run('UPDATE kap_model_jobs SET lease_until=0,last_error=? WHERE queue_id=?',error,row.id);});
    return {state:'evidence_failed',id:row.id};
   }
  }

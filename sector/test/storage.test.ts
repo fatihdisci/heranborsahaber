@@ -44,7 +44,8 @@ test('job lease is exclusive, result is idempotent, publication remains absent',
  const payload={id:'job',lease_token:job.lease_token,input_hash:hash,draft,audit:{supported:true,issues:[]},runtime:{model:'gpt-6-luna',effort:'high',provider:'openai-codex',tool_count:0,fallback_count:0},card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')};
  await assert.rejects(()=>submitJob(env,{...payload,input_hash:'changed'}),/invalid_job_lease/);
  await assert.rejects(()=>submitJob(env,{...payload,svg_hash:'wrong'}),/card_content_mismatch/);
- const result=await submitJob(env,payload);assert(!result.duplicate);assert.equal(objects.size,1);
+ sql.prepare("UPDATE model_jobs SET error='previous_validation_failure' WHERE id='job'").run();
+ const result=await submitJob(env,payload);assert.equal(sql.prepare("SELECT error FROM model_jobs WHERE id='job'").get()!.error,null);assert(!result.duplicate);assert.equal(objects.size,1);
  assert.equal(sql.prepare('SELECT value FROM system_state WHERE key=?').get('card_theme:draft:'+result.id)!.value,job.card_theme);
  assert.equal(sql.prepare('SELECT value FROM system_state WHERE key=?').get('card_layout:draft:'+result.id)!.value,job.card_layout);
  assert.equal(sql.prepare('SELECT COUNT(*) AS count FROM drafts').get()!.count,1);

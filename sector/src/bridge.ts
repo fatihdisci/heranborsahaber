@@ -88,7 +88,7 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
   await env.MEDIA.put(media,image,{httpMetadata:{contentType:'image/png'}});
   const result=await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending'").bind(JSON.stringify(draft),JSON.stringify(documents),checked.verification,revision,media,job.draft_id,job.expected_revision),
-   env.DB.prepare("UPDATE model_jobs SET state='complete',documents='[]',result_draft=? WHERE id=?").bind(job.draft_id,job.id),
+   env.DB.prepare("UPDATE model_jobs SET state='complete',error=NULL,documents='[]',result_draft=? WHERE id=?").bind(job.draft_id,job.id),
    env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+job.draft_id,theme),
    env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_layout:draft:'+job.draft_id,layout)
   ]);
@@ -98,14 +98,14 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
  const recent=await env.DB.prepare('SELECT id,content FROM drafts WHERE created_at>? LIMIT 200').bind(time-48*3600).all<{id:string;content:string}>();
  const duplicate=documents[0].source_id==='kap'?undefined:(recent.results??[]).find(r=>sameEvent(draft,JSON.parse(r.content)));
  if(duplicate){await env.DB.batch([
-  env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft=? WHERE id=?").bind(duplicate.id,job.id),
+  env.DB.prepare("UPDATE model_jobs SET state='complete',error=NULL,result_draft=? WHERE id=?").bind(duplicate.id,job.id),
   env.DB.prepare("UPDATE articles SET status='duplicate',draft_id=? WHERE id=?").bind(duplicate.id,job.article_id)]);return {id:duplicate.id,duplicate:true};}
  const id=crypto.randomUUID(),key=documents[0].source_id==='kap'?await sha256(documents[0].url):await eventIdentity(draft,documents),media=`drafts/${id}/1.png`;
  await env.MEDIA.put(media,image,{httpMetadata:{contentType:'image/png'}});
  const cited=documents[0].source_id==='kap'||documents[0].source_id==='manual-input'?documents:documents.map((d,i)=>({...d,body:'',passages:d.passages.filter(p=>draft.claims.some(c=>c.evidence.some(e=>e.document===i&&e.passage===p.id)))}));
  try {await env.DB.batch([
   env.DB.prepare('INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,media_key) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id,key,await sha256(draft.headline+'\n'+draft.body),JSON.stringify(draft),JSON.stringify(cited),checked.verification,checked.verification==='needs_review'||job.kind==='initial'&&draft.importance<MIN_DRAFT_IMPORTANCE?'needs_review':'pending',time,time+24*3600,media),
-  env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft=?,documents='[]' WHERE id=? AND state='leased'").bind(id,job.id),
+  env.DB.prepare("UPDATE model_jobs SET state='complete',error=NULL,result_draft=?,documents='[]' WHERE id=? AND state='leased'").bind(id,job.id),
   env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+id,theme),
   env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_layout:draft:'+id,layout),
   env.DB.prepare("UPDATE articles SET status='prepared',draft_id=? WHERE id=?").bind(id,job.article_id),

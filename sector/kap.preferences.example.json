@@ -2,9 +2,16 @@
   "version": 1,
   "funds": "off",
   "fundDigestTime": "19:00",
-  "priorityIndices": true,
-  "otherCompanies": "important",
-  "otherTopics": [],
+  "priorityIndices": false,
+  "otherCompanies": "topics",
+  "otherTopics": [
+    "business",
+    "financial",
+    "buyback",
+    "share_trade",
+    "dividend",
+    "capital"
+  ],
   "watchlist": [],
   "excludedTitles": [
     "İhraç Belgesi",

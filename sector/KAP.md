@@ -53,3 +53,9 @@ Yeni iş ilişkisi, sözleşme, ihale, sipariş, finansal rapor/tablolar ve bila
 Tam HTML metni ve satır/sütun birleşimleri açılmış tablolar okunur. Her resmî dosya eki indirilir; Java byte[] taşıma sarmalayıcısı kod çalıştırmadan doğrulanır. PDF'nin tüm sayfaları ve tabloları çıkarılır. Taranmış sayfalar Apple Vision OCR ile okunur; sayfa görüntüleri hem yazara hem bağımsız denetçiye verilir. Okunamayan/eksik, 20 MB üzeri, 200 sayfa üzeri veya 20 görsel sayfayı aşan belgeler kısmen sunulmaz; incelemeye ayrılır. İşlem tarihi, kurul kararı ve yayın tarihi ayrı tutulur. Geri alım programı gerçekleşmiş işlem gibi yazılmaz.
 
 Bir bildirim tek görsel, tweet ve Kaynağı aç düğmesi olarak gönderilir. Her KAP numarası ayrı olaydır; başlık benzerliği farklı bildirimleri birleştirmez. Model bütçesi haberlerden ayrıdır; abonelik kotası ortaktır. Fon özeti tüketicisi yoktur; fonlar ve devre kesiciler kapalı kalır. `deliveryEnabled` son 60 saniyedeki tüketici kalp atışını gösterir.
+
+## SECTOR yayın odağı
+
+Canlı tercih: endeks üyeliği tek başına gönderim sebebi değildir. Yeni iş, sipariş, ihale, sözleşme/anlaşma; finansal sonuç, bilanço/faaliyet raporu; geri alım ve pay alım/satımı seçili konulardır. Temettü ve sermaye işlemleri korunur. Devre kesici ve fon gönderimi kapalı kalır. `kap.preferences.example.json` bu seçimi içerir; genel kütüphane varsayılanları eski tercih sözleşmesini korur.
+
+Genel özel durum başlıklarında konu özette aranır. Yönetim kurulu/personel değişiklikleri, yönetim bilgi formları ve kredi derecelendirmeleri susturulur. İşlem bildirimlerinin tam metnindeki yönetim kurulu karar tarihi engelleme sebebi değildir. Pay işlemlerinin öncelikli kuralı korunur; BIST 50 sınırı yoktur. Tercih değişikliği bekleyen hazır kuyruğu da yeniden değerlendirir; kaynak kayıtları silinmez, gönderilmiş bildirimler yeniden açılmaz.

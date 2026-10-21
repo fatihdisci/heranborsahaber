@@ -37,7 +37,14 @@ export class KapStore {
  get<T>(key:string):T|null {const row=this.row<{value:string}>('SELECT value FROM settings WHERE key=?',key);return row?JSON.parse(row.value):null;}
  set(key:string,value:unknown){this.run('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',key,JSON.stringify(value));}
  prefs(){return preferences(this.get('preferences'));}
- configure(value:unknown){const p=preferences(value);this.transaction(()=>{this.set('preferences',p);if(!p.circuitNotifications)this.suppressCircuits();});}
+ configure(value:unknown){const p=preferences(value);this.transaction(()=>{
+  this.set('preferences',p);if(!p.circuitNotifications)this.suppressCircuits();
+  // Re-evaluate already collected, not-yet-started notifications. Keep source
+  // records and delivered messages; a preference change must not replay history.
+  for(const row of this.rows<{id:string;metadata:string}>("SELECT q.id,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE q.kind='instant' AND q.state='ready'")){
+   if(decide(JSON.parse(row.metadata),p,this.get<Indices>('indices')).action==='off')this.run("UPDATE queue SET state='suppressed' WHERE id=? AND state='ready'",row.id);
+  }
+ });}
  private suppressCircuits(){
   this.run("UPDATE queue SET state='suppressed' WHERE sent_at IS NULL AND state='ready' AND (kind='circuit' OR EXISTS(SELECT 1 FROM queue_members m JOIN disclosures d ON d.id=m.disclosure_id JOIN json_each(d.decision,'$.topics') t WHERE m.queue_id=queue.id AND t.value='circuit'))");
  }

@@ -45,7 +45,7 @@ test('KAP exact legacy precedence: funds off first, shares override exclusions, 
 });
 test('KAP storage and notification differ; routine explicit tracking and mandatory mutes',()=>{
  const routine=item(101,{title:'Kredi Derecelendirmesi'});assert.equal(decide(routine,pref(),null).store,false);
- const tracked=pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}]});assert.equal(decide(routine,tracked,null).action,'instant');
+ const tracked=pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}]});assert.equal(decide(routine,tracked,null).action,'off');
  const excluded=item(101,{title:'İhraç Belgesi'});assert.equal(decide(excluded,pref(),null).store,true);assert.equal(decide(excluded,pref(),null).action,'off');
  for(const title of ['İç Tüzük','Fon Gider Bilgileri','Fon Toplam Giderinin Dağılımı','Faizsiz Pay Dışı Sermaye Piyasası Aracı İşlemleri','Kurumsal Yönetim Bilgi Formu (Güncelleme) – Yönetim Kurulu-2'])assert.equal(decide(item(101,{title}),tracked,null).action,'off',title);
  assert.equal(decide(routine,pref({otherCompanies:'topics',otherTopics:['other']}),null).store,true);
@@ -149,4 +149,19 @@ test('KAP disabling circuits suppresses queued and not-yet-frozen groups without
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='instant' AND state='ready'")!.n,1);
   store.save(item(104,{title:'Devre Kesici'}),l,NOW+25_000,true);assert.equal(store.health().sources,4);assert.equal(store.health().circuitPending,0);
  }finally{close();}
+});
+
+test('focused KAP subjects exclude governance and ratings while retaining deals, financials and trades',()=>{
+ const focused=pref({priorityIndices:false,otherCompanies:'topics',otherTopics:['business','financial','buyback','share_trade','dividend','capital']});
+ for(const title of ['Yönetim Kurulu Komiteleri','Kurumsal Yönetim Bilgi Formu (Güncelleme) - Yönetim Kurulu-1','Yönetim Bilgi Formu','Kredi Derecelendirilmesi','Kredi Derecelendirmesi','Finansal Takvim','Sorumluluk Beyanı (Konsolide Olmayan)','Genel Kurul Bildirimi']){
+  assert.equal(decide(item(101,{title}),focused,null).action,'off',title);
+ }
+ for(const summary of ['Bağımsız Yönetim Kurulu Üyesinin Görevden Ayrılması','Yönetim Kurulu Üye Değişkliği Hakkında','Kredi Derecelendirilmesi']){
+  const d=item(101,{title:'Özel Durum Açıklaması (Genel)',summary});
+  assert.equal(decide(d,focused,null).action,'off');
+  assert.equal(decide(d,pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}]}),{bist30:['TEST'],bist100:['TEST'],checkedAt:'',source:''}).action,'off');
+ }
+ for(const summary of ['SIAL Paris Fuarı Kapsamında Alınan Yeni Siparişler','Şirket Pay Alım Bildirimi','9A26 Finansalları Hk.','Yeni İş Anlaşması','Yeni Sözleşme İmzalanması'])assert.equal(decide(item(101,{title:'Özel Durum Açıklaması (Genel)',summary}),focused,null).action,'instant',summary);
+ for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Payların Alınıp Satılmasına İlişkin Bildirim','Pay Alım Satım Bildirimi','Finansal Rapor','Faaliyet Raporu (Konsolide Olmayan)','Yönetim Kurulu Faaliyet Raporu','Bilanço','Yeni İş İlişkisi','Yeni İşler','İhale Sonucu','Sözleşme İmzalanması'])assert.equal(decide(item(101,{title,summary:'Yönetim Kurulu karar tarihi 01.10.2026'}),focused,null).action,'instant',title);
+ assert.equal(decide(item(101,{title:'Borsa Dışı Repo Sözleşmesi'}),focused,null).action,'off');
 });

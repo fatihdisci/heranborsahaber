@@ -58,3 +58,14 @@ test('manual intake requires owner and private chat; same Telegram update queues
  assert.equal(await queueManual(env,11,{...m,text:undefined,document:{file_id:'safe',file_name:'bildirim.pdf'}}),true);
  }finally{s.close();}
 });
+
+test('focused preferences suppress existing routine queue entries without deleting source records',async()=>{
+ const {s}=await setup();try{
+  const row=s.row<{metadata:string}>('SELECT metadata FROM disclosures')!;
+  const d=JSON.parse(row.metadata);d.title='Özel Durum Açıklaması (Genel)';d.summary='Yönetim Kurulu Üye Değişikliği';
+  s.run('UPDATE disclosures SET metadata=?',JSON.stringify(d));
+  s.configure({...s.prefs(),priorityIndices:false,otherCompanies:'topics',otherTopics:['business','financial','buyback','share_trade','dividend','capital']});
+  assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'suppressed');
+  assert.equal(s.rows('SELECT * FROM disclosures').length,1);assert.equal(s.rows('SELECT * FROM feed').length,1);
+ }finally{s.close();}
+});

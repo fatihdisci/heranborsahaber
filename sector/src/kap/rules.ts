@@ -13,14 +13,20 @@ export function preferences(value:unknown):Preferences {
  if(p.watchlist.some(w=>!w||!EQUITY.test(w.ticker)||!['all','important','topics'].includes(w.mode)||!topics(w.topics))||new Set(p.watchlist.map(w=>w.ticker)).size!==p.watchlist.length)throw new Error('kap_watchlist_invalid');
  return structuredClone(p);
 }
+// Only generic KAP headings need their subject summary. Do not scan full text:
+// a board decision date inside a buyback is not a governance announcement.
+export function subject(d:Disclosure):string {
+ const title=normalize(d.title);
+ return /^(OZEL DURUM ACIKLAMASI(?: \(GENEL\))?|GENEL ACIKLAMA)$/.test(title)?normalize(d.summary??''):title;
+}
 export function classify(d:Disclosure):Topic[] {
- const t=normalize(d.title),result:Topic[]=[];
+ const t=subject(d),result:Topic[]=[];
  if(/TEMETTU|KAR PAYI/.test(t))result.push('dividend');
  if(/GERI ALIM|GERI ALIN|GERI SATIM|GERI SATIS|GERI SATIL/.test(t))result.push('buyback');
- if(/FINANSAL (RAPOR|TABLO|SONUC)|BILANCO|FAALIYET RAPOR/.test(t))result.push('financial');
+ if(/FINANSAL (RAPOR|TABLO|SONUC)|FINANSALLAR|BILANCO|FAALIYET RAPOR/.test(t))result.push('financial');
  if(/SERMAYE ART|SERMAYE AZAL|BEDELLI|BEDELSIZ/.test(t))result.push('capital');
- if(/YENI IS ILISK|SOZLESME|IHALE|SIPARIS/.test(t))result.push('business');
- if(/PAY (ALIM|SATIM|ALIS|SATIS)/.test(t)&&!result.includes('buyback'))result.push('share_trade');
+ if(/YENI IS(?:LER| |$)|SOZLESME|IHALE|SIPARIS|ANLASMA/.test(t)&&!/BORSA DISI|FON IHRAC SOZLESMESI/.test(t))result.push('business');
+ if(/PAY(?:LARIN)? (ALIM|SATIM|ALIS|SATIS|ALIN|SATIL)/.test(t)&&!result.includes('buyback'))result.push('share_trade');
  if(normalize(d.title+' '+(d.summary??'')).includes('DEVRE KESICI'))result.push('circuit');
  return result.length?result:['other'];
 }
@@ -28,11 +34,12 @@ export function muted(title:string):boolean {
  const t=normalize(title);
  return /IC\s*TUZUK|FON GIDER BILGILERI|ARACI KURUMA ODENEN KOMISYON VE VARLIK ALIM SATIM BILGILERI|FON TOPLAM GIDER ORANI|FON TOPLAM GIDERININ DAGILIMI/.test(t)
  ||(/FAIZSIZ/.test(t)&&/PAY DISI SERMAYE PIYASASI ARACI/.test(t))
- ||(/KURUMSAL YONETIM BILGI FORMU/.test(t)&&/GUNCELLEME/.test(t)&&/YONETIM KURULU\s*[-–]?\s*2/.test(t));
+ ||/YONETIM BILGI FORMU|KREDI DERECELENDIR/.test(t)
+ ||(/YONETIM KURULU/.test(t)&&!/GERI ALIM|GERI ALIN|PAY ALIM|PAY SATIM|FINANSAL RAPOR|FAALIYET RAPOR|SOZLESME|IHALE|YENI IS|SIPARIS|ANLASMA|TEMETTU|KAR PAYI|SERMAYE ART|SERMAYE AZAL/.test(t));
 }
 export function important(d:Disclosure):boolean {
- const t=normalize(d.title);
- return !(/PORTFOY DAGILIM RAPORU|BORSA DISI VAAD SOZLESMESI|BORSA DISI REPO|BORSA DISI TERS REPO|FON SUREKLI BILGILENDIRME|KREDI DERECELENDIR|YATIRIMCI BILGI FORMU|RISK OLCUM|DEGERLEME ESASLARI|SIRKET GENEL BILGI FORMU|HAK KULLANIM SUREC DURUM/.test(t)||(/FAIZ/.test(t)&&/PAY DISI SERMAYE PIYASASI ARACI/.test(t))||muted(d.title));
+ const t=subject(d);
+ return !(/PORTFOY DAGILIM RAPORU|BORSA DISI VAAD SOZLESMESI|BORSA DISI REPO|BORSA DISI TERS REPO|FON SUREKLI BILGILENDIRME|KREDI DERECELENDIR|YATIRIMCI BILGI FORMU|RISK OLCUM|DEGERLEME ESASLARI|SIRKET GENEL BILGI FORMU|HAK KULLANIM SUREC DURUM/.test(t)||(/FAIZ/.test(t)&&/PAY DISI SERMAYE PIYASASI ARACI/.test(t))||muted(d.title)||muted(t));
 }
 export function criticalFund(d:Disclosure):boolean {
  const text=normalize(d.title+' '+(d.company??'')+' '+(d.summary??''));
@@ -51,7 +58,7 @@ export function decide(d:Disclosure,p:Preferences,indices:Indices|null):Decision
  if(topics.includes('circuit')&&!p.circuitNotifications)return result('off','circuit_disabled');
  if(d.isFund&&p.funds==='off')return result('off','funds_off');
  if(shares)return result('instant','share_transaction_override');
- if(muted(d.title))return result('off','mandatory_mute');
+ if(muted(d.title)||muted(subject(d)))return result('off','mandatory_mute');
  if(p.excludedTitles.some(t=>normalize(d.title).includes(normalize(t))))return result('off','excluded_title');
  if(critical)return result('instant','critical_fund');
  if(d.isFund)return result(p.funds==='instant'?'instant':'digest','fund_preference');

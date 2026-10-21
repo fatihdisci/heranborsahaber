@@ -1,3 +1,4 @@
+import {legacyTheme,type CardTheme} from './card-theme';
 import {PROFILE_DATA} from './brand';
 import type {Draft} from './types';
 export const COLORS={navy:'#112333',paper:'#E4E9EC',steel:'#8095A4'};
@@ -25,12 +26,12 @@ export function wrap(text:string,size:number,width:number):string[] {
  }
  return solve(0,greedy.length)?.lines??greedy;
 }
-export function draftCard(d:Draft,sources:string[]=[],date='',demo=false):string {return cardSvg({headline:d.card_headline,body:d.card_body,template:d.template},sources,date,demo);}
+export function draftCard(d:Draft,sources:string[]=[],date='',demo=false,theme?:CardTheme):string {return cardSvg({headline:d.card_headline,body:d.card_body,template:d.template},sources,date,demo,theme);}
 // Source access belongs to the Telegram button. Legacy arguments remain accepted.
-export function cardSvg(d:Pick<Draft,'headline'|'body'|'template'>,_sources:string[]=[],_date='',_demo=false):string {
+export function cardSvg(d:Pick<Draft,'headline'|'body'|'template'>,_sources:string[]=[],_date='',_demo=false,theme?:CardTheme):string {
  const headline=d.headline.replace(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u,'').trim();
  if(!headline||!d.body.trim())throw new Error('card_content_empty');
- const dark=d.template!=='info'&&d.template!=='economic_data';
+ const dark=(theme??legacyTheme(d.template))==='navy';
  const bg=dark?COLORS.navy:COLORS.paper,fg=dark?COLORS.paper:COLORS.navy;
  const bodySize=36,bodyLines=wrap(d.body,bodySize,848);
  if(bodyLines.length>6)throw new Error('card_content_overflow');

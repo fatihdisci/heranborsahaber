@@ -31,7 +31,7 @@ async function run():Promise<void> {
  });
  const result=JSON.parse(output) as {draft:Draft;audit:unknown;runtime:unknown};
  const documents=job.documents as Document[];acceptHermes(result.draft,result.audit,documents);
- const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true);
+ const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true,job.card_theme==='navy'||job.card_theme==='paper'?job.card_theme:undefined);
  await api('/api/bridge/result',{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
 }
 const lockPath=configPath+'.lock';let lock;

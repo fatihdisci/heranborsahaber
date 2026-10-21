@@ -122,3 +122,5 @@ KAP'ın otomatik belge/PDF okuma ve üretim akışı ile sahibin doğrudan gönd
 ## Tweet dili ve etiketler
 
 Tweet ve görsel metninde yayıncıya atıf veya Kaynak satırı kullanılmaz; kaynak düğmede kalır. İddia, plan, koşul ve açıklama sahibinin kimliği korunur. BIST şirket haberleri ve doğrulanmış hisse kodlu KAP bildirimlerinde `#Borsa #BIST #HİSSEKODU` kullanılır. Kod kurum kısaltmasından tahmin edilmez. Birden fazla şirket/kod varsa iki piyasa etiketi ve ilgili konu etiketi seçilir; yabancı şirket haberlerine BIST etiketi eklenmez. Diğer haberlerde doğrudan ilgili 2–3 şirket/konu etiketi kullanılır. Yazım kuralı ihlali mevcut sınırlı düzeltme/denetim turuna girer; kaynak delilleri değiştirilmez.
+
+Kartlarda lacivert zemin/açık alt panel ile açık zemin/lacivert alt panel, haber türünden bağımsız yaklaşık eşit olasılıkla seçilir. Seçim ilk hazırlamada saklanır; yeniden denemede ve taslak düzenlemesinde korunur. Mevcut kartların renkleri değiştirilmez. Bu seçim AI çağrısı gerektirmez.

@@ -22,8 +22,8 @@ export async function completeKapDocuments(page:ReturnType<typeof fullText>,load
  if(attachments.length<page.expectedAttachments||attachments.length>20)throw Error('kap_attachments_incomplete');
  const title=[d.company,d.title].filter(Boolean).join(' — ');
  const paragraphs=page.text.split(/\n\s*\n/).filter(Boolean).map((text,i)=>({id:`body${i+1}`,text}));
- const passages=[{id:'metadata',text:[d.company,d.title,d.summary,d.publishedAt].filter(Boolean).join('\n')},...paragraphs,...page.tables.map((rows,i)=>({id:`table${i+1}`,text:JSON.stringify(rows)}))];
- const main:Document={source_id:'kap',source_name:'KAP',family:'kap',official:true,url:d.url,title,body:passages.map(p=>p.text).join('\n\n'),passages,published_at:d.publishedAt,language:'tr'};
+ const passages=[{id:'metadata',text:[d.company,d.title,d.summary,d.publishedAt,d.subjectCodes.length?'Asıl hisse kodu: '+d.subjectCodes.join(', '):''].filter(Boolean).join('\n')},...paragraphs,...page.tables.map((rows,i)=>({id:`table${i+1}`,text:JSON.stringify(rows)}))];
+ const main:Document={source_id:'kap',source_name:'KAP',family:'kap',official:true,url:d.url,title,body:passages.map(p=>p.text).join('\n\n'),passages,published_at:d.publishedAt,language:'tr',equity_codes:d.subjectCodes};
  const docs=[main];
  for(const a of attachments){
   const pdf=await load(a.url);

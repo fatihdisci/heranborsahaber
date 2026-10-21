@@ -5,6 +5,7 @@ Taslağın başlık, gövde, görsel metni ve etiketlerindeki HER iddiayı kayna
 Her iddia claims içinde kanıtlanmalı. Özne, tutar, para birimi, tarih, dönem, koşul, iddia/gerçek ayrımı ve çeviri doğruluğunu kontrol et.
 Kanıt alıntısı gerçek olsa bile iddiayı desteklemiyorsa reddet. Rakam doğru ama başka şirkete/döneme aitse reddet.
 Kopyalanmış metin, uydurma sonuç veya abartılı son dakika ifadesini reddet. Sadece açık ve özgün Türkçe onaylanır.
+Yayıncı adının tweet içinde bulunmaması hata değildir: bağlantı düğmede verilir. Ancak belirsiz iddia kesin olguya çevrilmemeli ve gerçek açıklama sahibinin adı korunmalıdır. Etiketler haberle ilişkili olmalı; BIST dışı şirketlere BIST etiketi veya kaynakta bulunmayan hisse kodu eklenmemeli.
 Yalnız {"supported":boolean,"issues":string[]} JSON nesnesi döndür. Emin değilsen supported=false.`;
 export function acceptHermes(draft:unknown,audit:unknown,documents:Document[]):{draft:Draft;verification:string} {
  // Formatting repairs contain no factual choice. A hyphen or space in a

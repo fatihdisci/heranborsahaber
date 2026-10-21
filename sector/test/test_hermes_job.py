@@ -43,6 +43,17 @@ class HermesJobContract(unittest.TestCase):
             result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],short)
         self.assertTrue(job_module.presentation_issues({'headline':'🌍'*510,'body':'Açıklama','hashtags':['#Ekonomi','#Finans']}))
 
+    def test_publisher_attribution_and_market_tags_trigger_bounded_repair(self):
+        policy={'publisher_names':['CNBC-e'],'required_hashtags':['#Borsa','#BIST','#THYAO']}
+        bad={'headline':'Şirket yeni sözleşmesini duyurdu','body':'CNBC-e’nin haberine göre sözleşme imzalandı.','hashtags':['#Şirket','#Yatırım']}
+        good={**bad,'body':'Şirket yeni sözleşmenin onaya bağlı olduğunu açıkladı.','hashtags':policy['required_hashtags']}
+        self.assertEqual(len(job_module.presentation_issues(bad,policy)),2)
+        self.assertEqual(job_module.presentation_issues(good,policy),[])
+        with patch.object(job_module,'call',side_effect=[bad,{'supported':True,'issues':[]},good,{'supported':True,'issues':[]}]) as call:
+            result=job_module.main(self.job()|{'editorial_policy':policy})
+            self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],good)
+            self.assertEqual(call.call_args_list[0].args[2]['editorial_policy'],policy)
+
     def test_json_fence_handling_does_not_accept_prose(self):
         self.assertEqual(job_module.decode('```json\n{"başlık":"Haber"}\n```'),{'başlık':'Haber'})
         with self.assertRaises(ValueError):job_module.decode('Result is not a JSON object')

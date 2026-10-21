@@ -3,7 +3,7 @@
 Run with the existing Hermes virtualenv Python. Secrets never cross into
 Cloudflare: only the resulting draft and audit are returned to our bridge.
 """
-import contextlib, inspect, io, json, os, pathlib, sys, time, subprocess, base64
+import contextlib, inspect, io, json, os, pathlib, sys, time, subprocess, base64, re
 
 def runtime(home):
     profile=pathlib.Path(home).resolve()
@@ -69,28 +69,39 @@ def call(job,instructions,payload):
     if result.get('api_calls',1)!=1:raise RuntimeError('unexpected_call_count')
     return decode(result['final_response'])
 
-def presentation_issues(draft):
+def presentation_issues(draft,policy=None):
     if not isinstance(draft,dict) or not isinstance(draft.get('body'),str) or not isinstance(draft.get('hashtags'),list):return []
     if not isinstance(draft.get('headline'),str) or any(not isinstance(t,str) for t in draft['hashtags']):return []
     text='\n\n'.join(p for p in [draft['headline'],draft['body'],' '.join(draft['hashtags'])] if p)
-    if len(text.encode('utf-16-le'))//2>1024:return ['Başlık, gövde ve etiketleri kritik olguları koruyarak toplam 1024 UTF-16 karakter içine yeniden yaz. Metni kesme veya bölme.']
-    return []
+    issues=[]
+    if len(text.encode('utf-16-le'))//2>1024:issues.append('Başlık, gövde ve etiketleri kritik olguları koruyarak toplam 1024 UTF-16 karakter içine yeniden yaz. Metni kesme veya bölme.')
+    policy=policy or {}
+    required=policy.get('required_hashtags',[])
+    if any(t.casefold() not in [h.casefold() for h in draft['hashtags']] for t in required):issues.append('Etiketleri şu zorunlu etiketleri içerecek şekilde 2–3 adet olarak düzelt: '+' '.join(required))
+    visible='\n'.join(str(draft.get(k,'')) for k in ['headline','body','card_headline','card_body']).lower().replace('ı','i')
+    attribution=bool(re.search(r'(?:^|\n)\s*kaynak\s*:|(?:haberine|haberlerinde|aktardiğina|aktardigina)\s+göre',visible))
+    for name in policy.get('publisher_names',[]):
+        if not name:continue
+        pattern=r'[-\s]*'.join(re.escape(part) for part in re.split(r'[-\s]+',name.lower().replace('ı','i')))
+        attribution=attribution or bool(re.search(pattern+r"(?:['’]?[a-zçğıöşü]+)?\s+(?:haberine|haberindeki|aktardiğina|aktardigina|bildirdiğine|bildirdigine|göre|kaynakli|tarafindan aktarilan)",visible))
+    if attribution:issues.append('Yayıncıya atıf veya Kaynak satırını kaldır; kaynak düğmededir. İddia/plan/koşul niteliğini ve gerçek açıklama sahibini aynen koruyarak özgün haber diliyle yeniden yaz.')
+    return issues
 
 def main(job):
     if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6.1-sol' or job.get('effort')!='low' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
-    draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request')})
+    draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{})})
     if job.get('deadline',0)<time.time():raise RuntimeError('job_expired')
     audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
     calls=2
-    layout_issues=presentation_issues(draft)
+    layout_issues=presentation_issues(draft,job.get('editorial_policy'))
     if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
     if audit.get('supported') is not True or audit.get('issues'):
         if job.get('deadline',0)<time.time()+90:raise RuntimeError('repair_budget_expired')
-        draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'previous_draft':draft,'required_corrections':audit.get('issues',[])})
+        draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{}),'previous_draft':draft,'required_corrections':audit.get('issues',[])})
         audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
         calls=4
-        layout_issues=presentation_issues(draft)
+        layout_issues=presentation_issues(draft,job.get('editorial_policy'))
         if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
     return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':'low','provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
 

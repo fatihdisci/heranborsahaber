@@ -1,3 +1,4 @@
+import {editorialPolicy} from './style';
 import {DRAFT_SCHEMA,EDITOR_PROMPT,topicScore,MIN_DRAFT_IMPORTANCE} from './editorial';
 import {AUDIT_PROMPT,acceptHermes} from './ai';
 import {eventIdentity,sameEvent} from './dedupe';
@@ -32,7 +33,7 @@ export async function leaseJob(env:Env) {
  const lock=await env.DB.prepare("UPDATE model_jobs SET state='leased',lease_token=?,lease_until=? WHERE id=? AND state='queued'").bind(token,now()+600,job.id).run();if(!lock.meta.changes)return null;
  const previous=await env.DB.prepare('SELECT id,content FROM drafts WHERE created_at>? ORDER BY created_at DESC LIMIT 40').bind(now()-48*3600).all<{id:string;content:string}>();
  const existing_events=(previous.results??[]).map(r=>{const d=JSON.parse(r.content) as Draft;return {id:r.id,headline:d.headline,event_key:d.event_key,entities:d.entities};});
- return {id:job.id,lease_token:token,input_hash:job.input_hash,deadline:now()+600,model:env.AI_MODEL,effort:env.AI_EFFORT,provider:'openai-codex',allowed_tools:[],documents:JSON.parse(job.documents),existing_events,edit_request:job.edit_request,prompt:EDITOR_PROMPT,schema:DRAFT_SCHEMA,audit_prompt:AUDIT_PROMPT};
+ return {id:job.id,lease_token:token,input_hash:job.input_hash,deadline:now()+600,model:env.AI_MODEL,effort:env.AI_EFFORT,provider:'openai-codex',allowed_tools:[],documents:JSON.parse(job.documents),editorial_policy:editorialPolicy(JSON.parse(job.documents)),existing_events,edit_request:job.edit_request,prompt:EDITOR_PROMPT,schema:DRAFT_SCHEMA,audit_prompt:AUDIT_PROMPT};
 }
 export async function enqueueEdit(env:Env,id:string,revision:number,request:string):Promise<void> {
  if(!request.trim()||request.length>12_000)throw new Error('invalid_edit_request');

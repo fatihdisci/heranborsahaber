@@ -29,10 +29,10 @@ Eksik/çelişkili kanıtlar, belirsiz galeri/PDF veya doğrulamadan geçmeyen me
 `sources.json` ortak kayıttır. Sağlık, etag, son başarılı kontrol ve hata bekleme süreleri ayrı veritabanında tutulur.
 Kaynaklar tek tek `sources.candidates.json` ve `reports/source-check.json` üzerinden doğrulanmıştır.
 Kurulumda eski RSS arşivi canlı kuyruğa boşaltılmaz; başlangıç anı ve kısa zaman payı kaydedilir. Önem ve güncellik birlikte sıralanır.
-Günlük en fazla 60 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X yayını kalıcı olarak kapsam dışıdır.
+Günlük en fazla 240 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X yayını kalıcı olarak kapsam dışıdır.
 NTV’nin denenen RSS’i ve TCMB’nin özel PPK beslemesi eski kaldığı için etkinleştirilmedi. PPK basın duyuruları genel TCMB basın akışından takip edilir.
 TÜİK RSS adayı 404, güncel veri portalı ise otomatik istemciye koruma sayfası verdi; bültenler okunmuş gibi sisteme eklenmedi.
-Haber okuyucusu KAP bağlantılarını birincil kaynak olarak okuyabilir. Ayrıca bağımsız KAP toplayıcısı çalışır; kalıcı cursor, saklama ve kuyruk kuralları [KAP.md](KAP.md) içindedir. Devre kesici gönderimi kapalıdır; KAP kuyruğunun Telegram tüketicisi henüz bağlı değildir.
+Haber okuyucusu KAP bağlantılarını birincil kaynak olarak okuyabilir. Ayrıca bağımsız KAP toplayıcısı çalışır; kalıcı cursor, saklama ve kuyruk kuralları [KAP.md](KAP.md) içindedir. Devre kesici gönderimi kapalıdır; KAP kuyruğu haber servisindeki bağımsız Telegram tüketicisine bağlıdır.
 SPK’nın güncel bülten listesi ve PDF’leri ayrı okuyucuyla takip edilir; sayfa ve tablo sınırları korunur.
 
 Kamuya açık RSS veya okunabilir sayfa, yeniden yayın/görsel lisansı sayılmaz.
@@ -93,7 +93,7 @@ Gerçek haber denemeleri `scripts/demo.ts`, erişim raporları `reports/` içind
 
 ## Ayrı KAP toplama hattı
 
-KAP bildirimleri için ayrı cursor, kurallar, kalıcı kayıt ve kuyruk uygulaması: [KAP.md](KAP.md). Bu hat RSS/AI taslaklarına veri aktarmaz; dış servise gönderim yapmaz.
+KAP bildirimleri için ayrı cursor, kurallar, kalıcı kayıt ve kuyruk uygulaması: [KAP.md](KAP.md). Toplayıcı ayrı kayıt/kuyruk üretir; tüketici tam metin, tablolar ve PDF eklerini doğrulanmış taslak üretimine aktarır.
 
 ## Tek mesaj ve sade kartlar
 
@@ -102,3 +102,13 @@ Her yeni haber bir PNG ve açıklamasındaki tweet metniyle tek Telegram mesajı
 Telegram fotoğraf açıklamasının teknik sınırı 1024 UTF-16 karakterdir. Başlık/gövde/etiketler bu sınırı aşarsa Hermes aynı sınırlı düzeltme turunda anlamı koruyarak yeniden yazar ve tekrar denetlenir. Metin kesilmez, ikinci mesaja bölünmez; sığmayan doğrulanmamış sonuç gönderilmez. [Telegram sözleşmesi](https://core.telegram.org/bots/api#sendphoto).
 
 1080×1350 kartlarda yalnız marka, güçlü başlık ve kısa açıklama bulunur; gerçek son dakika şablonunda küçük bir konu etiketi vardır. Tarih, kullanıcı adı, kaynak listesi, yan şeritler, puan ve DENEME filigranı kaldırılmıştır. Renkler ve onaylı logo korunur; başlık boyutu ve satır yerleşimi metne uyarlanır, taşma sessizce kesilmez.
+
+## Akış kapasitesi ve KAP teslimatı
+
+Kaynak filtresi 60 puan ve üzeri ekonomi/şirket adaylarını toplar; doğrulanmış taslakların gönderim eşiği 50 puandır. Kaynak denetimi, sayı/kanıt kontrolleri ve çözümlenmemiş belirsizlik engeli korunur. Günlük 240 model adayı sınırı teslim edilmiş mesaj sayısı değildir; başarısız adaylar da bu bütçeyi kullanır. ChatGPT kota sınırında otomatik bekleme devam eder.
+
+Haber teslimatı kaynak taramasından ayrı 10 saniyelik döngüde çalışır. KAP tüketicisi tam metni, tabloları ve tüm PDF eklerini okur. Taranmış ekler OCR ve sayfa görüntüsüyle modele ve denetçiye iletilir. Eksik/okunamayan ek varsa özetten taslak üretilmez. KAP için ayrı günlük model bütçesi uygulanır; aynı Hermes abonelik kotası paylaşılır. Telegram'a bir görsel, tweet metni ve Kaynağı aç düğmesi tek mesajda gelir.
+
+## Kendi haberini gönder
+
+@habernewssbot özel sohbetine desteklenen kaynaklardan haber bağlantısı, KAP bağlantısı, PDF dosyası veya en az 100 karakterlik haber metni gönder. Yalnız kayıtlı hesap sahibi kabul edilir. Aynı kaynak denetimi ve görsel üretimi uygulanır; X yayını yoktur. @Minihermesimbot genel Hermes sohbetidir. Bilinmeyen sitelerde tam metni veya PDF'yi gönder. Dosya/metin taslaklarının kaynak düğmesi orijinal Telegram gönderisini açmak için bot bağlantısını kullanır.

@@ -19,6 +19,9 @@ for name in ['src','scripts','assets','migrations']:
 for name in ['sources.json','package.json','package-lock.json']:
     shutil.copy2(source/name,app/name)
 subprocess.run(['npm','ci','--omit=dev','--ignore-scripts'],cwd=app,check=True)
+ocr=runtime/'bin/pdf-ocr';ocr.parent.mkdir(exist_ok=True,mode=0o700)
+subprocess.run(['/usr/bin/xcrun','swiftc','-O',str(app/'scripts/pdf_ocr.swift'),'-o',str(ocr)],check=True)
+ocr.chmod(0o700)
 node=shutil.which('node')
 if not node:raise RuntimeError('node_required')
 logs=runtime/'logs';logs.mkdir(exist_ok=True)

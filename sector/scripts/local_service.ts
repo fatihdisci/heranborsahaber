@@ -1,10 +1,15 @@
-import {readFile,writeFile,open,unlink} from 'node:fs/promises';
+import {readFile,writeFile,open,unlink,access} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 import {homedir} from 'node:os';
 import {localDatabase,localMedia} from '../src/local-adapters';
 import {tick,seed,deliver,errorCode} from '../src/pipeline';
 import {leaseJob,submitJob,ingestOfficial} from '../src/bridge';
 import {telegram} from '../src/telegram';
+import {KapStore} from '../src/kap/store';
+import {KapDelivery} from '../src/kap-delivery';
+import {kapDocuments} from '../src/kap-evidence';
+import {readPdf} from './pdf_reader';
+import {runManual} from './manual_reader';
 import {draftCard} from '../src/card';
 import {sha256} from '../src/utils/text';
 import {acceptHermes} from '../src/ai';
@@ -14,7 +19,7 @@ import worker from '../src/worker';
 import type {Env,Document,Draft} from '../src/types';
 const directory=`${homedir()}/Library/Application Support/sector-haber`;
 const secrets=JSON.parse(await readFile(directory+'/secrets.json','utf8'));
-const env={...secrets,DB:await localDatabase(directory+'/sector-haber.sqlite',await readFile('migrations/0001_sector.sql','utf8')),MEDIA:await localMedia(directory+'/media'),MODE:'telegram_review',AI_MODEL:'gpt-6.1-sol',AI_EFFORT:'low',AI_DAILY_DRAFT_LIMIT:'60'} as Env;
+const env={...secrets,DB:await localDatabase(directory+'/sector-haber.sqlite',await readFile('migrations/0001_sector.sql','utf8')),MEDIA:await localMedia(directory+'/media'),MODE:'telegram_review',AI_MODEL:'gpt-6.1-sol',AI_EFFORT:'low',AI_DAILY_DRAFT_LIMIT:'240'} as Env;
 await seed(env);
 const lockPath=directory+'/service.lock';let lock;
 try{lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}
@@ -42,6 +47,18 @@ async function modelLoop(){while(!stopping){let job:Awaited<ReturnType<typeof le
  }catch(e){if(job)await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error=? WHERE id=? AND state='leased'").bind(errorCode(e),job.id).run();await status('model_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});if(e instanceof Error&&['quota_paused','hermes_auth_unavailable'].includes(e.message))await status('model_paused_until',Date.now()+3600_000);await pause(60_000);}
 }}
 async function newsLoop(){let official=0;while(!stopping){try{await tick(env);await status('collector_health',{ok:true,at:new Date().toISOString()});if(Date.now()-official>10*60_000){try{await scanOfficial(async(_path,value)=>ingestOfficial(env,value as Record<string,unknown>),directory+'/official-state.json');official=Date.now();await status('official_health',{ok:true,at:new Date().toISOString()});}catch(e){await status('official_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}}catch(e){await status('collector_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(60_000);}}
+async function deliveryLoop(){while(!stopping){try{await deliver(env);}catch(e){await status('delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
+async function kapLoop(){
+ // Absence of the separate KAP database must not create/bootstrap one here.
+ const path=directory+'/kap/kap.sqlite';let store:KapStore|undefined,consumer:KapDelivery|undefined;
+ while(!stopping){try{
+  if(!store){await access(path);store=new KapStore(path);consumer=new KapDelivery(store,env,id=>kapDocuments(id,readPdf));}
+  const result=await consumer!.run();await status('kap_delivery_health',{ok:!['uncertain','needs_review'].includes(result.state),at:new Date().toISOString(),...result});
+ }catch(e){await status('kap_delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}
+ await pause(5_000);}
+ store?.close();
+}
+async function manualLoop(){while(!stopping){try{await runManual(env);}catch(e){await status('manual_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}
 async function telegramLoop(){
  let offset=Number((await env.DB.prepare("SELECT value FROM system_state WHERE key='telegram_offset'").first<{value:string}>())?.value??0);
  while(!stopping){try{
@@ -55,4 +72,4 @@ if(process.argv.includes('--prepare-once')){try{await tick(env);console.log('Sou
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}
-}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}
+}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}

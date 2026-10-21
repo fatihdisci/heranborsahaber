@@ -44,9 +44,9 @@ export async function poll(env:Env):Promise<void> {
   }
  }));
 }
-async function quota(env:Env):Promise<boolean> {
- const day=new Date().toISOString().slice(0,10),key='ai-budget:'+day;
- const limit=Math.max(0,Math.min(100,Number(env.AI_DAILY_DRAFT_LIMIT)||0));
+export async function quota(env:Env,bucket='ai-budget'):Promise<boolean> {
+ const day=new Date().toISOString().slice(0,10),key=bucket+':'+day;
+ const limit=Math.max(0,Math.min(500,Math.floor(Number(env.AI_DAILY_DRAFT_LIMIT)||0)));
  const result=await env.DB.prepare("INSERT INTO system_state(key,value) SELECT ?, '1' WHERE ?>0 ON CONFLICT(key) DO UPDATE SET value=CAST(value AS INTEGER)+1 WHERE CAST(value AS INTEGER)<?").bind(key,limit,limit).run();
  return !!result.meta.changes;
 }

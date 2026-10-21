@@ -1,4 +1,4 @@
-import {DRAFT_SCHEMA,EDITOR_PROMPT,topicScore} from './editorial';
+import {DRAFT_SCHEMA,EDITOR_PROMPT,topicScore,MIN_DRAFT_IMPORTANCE} from './editorial';
 import {AUDIT_PROMPT,acceptHermes} from './ai';
 import {eventIdentity,sameEvent} from './dedupe';
 import {draftCard} from './card';
@@ -38,8 +38,13 @@ export async function enqueueEdit(env:Env,id:string,revision:number,request:stri
  if(!request.trim()||request.length>12_000)throw new Error('invalid_edit_request');
  const row=await env.DB.prepare("SELECT * FROM drafts WHERE id=? AND revision=? AND state='pending' AND expires_at>?").bind(id,revision,now()).first<{documents:string}>();if(!row)throw new Error('stale_edit');
  const article=await env.DB.prepare('SELECT * FROM articles WHERE draft_id=? ORDER BY first_seen LIMIT 1').bind(id).first<{id:string;source_id:string;url:string;title:string;summary:string;published_at:string}>();if(!article)throw new Error('edit_source_missing');
- const source=(registry as Source[]).find(s=>s.id===article.source_id);if(!source)throw new Error('edit_source_missing');
- const documents=[await readDocument(article,source)],input=JSON.stringify(documents);
+ const stored=JSON.parse(row.documents) as Document[];
+ const localEvidence=stored[0]?.source_id==='kap'||stored[0]?.source_id==='manual-input';
+ const source=(registry as Source[]).find(s=>s.id===article.source_id);
+ if(!localEvidence&&!source)throw new Error('edit_source_missing');
+ const documents=localEvidence?stored:[await readDocument(article,source!)];
+ if(documents.some(d=>!d.body||!d.passages.length))throw new Error('edit_source_incomplete');
+ const input=JSON.stringify(documents);
  await env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,draft_id,expected_revision,edit_request) VALUES(?,?,?,?,?,'edit',?,?,?)").bind(crypto.randomUUID(),article.id,input,await sha256(input),now(),id,revision,request).run();
 }
 export function pngBytes(base64:unknown):Uint8Array {
@@ -69,22 +74,22 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
   const revision=current.revision+1,media=`drafts/${job.draft_id}/${revision}.png`;
   await env.MEDIA.put(media,image,{httpMetadata:{contentType:'image/png'}});
   const result=await env.DB.batch([
-   env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending'").bind(JSON.stringify(draft),JSON.stringify(documents.map(d=>({...d,body:'',passages:d.passages.filter(p=>draft.claims.some(c=>c.evidence.some(e=>e.passage===p.id)))}))),checked.verification,revision,media,job.draft_id,job.expected_revision),
+   env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending'").bind(JSON.stringify(draft),JSON.stringify(documents),checked.verification,revision,media,job.draft_id,job.expected_revision),
    env.DB.prepare("UPDATE model_jobs SET state='complete',documents='[]',result_draft=? WHERE id=?").bind(job.draft_id,job.id)
   ]);
   if(!result[0].meta.changes){await env.MEDIA.delete(media);throw new Error('stale_edit');}
   return {id:job.draft_id!,duplicate:false};
  }
  const recent=await env.DB.prepare('SELECT id,content FROM drafts WHERE created_at>? LIMIT 200').bind(time-48*3600).all<{id:string;content:string}>();
- const duplicate=(recent.results??[]).find(r=>sameEvent(draft,JSON.parse(r.content)));
+ const duplicate=documents[0].source_id==='kap'?undefined:(recent.results??[]).find(r=>sameEvent(draft,JSON.parse(r.content)));
  if(duplicate){await env.DB.batch([
   env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft=? WHERE id=?").bind(duplicate.id,job.id),
   env.DB.prepare("UPDATE articles SET status='duplicate',draft_id=? WHERE id=?").bind(duplicate.id,job.article_id)]);return {id:duplicate.id,duplicate:true};}
- const id=crypto.randomUUID(),key=await eventIdentity(draft,documents),media=`drafts/${id}/1.png`;
+ const id=crypto.randomUUID(),key=documents[0].source_id==='kap'?await sha256(documents[0].url):await eventIdentity(draft,documents),media=`drafts/${id}/1.png`;
  await env.MEDIA.put(media,image,{httpMetadata:{contentType:'image/png'}});
- const cited=documents.map((d,i)=>({...d,body:'',passages:d.passages.filter(p=>draft.claims.some(c=>c.evidence.some(e=>e.document===i&&e.passage===p.id)))}));
+ const cited=documents[0].source_id==='kap'||documents[0].source_id==='manual-input'?documents:documents.map((d,i)=>({...d,body:'',passages:d.passages.filter(p=>draft.claims.some(c=>c.evidence.some(e=>e.document===i&&e.passage===p.id)))}));
  try {await env.DB.batch([
-  env.DB.prepare('INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,media_key) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id,key,await sha256(draft.headline+'\n'+draft.body),JSON.stringify(draft),JSON.stringify(cited),checked.verification,checked.verification==='needs_review'||draft.importance<60?'needs_review':'pending',time,time+24*3600,media),
+  env.DB.prepare('INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,media_key) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id,key,await sha256(draft.headline+'\n'+draft.body),JSON.stringify(draft),JSON.stringify(cited),checked.verification,checked.verification==='needs_review'||job.kind==='initial'&&draft.importance<MIN_DRAFT_IMPORTANCE?'needs_review':'pending',time,time+24*3600,media),
   env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft=?,documents='[]' WHERE id=? AND state='leased'").bind(id,job.id),
   env.DB.prepare("UPDATE articles SET status='prepared',draft_id=? WHERE id=?").bind(id,job.article_id),
   ...(JSON.parse(job.related_ids) as string[]).map(other=>env.DB.prepare("UPDATE articles SET status='duplicate',draft_id=? WHERE id=? AND status='queued'").bind(id,other))

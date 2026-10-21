@@ -1,4 +1,5 @@
 import registry from '../sources.json';
+import {queueManual,type InputMessage} from './manual';
 import {tick,seed,deliver,errorCode,type DraftRow} from './pipeline';
 import {leaseJob,submitJob,enqueueEdit,ingestOfficial} from './bridge';
 import {isOwner,telegram,sourceKeyboard} from './telegram';
@@ -20,13 +21,13 @@ async function body(request:Request,max=80_000):Promise<Record<string,unknown>> 
 async function webhook(request:Request,env:Env):Promise<Response> {
  if(!await secretEqual(request.headers.get('x-telegram-bot-api-secret-token')??'',env.TELEGRAM_WEBHOOK_SECRET??''))return json({error:'unauthorized'},401);
  const update=await body(request);const id=update.update_id;if(!Number.isSafeInteger(id))return json({ok:true});
- const message=update.message as {text?:string;from?:{id:number};chat?:{id:number;type:string};reply_to_message?:{message_id:number}}|undefined;
- if(message?.chat&&message.from&&message.text&&isOwner(env,String(message.from.id),String(message.chat.id),message.chat.type)) {
+ const message=update.message as InputMessage|undefined;
+ if(message?.chat&&message.from&&isOwner(env,String(message.from.id),String(message.chat.id),message.chat.type)) {
   const edit=await env.DB.prepare('SELECT * FROM edits WHERE user_id=? AND expires_at>?').bind(env.TELEGRAM_USER_ID!,Math.floor(Date.now()/1000)).first<{draft_id:string;revision:number;prompt_message_id:number}>();
-  if(edit&&message.reply_to_message?.message_id===edit.prompt_message_id) {
+  if(edit&&message.text&&message.reply_to_message?.message_id===edit.prompt_message_id) {
    try {await enqueueEdit(env,edit.draft_id,edit.revision,message.text);await env.DB.prepare('DELETE FROM edits WHERE user_id=?').bind(env.TELEGRAM_USER_ID!).run();}
    catch {await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Düzenleme kaydedilemedi. Karttaki Düzenle düğmesinden tekrar deneyebilirsin.'}));}
-  }
+  } else await queueManual(env,Number(id),message);
   return json({ok:true});
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;

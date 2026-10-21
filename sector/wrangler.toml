@@ -8,7 +8,7 @@ preview_urls = false
 MODE = "dry_run"
 AI_MODEL = "gpt-6.1-sol"
 AI_EFFORT = "low"
-AI_DAILY_DRAFT_LIMIT = "60"
+AI_DAILY_DRAFT_LIMIT = "240"
 
 [[d1_databases]]
 binding = "DB"

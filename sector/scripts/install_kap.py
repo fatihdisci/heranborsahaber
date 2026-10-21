@@ -33,4 +33,4 @@ payload={'Label':label,'ProgramArguments':[node,str(app/'node_modules/tsx/dist/c
  'StandardOutPath':str(logs/'collector.log'),'StandardErrorPath':str(logs/'collector.error.log')}
 plist.parent.mkdir(exist_ok=True);plist.write_bytes(plistlib.dumps(payload));plist.chmod(0o600)
 subprocess.run(['launchctl','bootstrap',domain,str(plist)],check=True)
-print('SECTOR KAP collector installed. Delivery is not configured.')
+print('SECTOR KAP collector installed. Telegram delivery is handled separately by the news service.')

@@ -96,7 +96,22 @@ export function fullText(html:string,id:number) {
  const areas=[...document.querySelectorAll('.disclosureScrollableArea')];
  const clean=(s:string)=>s.replace(/\u00a0/g,' ').replace(/[\t ]+/g,' ').trim();
  for(const area of areas)for(const el of area.querySelectorAll('script,style,noscript,[aria-hidden="true"]'))el.remove();
- const tables=areas.flatMap(a=>[...a.querySelectorAll('table')].map(t=>[...t.querySelectorAll('tr')].filter(r=>r.closest('table')===t).map(r=>[...r.querySelectorAll('th,td')].filter(c=>c.closest('table')===t).map(c=>clean(c.textContent??''))).filter(r=>r.length)));
+ const tables=areas.flatMap(a=>[...a.querySelectorAll('table')].map(t=>{
+  const grid:string[][]=[];
+  [...t.querySelectorAll('tr')].filter(r=>r.closest('table')===t).forEach((row,y)=>{
+   grid[y]??=[];let x=0;
+   for(const cell of [...row.querySelectorAll('th,td')].filter(c=>c.closest('table')===t)){
+    while(grid[y][x]!==undefined)x++;
+    const rs=Number(cell.getAttribute('rowspan')??1),cs=Number(cell.getAttribute('colspan')??1);
+    if(!Number.isInteger(rs)||!Number.isInteger(cs)||rs<1||cs<1||rs>500||cs>100)throw Error('kap_table_span');
+    const copy=cell.cloneNode(true) as typeof cell;
+    for(const br of copy.querySelectorAll('br'))br.replaceWith(' ');
+    for(const el of copy.querySelectorAll('td,th,p,tr,div'))el.append(' | ');
+    const value=clean(copy.textContent??'');
+    for(let dy=0;dy<rs;dy++){grid[y+dy]??=[];for(let dx=0;dx<cs;dx++)grid[y+dy][x+dx]=value;}x+=cs;
+   }
+  });return grid.filter(r=>r.length).map(r=>Array.from(r,v=>v??''));
+ }));
  const text=[...new Set(areas.map(a=>{for(const br of a.querySelectorAll('br'))br.replaceWith('\n');for(const cell of a.querySelectorAll('th,td'))cell.append(' | ');for(const el of a.querySelectorAll('p,tr,div'))el.append('\n');return clean(a.textContent??'');}).filter(Boolean))].join('\n\n');
  const links=new Map<string,string>();
  for(const a of document.querySelectorAll('a[href]')){const raw=a.getAttribute('href')!;let u:URL;try{u=new URL(raw,ORIGIN);}catch{continue;}

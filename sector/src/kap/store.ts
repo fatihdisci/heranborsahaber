@@ -115,7 +115,7 @@ export class KapStore {
   return {at:new Date(now).toISOString(),bootstrap:this.get('bootstrap'),notificationStart:this.get('notification_start'),jobs:this.rows('SELECT name,cursor,ceiling,next_at,lease_until,failures,last_ok,last_error FROM jobs'),
    cursorLagIds:Math.max(0,latest-live),unresolvedGaps:counts('gaps'),oldestGap:this.row('SELECT id,first_seen,attempts,last_error FROM gaps ORDER BY first_seen LIMIT 1')??null,
    sources:counts('disclosures'),feed:counts('feed'),queue:counts('queue'),circuitPending:counts('circuit_pending'),queueByState:this.rows('SELECT kind,state,COUNT(*) AS count,MIN(created_at) AS oldest FROM queue GROUP BY kind,state'),
-   indexCheckedAt:indexes?.checkedAt??null,indexAgeMs:indexes?now-Date.parse(indexes.checkedAt):null,discovery:this.get('last_listing'),deliveryEnabled:false};
+   indexCheckedAt:indexes?.checkedAt??null,indexAgeMs:indexes?now-Date.parse(indexes.checkedAt):null,discovery:this.get('last_listing'),deliveryEnabled:(this.get<{heartbeatAt:number}>('telegram_delivery')?.heartbeatAt??0)>now-60_000};
  }
  close(){this.db.close();}
 }

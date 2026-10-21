@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {DatabaseSync} from 'node:sqlite';
 import worker from '../src/worker';
 import {leaseJob,submitJob} from '../src/bridge';
+import {validateDraft} from '../src/editorial';
 import {draftCard} from '../src/card';
 import {png} from '../scripts/render_local';
 import {sha256} from '../src/utils/text';
@@ -23,7 +24,7 @@ async function environment(){
  return {env,sql,objects};
 }
 const document:Document={source_id:'test',source_name:'Resmî Test',family:'official-test',official:true,title:'Test Teknoloji yeni tesis planını açıkladı',url:'https://test.example.org/a',published_at:'2026-10-21T12:00:00Z',body:'Test Teknoloji, yeni üretim tesisi yatırımını planladığını açıkladı. Proje için izin başvuruları sürüyor.',passages:[{id:'p1',text:'Test Teknoloji, yeni üretim tesisi yatırımını planladığını açıkladı.'}]};
-const draft:Draft={headline:'Test Teknoloji üretim tesisi yatırımı planlıyor',body:'Şirketin yeni tesisi için izin başvuruları sürüyor.',card_headline:'Test Teknoloji yeni tesis planlıyor',card_body:'Üretim yatırımı için izin süreci devam ediyor.',entities:['Test Teknoloji'],event_key:'test-yeni-tesis-2026',category:'companies',importance:70,template:'company',claims:[{text:'Test Teknoloji üretim tesisi planlıyor.',evidence:[{document:0,passage:'p1',quote:document.passages[0].text}]}],hashtags:['#Teknoloji','#Yatırım'],uncertainties:[]};
+const draft:Draft={headline:'Test Teknoloji üretim tesisi yatırımı planlıyor',body:'Şirketin yeni tesisi için izin başvuruları sürüyor.',card_headline:'Test Teknoloji yeni tesis planlıyor',card_body:'Üretim yatırımı için izin süreci devam ediyor.',entities:['Test Teknoloji'],event_key:'test-yeni-tesis-2026',category:'companies',importance:55,template:'company',claims:[{text:'Test Teknoloji üretim tesisi planlıyor.',evidence:[{document:0,passage:'p1',quote:document.passages[0].text}]}],hashtags:['#Teknoloji','#Yatırım'],uncertainties:[]};
 test('private routes require distinct admin and bridge secrets',async()=>{
  const {env}=await environment(),ctx={waitUntil:()=>{}} as unknown as ExecutionContext;
  assert.equal((await worker.fetch(new Request('https://sector.test/api/status'),env,ctx)).status,401);
@@ -44,6 +45,7 @@ test('job lease is exclusive, result is idempotent, publication remains absent',
  await assert.rejects(()=>submitJob(env,{...payload,svg_hash:'wrong'}),/card_content_mismatch/);
  const result=await submitJob(env,payload);assert(!result.duplicate);assert.equal(objects.size,1);
  assert.equal(sql.prepare('SELECT COUNT(*) AS count FROM drafts').get()!.count,1);
+ assert.equal(sql.prepare('SELECT state FROM drafts').get()!.state,'pending'); // Verified 50–59-point stories are deliverable.
  const repeat=await submitJob(env,payload);assert.equal(repeat.id,result.id);assert(repeat.duplicate);
  assert.equal(sql.prepare('SELECT COUNT(*) AS count FROM publication_log').get()!.count,0);
  assert.equal(sql.prepare('SELECT documents FROM model_jobs').get()!.documents,'[]');
@@ -52,4 +54,9 @@ test('SQLite transactions roll back partially completed jobs',async()=>{
  const {env,sql}=await environment();
  await assert.rejects(()=>env.DB.batch([env.DB.prepare("INSERT INTO system_state VALUES('test','1')"),env.DB.prepare('INSERT INTO nonexistent VALUES(1)')]));
  assert.equal(sql.prepare("SELECT * FROM system_state WHERE key='test'").get(),undefined);
+});
+
+test('malformed unrelated numeric source text cannot crash claim validation',()=>{
+ const doc={...document,body:document.body+' 0,00452.309.2026.271.253.902.511.65,3760 1 tesis'};
+ assert.equal(validateDraft({...draft,headline:'Test Teknoloji 1 tesis planlıyor'},[doc]).verification,'official_attributed');
 });

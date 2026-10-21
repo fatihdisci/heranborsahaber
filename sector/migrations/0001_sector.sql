@@ -40,3 +40,9 @@ CREATE TABLE IF NOT EXISTS model_jobs (
  result_draft TEXT, error TEXT, kind TEXT NOT NULL DEFAULT 'initial', draft_id TEXT,
  expected_revision INTEGER NOT NULL DEFAULT 0, edit_request TEXT, UNIQUE(article_id,expected_revision)
 );
+-- Owner-submitted URLs, PDFs and text. Independent of automatic source filtering.
+CREATE TABLE IF NOT EXISTS manual_requests (
+ update_id INTEGER PRIMARY KEY,message_id INTEGER NOT NULL,kind TEXT NOT NULL,input TEXT NOT NULL,
+ state TEXT NOT NULL DEFAULT 'queued',created_at INTEGER NOT NULL,lease_until INTEGER NOT NULL DEFAULT 0,
+ attempts INTEGER NOT NULL DEFAULT 0,job_id TEXT,error TEXT,notified INTEGER NOT NULL DEFAULT 0
+);

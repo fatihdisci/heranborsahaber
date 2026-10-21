@@ -9,7 +9,7 @@ export interface Source {
   method?:'rss'|'bridge_pdf'|'reference';
 }
 export interface Item {title:string;url:string;summary:string;published_at:string|null;}
-export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];language?:string;}
+export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];language?:string;images?:string[];coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface Draft {

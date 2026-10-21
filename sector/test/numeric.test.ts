@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateDraft} from '../src/editorial';
+import {validateDraft,numericTokens,numericIssues} from '../src/editorial';
 import type {Draft,Document} from '../src/types';
 const base:Draft={headline:'Example yatırım planını duyurdu',body:'Yeni üretim kapasitesi için hazırlıklar sürüyor.',card_headline:'Example yatırım planlıyor',card_body:'Üretim kapasitesinin artırılması hedefleniyor.',hashtags:['#Yatırım','#Şirketler'],entities:['Example'],category:'companies',importance:70,template:'company',event_key:'example-investment',uncertainties:[],claims:[]};
 function document(text:string,language='tr'):Document{return {source_id:'official',source_name:'Official',family:'official',official:true,language,url:'https://official.example/a',title:'Example announcement',body:text,published_at:'2026-10-21T00:00:00Z',passages:[{id:'p1',text}]};}
@@ -26,4 +26,18 @@ test('multiple cited passages jointly support a compound claim',()=>{
  doc.passages=[{id:'p1',text:'Example üretimi yüzde 3 artırdı.'},{id:'p2',text:'İhracat yüzde 5 yükseldi.'}];
  const d={...base,headline:'Example üretimi %3 artırdı',claims:[{text:'Üretim %3, ihracat %5 arttı.',evidence:doc.passages.map(p=>({document:0,passage:p.id,quote:p.text}))}]};
  assert.doesNotThrow(()=>validateDraft(d,[doc]));
+});
+
+test('price ranges share explicit currency without inventing negative prices',()=>{
+ const doc=document('Example işlemleri 1,76 TL - 1,87 TL fiyat aralığındadır.');
+ for(const value of ['1,76-1,87 TL','1,76–1,87 TL','1,76 TL–1,87 TL'])assert.doesNotThrow(()=>validateDraft(amount(value,doc),[doc]));
+ assert.deepEqual(numericTokens('-1,87 TL zarar'),['-1,87 tl']);
+ assert.throws(()=>validateDraft(amount('-1,87 TL',doc),[doc]),/unsupported_number/);
+ assert.throws(()=>validateDraft(amount('1,76-1,88 TL',doc),[doc]),/unsupported_number/);
+});
+test('rounded card quantities remain blocked with actionable preflight feedback',()=>{
+ const doc=document('Example toplam 10.493.920 pay geri aldı.');
+ const d={...amount('10.493.920',doc),card_body:'Toplam 10,49 milyon pay.'};
+ assert.match(numericIssues(d,[doc])[0],/card_body.*10,49 milyon/);
+ assert.throws(()=>validateDraft(d,[doc]),/unsupported_number/);
 });

@@ -62,3 +62,12 @@ test('malformed unrelated numeric source text cannot crash claim validation',()=
  const doc={...document,body:document.body+' 0,00452.309.2026.271.253.902.511.65,3760 1 tesis'};
  assert.equal(validateDraft({...draft,headline:'Test Teknoloji 1 tesis planlıyor'},[doc]).verification,'official_attributed');
 });
+test('fresh model jobs precede old KAP retries; retry leases remain exclusive',async()=>{
+ const {env,sql}=await environment();sql.prepare('INSERT INTO sources(id,config) VALUES(?,?)').run('test','{}');
+ for(const [id,state,age] of [['old','retry_pending',100],['fresh','queued',0]] as const){
+  sql.prepare('INSERT INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').run(id,'test',document.url+id,document.title,'',document.published_at!,Date.now()/1000);
+  sql.prepare('INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,state) VALUES(?,?,?,?,?,?,?)').run(id,id,JSON.stringify([document]),'hash',Date.now()/1000-age,'kap',state);
+ }
+ assert.equal((await leaseJob(env))!.id,'fresh');assert.equal((await leaseJob(env))!.id,'old');assert.equal(await leaseJob(env),null);
+ assert.equal(sql.prepare("SELECT state FROM model_jobs WHERE id='old'").get()!.state,'leased');
+});

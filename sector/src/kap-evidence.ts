@@ -1,3 +1,4 @@
+import {withKapTableEvidence} from './kap-table-evidence';
 import {KapClient} from './kap/client';
 import {ORIGIN,type Disclosure,fullText} from './kap/parser';
 import {pdfBytes,boundedBytes} from './pdf-transport';
@@ -30,6 +31,7 @@ export async function completeKapDocuments(page:ReturnType<typeof fullText>,load
   if(!pdf.coverage.complete||pdf.coverage.pages.length!==pdf.coverage.page_count||!pdf.body.trim())throw Error('kap_attachment_incomplete');
   docs.push({...main,url:a.url,title:`${d.company??'KAP'} — ${a.label}`,body:pdf.body,passages:pdf.passages,images:pdf.images,coverage:pdf.coverage});
  }
- if(docs.reduce((n,d)=>n+d.body.length,0)>1_000_000||docs.reduce((n,d)=>n+(d.images?.length??0),0)>20)throw Error('kap_evidence_limit');
- return docs;
+ const prepared=withKapTableEvidence(docs);
+ if(prepared.reduce((n,d)=>n+d.body.length,0)>1_000_000||docs.reduce((n,d)=>n+(d.images?.length??0),0)>20)throw Error('kap_evidence_limit');
+ return prepared;
 }

@@ -5,6 +5,16 @@ spec=importlib.util.spec_from_file_location('sector_job',Path(__file__).parents[
 job_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(job_module)
 
 class HermesJobContract(unittest.TestCase):
+    def setUp(self):
+        self.preflight=patch.object(job_module,'deterministic_issues',return_value=[])
+        self.preflight.start();self.addCleanup(self.preflight.stop)
+    def test_deterministic_numeric_failure_is_repaired_in_existing_bounded_round(self):
+        with patch.object(job_module,'deterministic_issues',side_effect=[['card_body: exact amount required'],[]]),patch.object(job_module,'call',side_effect=[{'headline':'first'},{'supported':True,'issues':[]},{'headline':'fixed'},{'supported':True,'issues':[]}]) as call:
+            result=job_module.main(self.job())
+            self.assertEqual(call.call_count,4)
+            self.assertIn('card_body: exact amount required',call.call_args_list[2].args[2]['required_corrections'])
+            self.assertTrue(result['audit']['supported'])
+
     def job(self):return {'id':'test','provider':'openai-codex','model':'gpt-6-luna','effort':'high','allowed_tools':[],'deadline':time.time()+600,'prompt':'Grounded editor','schema':{},'documents':[],'audit_prompt':'Check facts'}
     def test_no_paid_provider_or_tools_can_run(self):
         for change in [{'provider':'openai-api'},{'allowed_tools':['terminal']},{'effort':'low'},{'model':'gpt-6.1-sol'}]:

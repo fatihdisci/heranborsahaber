@@ -97,6 +97,13 @@ def presentation_issues(draft,policy=None):
     if attribution:issues.append('Yayıncıya atıf veya Kaynak satırını kaldır; kaynak düğmededir. İddia/plan/koşul niteliğini ve gerçek açıklama sahibini aynen koruyarak özgün haber diliyle yeniden yaz.')
     return issues
 
+def deterministic_issues(draft,documents):
+    check=subprocess.run(['node','--import','tsx','scripts/validate_draft.ts'],input=json.dumps({'draft':draft,'documents':documents},ensure_ascii=False),capture_output=True,text=True,timeout=15,check=False)
+    if check.returncode:raise RuntimeError('local_validation_failed')
+    issues=json.loads(check.stdout)
+    if not isinstance(issues,list) or any(not isinstance(i,str) for i in issues):raise RuntimeError('local_validation_failed')
+    return issues
+
 def main(job):
     if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6-luna' or job.get('effort')!='high' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
@@ -105,7 +112,7 @@ def main(job):
     if job.get('deadline',0)<time.time():raise RuntimeError('job_expired')
     audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
     calls=2
-    layout_issues=presentation_issues(draft,job.get('editorial_policy'))
+    layout_issues=presentation_issues(draft,job.get('editorial_policy'))+deterministic_issues(draft,job['documents'])
     if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
     if audit.get('supported') is not True or audit.get('issues'):
         if job.get('deadline',0)<time.time()+90:raise RuntimeError('repair_budget_expired')
@@ -113,7 +120,7 @@ def main(job):
         draft=ensure_headline_emoji(draft)
         audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
         calls=4
-        layout_issues=presentation_issues(draft,job.get('editorial_policy'))
+        layout_issues=presentation_issues(draft,job.get('editorial_policy'))+deterministic_issues(draft,job['documents'])
         if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
     return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':'high','provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
 

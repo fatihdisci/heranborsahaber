@@ -1,3 +1,4 @@
+import {withKapTableEvidence} from '../src/kap-table-evidence';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -68,4 +69,14 @@ test('focused preferences suppress existing routine queue entries without deleti
   assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'suppressed');
   assert.equal(s.rows('SELECT * FROM disclosures').length,1);assert.equal(s.rows('SELECT * FROM feed').length,1);
  }finally{s.close();}
+});
+
+test('KAP table units stay scoped to their exact column and row',()=>{
+ const doc={source_id:'kap',official:true,body:'Original',passages:[{id:'table5',text:JSON.stringify([['İşlem Tarihi |','İşlem Fiyatı (TL/Adet) |','Sermayeye Oranı (%) |','Pay Miktarı |'],['21.10.2026 |','104,233 |','0,04412 |','75.000 |']])}]} as Document;
+ const out=withKapTableEvidence([doc])[0],row=out.passages.find(p=>p.id==='table5row1')!;
+ assert.match(row.text,/İşlem Fiyatı \(TL\/Adet\): 104,233 TL/);
+ assert.match(row.text,/Sermayeye Oranı \(%\): %0,04412/);
+ assert.match(row.text,/Pay Miktarı: 75.000$/);
+ assert(!row.text.includes('21.10.2026 TL'));
+ assert.deepEqual(withKapTableEvidence([out]),[out]);assert.equal(out.passages[0].text,doc.passages[0].text);
 });

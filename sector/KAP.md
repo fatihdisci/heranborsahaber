@@ -59,3 +59,9 @@ Bir bildirim tek görsel, tweet ve Kaynağı aç düğmesi olarak gönderilir. H
 Canlı tercih: endeks üyeliği tek başına gönderim sebebi değildir. Yeni iş, sipariş, ihale, sözleşme/anlaşma; finansal sonuç, bilanço/faaliyet raporu; geri alım ve pay alım/satımı seçili konulardır. Temettü ve sermaye işlemleri korunur. Devre kesici ve fon gönderimi kapalı kalır. `kap.preferences.example.json` bu seçimi içerir; genel kütüphane varsayılanları eski tercih sözleşmesini korur.
 
 Genel özel durum başlıklarında konu özette aranır. Yönetim kurulu/personel değişiklikleri, yönetim bilgi formları ve kredi derecelendirmeleri susturulur. İşlem bildirimlerinin tam metnindeki yönetim kurulu karar tarihi engelleme sebebi değildir. Pay işlemlerinin öncelikli kuralı korunur; BIST 50 sınırı yoktur. Tercih değişikliği bekleyen hazır kuyruğu da yeniden değerlendirir; kaynak kayıtları silinmez, gönderilmiş bildirimler yeniden açılmaz.
+
+## Hızlı doğrulama ve sınırlı yeniden inceleme
+
+KAP tablo hücreleri birimleriyle birlikte satır pasajlarına dönüştürülür; orijinal metin ve tablolar korunur. Sayı/birim kontrolü modelin mevcut tek düzeltme turuna geri bildirim sağlar. Yanlış/yuvarlanmış sayı kontrolü kaldırılmaz. İçerik doğrulama hatasında bütün model hattı 60 saniye yerine 2 saniye bekler; kota ve bağlantı beklemeleri korunur. Sayı kanıtları her kontrol için bir kez indekslenir.
+
+`node --import tsx scripts/review_kap.ts` yeniden inceleme adaylarını gösterir; `--apply` son 24 saatteki uygun hata kayıtlarını sürüm başına yalnız bir kez `retry_pending` durumuna alır. Yeni işler bu yeniden denemelerden önce işlenir. Mevcut filtreye uymayanlar susturulur, tamamlanmış veya belirsizlik içeren taslaklar otomatik onaylanmaz. Kaynak kayıtları silinmez.

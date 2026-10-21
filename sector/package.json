@@ -1,0 +1,28 @@
+{
+  "name": "sector-haber",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "dev": "wrangler dev --test-scheduled",
+    "demo": "tsx scripts/demo.ts",
+    "sources:check": "python3 scripts/probe_sources.py",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@resvg/resvg-wasm": "2.6.2",
+    "linkedom": "0.18.13",
+    "saxes": "6.0.0",
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261021.1",
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.2",
+    "wrangler": "4.151.3"
+  }
+}

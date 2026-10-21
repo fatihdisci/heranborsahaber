@@ -1,0 +1,23 @@
+{
+  "active_runtime": "Mac mini / isolated SECTOR service",
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "provider": "Hermes openai-codex / existing ChatGPT subscription",
+  "paid_api_fallback": false,
+  "x_publishing": false,
+  "telegram_bot": "habernewssbot",
+  "brand": "approved 02_financial assets; #112333 #E4E9EC #8095A4",
+  "templates": 5,
+  "rss_registry_count": 14,
+  "official_pdf": "SPK, complete 3-page current bulletin extracted and visually checked",
+  "reference_only": [
+    "KAP official links in article body"
+  ],
+  "not_enabled": [
+    "NTV tested feed stale",
+    "TCMB dedicated PPK feed stale; general press feed retained",
+    "TUIK RSS 404; portal returns protection page to automated reader"
+  ],
+  "cloud_status": "Separate Worker/D1/R2 prepared; public transport not accepted as healthy; cloud cron disabled",
+  "instagram_retirement": "Worker/workflow/D1/instagram-reels and 69 objects removed; evb-temp preserved"
+}

@@ -1,0 +1,24 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {homedir} from 'node:os';
+import {EDITOR_PROMPT,DRAFT_SCHEMA,postText} from '../src/editorial';
+import {AUDIT_PROMPT,acceptHermes} from '../src/ai';
+import {cardSvg,draftCard} from '../src/card';
+import {png} from './render_local';
+import type {Document,Template} from '../src/types';
+const source=process.argv[2]??'foreks';
+const document=JSON.parse(await readFile(`reports/articles/${source}.json`,'utf8')) as Document;
+await mkdir('outputs',{recursive:true});
+const job={id:crypto.randomUUID(),provider:'openai-codex',model:'gpt-6-luna',effort:'high',allowed_tools:[],deadline:Date.now()/1000+600,profile:`${homedir()}/.hermes/profiles/sectorhaber`,prompt:EDITOR_PROMPT,schema:DRAFT_SCHEMA,documents:[document],audit_prompt:AUDIT_PROMPT};
+const output=await new Promise<string>((resolve,reject)=>{
+ const child=spawn(`${homedir()}/.hermes/hermes-agent/venv/bin/python`,['scripts/hermes_job.py'],{env:{PATH:process.env.PATH??'',HOME:homedir(),HERMES_HOME:job.profile,PYTHONPATH:`${homedir()}/.hermes/hermes-agent`},stdio:['pipe','pipe','pipe']});let result='';
+ child.stdout.on('data',c=>result+=c.toString());child.stderr.on('data',c=>process.stderr.write(c));
+ child.on('error',reject);child.on('close',code=>code===0?resolve(result):reject(new Error('hermes_failed')));child.stdin.end(JSON.stringify(job));
+});
+const value=JSON.parse(output);await writeFile(`outputs/${source}.result.json`,JSON.stringify(value,null,2));
+const {draft,verification}=acceptHermes(value.draft,value.audit,[document]);
+const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'});
+await writeFile(`outputs/${source}.png`,await png(draftCard(draft,[document.source_name],date,true)));
+await writeFile(`outputs/${source}.txt`,postText(draft,[document.source_name]));
+for(const template of ['breaking','economic_data','company','global','info'] as Template[])await writeFile(`outputs/template-${template}.png`,await png(cardSvg({headline:draft.card_headline,body:draft.card_body,template},[document.source_name],date,true)));
+console.log({source,verification,audit:value.audit,post:postText(draft,[document.source_name]),image:`outputs/${source}.png`});

@@ -1,4 +1,13 @@
-# Her An Borsa — bağımsız habnews haber masası
+# SECTOR HABER
+
+Aktif SECTOR HABER deneme sistemi, ayrı Hermes profili ve Telegram onay masasıyla
+[`sector/`](sector/README.md) altında bulunur. Mac mini mevcut ChatGPT üyeliğini kullanır;
+eski X hesabına veya yeni X hesabına otomatik yayın yapmaz.
+
+Aşağıdaki `habnews` notları önceki Her An Borsa sürümünün arşividir. Eski canlı kurulum
+kaldırılmıştır; bu notlar SECTOR HABER'in güncel kaynak/karakter/yayın ayarlarını tanımlamaz.
+
+## Arşiv: Her An Borsa — bağımsız habnews haber masası
 
 Güncel model: **gpt-6-luna**, düşünme açık, **reasoning effort high**. Otomatik düşük effort/model seçimi yok.
 

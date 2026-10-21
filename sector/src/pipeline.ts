@@ -1,0 +1,119 @@
+import registry from '../sources.json';
+import type {Env,Source,Document,Draft} from './types';
+import {parseFeed} from './feed';
+import {readPublic} from './network';
+import {readDocument} from './article';
+import {topicScore} from './editorial';
+import {sha256} from './utils/text';
+import {evidenceFamily,titleSimilarity} from './dedupe';
+import {sendDraft,TelegramError} from './telegram';
+type SourceRow={id:string;config:string;etag:string|null;modified:string|null;failures:number;last_ok:number|null;};
+export type DraftRow={id:string;content:string;documents:string;verification:string;revision:number;state:string;expires_at:number;message_id:number|null;media_key:string|null;};
+const now=()=>Math.floor(Date.now()/1000);
+export const errorCode=(e:unknown)=>e instanceof Error&&/^[a-z][a-z\d_]{2,70}$/.test(e.message)?e.message:'operation_failed';
+export async function seed(env:Env):Promise<void> {
+ // Source state survives deployments. Registry changes never silently turn a
+ // source back on after the owner disabled it.
+ await env.DB.batch((registry as Source[]).map(s=>env.DB.prepare('INSERT INTO sources(id,config,enabled) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET config=excluded.config').bind(s.id,JSON.stringify(s),Number(s.enabled))));
+ await env.DB.prepare("INSERT OR IGNORE INTO system_state(key,value) VALUES('live_since',?)").bind(new Date(Date.now()-5*60_000).toISOString()).run();
+}
+export async function poll(env:Env):Promise<void> {
+ const time=now();
+ const cutoff=(await env.DB.prepare("SELECT value FROM system_state WHERE key='live_since'").first<{value:string}>())?.value;
+ const due=await env.DB.prepare('SELECT id,config,etag,modified,failures,last_ok FROM sources WHERE enabled=1 AND next_poll<=? AND lease_until<? ORDER BY next_poll,id LIMIT 18').bind(time,time).all<SourceRow>();
+ const rows=due.results??[];
+ // At most three slow publishers occupy network slots simultaneously.
+ for(let index=0;index<rows.length;index+=3)await Promise.all(rows.slice(index,index+3).map(async row=>{
+  const lock=await env.DB.prepare('UPDATE sources SET lease_until=? WHERE id=? AND lease_until<?').bind(time+90,row.id,time).run();if(!lock.meta.changes)return;
+  const source=JSON.parse(row.config) as Source;
+  if(source.method==='bridge_pdf'||source.method==='reference'){await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0 WHERE id=?').bind(time+3600,row.id).run();return;}
+  try {
+   const headers:Record<string,string>={};if(row.etag)headers['If-None-Match']=row.etag;if(row.modified)headers['If-Modified-Since']=row.modified;
+   const feed=await readPublic(source.url,source.allowed_hosts,headers);
+   if(feed.status===304){await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0,last_error=NULL WHERE id=?').bind(time+source.poll_seconds,row.id).run();return;}
+   const items=parseFeed(feed.text,source),dated=items.filter(i=>i.published_at&&Date.parse(i.published_at)<=Date.now()+5*60_000);
+   const newest=Math.max(0,...dated.map(i=>Date.parse(i.published_at!)));
+   if(!newest||Date.now()-newest>source.fresh_hours*3600_000)throw new Error('stale_or_undated_feed');
+   const selected=dated.filter(i=>Date.now()-Date.parse(i.published_at!)<24*3600_000&&(!cutoff||i.published_at!>=cutoff)&&topicScore(i.title,i.summary,source.official).score>=60);
+   const inserts=await Promise.all(selected.slice(0,25).map(async i=>env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').bind(await sha256(i.url),source.id,i.url,i.title,i.summary,i.published_at!,time)));
+   if(inserts.length)await env.DB.batch(inserts);
+   await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0,etag=?,modified=?,failures=0,last_ok=?,last_error=NULL,last_count=? WHERE id=?').bind(time+source.poll_seconds,feed.headers.get('etag'),feed.headers.get('last-modified'),time,items.length,row.id).run();
+  } catch(e) {
+   const fails=row.failures+1,delay=Math.min(6*3600,source.poll_seconds*2**Math.min(fails,7));
+   await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0,failures=?,last_error=? WHERE id=?').bind(time+delay,fails,errorCode(e),row.id).run();
+  }
+ }));
+}
+async function quota(env:Env):Promise<boolean> {
+ const day=new Date().toISOString().slice(0,10),key='ai-budget:'+day;
+ const limit=Math.max(0,Math.min(100,Number(env.AI_DAILY_DRAFT_LIMIT)||0));
+ const result=await env.DB.prepare("INSERT INTO system_state(key,value) SELECT ?, '1' WHERE ?>0 ON CONFLICT(key) DO UPDATE SET value=CAST(value AS INTEGER)+1 WHERE CAST(value AS INTEGER)<?").bind(key,limit,limit).run();
+ return !!result.meta.changes;
+}
+export async function prepare(env:Env):Promise<void> {
+ const pending=await env.DB.prepare("SELECT COUNT(*) AS count FROM drafts WHERE state IN ('pending','deferred')").first<{count:number}>();if((pending?.count??0)>=12)return;
+ const time=now();
+ const started=(await env.DB.prepare("SELECT value FROM system_state WHERE key='live_since'").first<{value:string}>())?.value??'1970';
+ const cutoff=[started,new Date(Date.now()-24*3600_000).toISOString()].sort().at(-1)!;
+ const queue=await env.DB.prepare("SELECT a.*,s.config FROM articles a JOIN sources s ON s.id=a.source_id WHERE s.enabled=1 AND a.status='queued' AND a.next_try<=? AND a.lease_until<? AND a.published_at>=? ORDER BY a.published_at DESC LIMIT 80").bind(time,time,cutoff).all<{id:string;url:string;title:string;summary:string;published_at:string;attempts:number;config:string}>();
+ const priority=(a:{title:string;summary:string;published_at:string;config:string})=>topicScore(a.title,a.summary,JSON.parse(a.config).official).score-(Date.now()-Date.parse(a.published_at))/3600_000*2;
+ const selected=(queue.results??[]).sort((a,b)=>priority(b)-priority(a)).slice(0,2);
+ for(const article of selected) {
+  const lock=await env.DB.prepare('UPDATE articles SET lease_until=? WHERE id=? AND lease_until<?').bind(time+360,article.id,time).run();if(!lock.meta.changes)continue;
+  try {
+   const source=JSON.parse(article.config) as Source;
+   const doc=await readDocument(article,source);doc.family=evidenceFamily(doc);
+   const documents=[doc];
+   const kap=(registry as Source[]).find(s=>s.id==='kap');
+   for(const url of doc.primary_urls??[])if(kap)try{documents.push(await readDocument({title:doc.title,url,summary:'',published_at:doc.published_at},kap));}catch{/* Missing primary document leaves attribution intact, never an invented official confirmation. */}
+   // Merge closely matching reports before generating. Unrelated companies,
+   // later dates and merely similar macro topics are not corroboration.
+   const related=await env.DB.prepare("SELECT a.*,s.config FROM articles a JOIN sources s ON s.id=a.source_id WHERE a.id<>? AND a.status='queued' AND s.enabled=1 AND ABS(julianday(a.published_at)-julianday(?))<0.5 LIMIT 80").bind(article.id,article.published_at).all<{id:string;url:string;title:string;summary:string;published_at:string;config:string}>();
+   const matched=(related.results??[]).filter(r=>titleSimilarity(article.title,r.title)>.68).slice(0,2);
+   const relatedIds:string[]=[];
+   for(const r of matched)try {const extra=await readDocument(r,JSON.parse(r.config));extra.family=evidenceFamily(extra);documents.push(extra);relatedIds.push(r.id);}catch{/* A failed corroborating page never replaces the primary evidence. */}
+   const jobs=await env.DB.prepare("SELECT COUNT(*) AS count FROM model_jobs WHERE state IN ('queued','leased')").first<{count:number}>();
+   if((jobs?.count??0)>=4||!await quota(env)){await env.DB.prepare('UPDATE articles SET lease_until=0,next_try=? WHERE id=?').bind(time+1800,article.id).run();break;}
+   const jobId=crypto.randomUUID(),input=JSON.stringify(documents);
+   await env.DB.batch([
+    env.DB.prepare('INSERT OR IGNORE INTO model_jobs(id,article_id,documents,related_ids,input_hash,created_at) VALUES(?,?,?,?,?,?)').bind(jobId,article.id,input,JSON.stringify(relatedIds),await sha256(input),time),
+    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(JSON.stringify(doc),time+24*3600,article.id)
+   ]);
+  } catch(e) {
+   const count=article.attempts+1;
+   await env.DB.prepare('UPDATE articles SET lease_until=0,status=?,attempts=?,next_try=?,error=? WHERE id=?').bind(count>=3?'needs_review':'queued',count,time+Math.min(3600,120*2**count),errorCode(e),article.id).run();
+  }
+ }
+}
+export async function deliver(env:Env):Promise<void> {
+ if(env.MODE!=='telegram_review'||!env.TELEGRAM_BOT_TOKEN||!env.TELEGRAM_CHAT_ID)return;
+ const time=now();
+ await env.DB.prepare("UPDATE drafts SET state='pending',delivery_state='waiting',revision=revision+1 WHERE state='deferred' AND defer_until<=? AND expires_at>?").bind(time,time).run();
+ const row=await env.DB.prepare("SELECT * FROM drafts WHERE state='pending' AND delivery_state='waiting' AND next_delivery<=? AND expires_at>? AND lease_until<? ORDER BY created_at LIMIT 1").bind(time,time,time).first<DraftRow>();if(!row)return;
+ const lock=await env.DB.prepare("UPDATE drafts SET lease_until=?,delivery_state='sending',delivery_attempts=delivery_attempts+1 WHERE id=? AND lease_until<? AND delivery_state='waiting'").bind(time+120,row.id,time).run();if(!lock.meta.changes)return;
+ try {
+  const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
+  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification);
+  await env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id).run();
+ } catch(e) {
+  // Retrying an ambiguous timeout can duplicate a card already accepted by
+  // Telegram. Only an explicit API rejection is eligible for an automatic retry.
+  const retry=e instanceof TelegramError&&e.code===429;
+  await env.DB.prepare('UPDATE drafts SET lease_until=0,delivery_state=?,next_delivery=? WHERE id=?').bind(retry?'waiting':'uncertain',time+(e instanceof TelegramError?e.retryAfter:300),row.id).run();
+ }
+}
+export async function tick(env:Env):Promise<void> {
+ if(env.TARGET_X_USERNAME!=='sectorhaber')throw new Error('forbidden_publication_target');
+ const time=now();
+ const lease=await env.DB.prepare("INSERT INTO system_state(key,value) VALUES('tick_lease',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE CAST(value AS INTEGER)<?").bind(String(time+300),time).run();
+ if(!lease.meta.changes)return;
+ try {await seed(env);await poll(env);await prepare(env);await deliver(env);}
+ finally {await env.DB.prepare("UPDATE system_state SET value='0' WHERE key='tick_lease'").run();}
+ await env.DB.batch([
+  env.DB.prepare('UPDATE articles SET document=NULL WHERE document_expires<? AND document IS NOT NULL').bind(now()),
+  env.DB.prepare('DELETE FROM edits WHERE expires_at<?').bind(now()),
+  env.DB.prepare("UPDATE drafts SET state='expired',delivery_state='expired' WHERE expires_at<? AND state IN ('pending','deferred','needs_review')").bind(now()),
+  env.DB.prepare("UPDATE model_jobs SET documents='[]',state='expired' WHERE created_at<? AND state IN ('queued','needs_review')").bind(now()-24*3600),
+  env.DB.prepare("UPDATE drafts SET delivery_state='uncertain',lease_until=0 WHERE delivery_state='sending' AND lease_until<?").bind(now()),
+  env.DB.prepare("INSERT INTO system_state(key,value) VALUES('last_tick',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(new Date().toISOString())]);
+}

@@ -1,0 +1,55 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {DatabaseSync} from 'node:sqlite';
+import worker from '../src/worker';
+import {leaseJob,submitJob} from '../src/bridge';
+import {draftCard} from '../src/card';
+import {png} from '../scripts/render_local';
+import {sha256} from '../src/utils/text';
+import type {Document,Draft,Env} from '../src/types';
+async function environment(){
+ const sql=new DatabaseSync(':memory:');sql.exec(await readFile('migrations/0001_sector.sql','utf8'));
+ class Statement {
+  args:unknown[]=[];constructor(public text:string){}
+  bind(...args:unknown[]){const s=new Statement(this.text);s.args=args;return s;}
+  run(){const r=sql.prepare(this.text).run(...this.args as never[]);return Promise.resolve({success:true,meta:{changes:Number(r.changes)}});}
+  first(){return Promise.resolve(sql.prepare(this.text).get(...this.args as never[])??null);}
+  all(){return Promise.resolve({results:sql.prepare(this.text).all(...this.args as never[])});}
+ }
+ const db={prepare:(text:string)=>new Statement(text),batch:async(statements:Statement[])=>{sql.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());sql.exec('COMMIT');return result;}catch(e){sql.exec('ROLLBACK');throw e;}}};
+ const objects=new Map<string,Uint8Array>();
+ const env={DB:db,MEDIA:{put:async(k:string,b:Uint8Array)=>objects.set(k,b),delete:async(k:string)=>objects.delete(k)},MODE:'dry_run',TARGET_X_USERNAME:'sectorhaber',AI_MODEL:'gpt-6-luna',AI_EFFORT:'high',AI_DAILY_DRAFT_LIMIT:'30',ADMIN_TOKEN:'admin',BRIDGE_TOKEN:'bridge'} as unknown as Env;
+ return {env,sql,objects};
+}
+const document:Document={source_id:'test',source_name:'Resmî Test',family:'official-test',official:true,title:'Test Teknoloji yeni tesis planını açıkladı',url:'https://test.example.org/a',published_at:'2026-10-21T12:00:00Z',body:'Test Teknoloji, yeni üretim tesisi yatırımını planladığını açıkladı. Proje için izin başvuruları sürüyor.',passages:[{id:'p1',text:'Test Teknoloji, yeni üretim tesisi yatırımını planladığını açıkladı.'}]};
+const draft:Draft={headline:'Test Teknoloji üretim tesisi yatırımı planlıyor',body:'Şirketin yeni tesisi için izin başvuruları sürüyor.',card_headline:'Test Teknoloji yeni tesis planlıyor',card_body:'Üretim yatırımı için izin süreci devam ediyor.',entities:['Test Teknoloji'],event_key:'test-yeni-tesis-2026',category:'companies',importance:70,template:'company',claims:[{text:'Test Teknoloji üretim tesisi planlıyor.',evidence:[{document:0,passage:'p1',quote:document.passages[0].text}]}],hashtags:['#Teknoloji','#Yatırım'],uncertainties:[]};
+test('private routes require distinct admin and bridge secrets',async()=>{
+ const {env}=await environment(),ctx={waitUntil:()=>{}} as unknown as ExecutionContext;
+ assert.equal((await worker.fetch(new Request('https://sector.test/api/status'),env,ctx)).status,401);
+ assert.equal((await worker.fetch(new Request('https://sector.test/api/bridge/lease',{method:'POST',headers:{authorization:'Bearer admin'}}),env,ctx)).status,401);
+ assert.equal((await worker.fetch(new Request('https://sector.test/health'),env,ctx)).status,200);
+ assert.equal((await worker.fetch(new Request('https://sector.test/telegram/webhook',{method:'POST',body:'{}'}),env,ctx)).status,401);
+});
+test('job lease is exclusive, result is idempotent, publication remains absent',async()=>{
+ const {env,sql,objects}=await environment();
+ sql.prepare('INSERT INTO sources(id,config) VALUES(?,?)').run('test','{}');
+ sql.prepare('INSERT INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').run('a','test',document.url,document.title,'',document.published_at!,Date.now()/1000);
+ const input=JSON.stringify([document]),hash=await sha256(input);
+ sql.prepare('INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at) VALUES(?,?,?,?,?)').run('job','a',input,hash,Date.now()/1000);
+ const job=await leaseJob(env);assert(job);assert.equal(await leaseJob(env),null);
+ const date='21.10.2026',svg=draftCard(draft,[document.source_name],date,true);
+ const payload={id:'job',lease_token:job.lease_token,input_hash:hash,draft,audit:{supported:true,issues:[]},runtime:{model:'gpt-6-luna',effort:'high',provider:'openai-codex',tool_count:0,fallback_count:0},card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')};
+ await assert.rejects(()=>submitJob(env,{...payload,input_hash:'changed'}),/invalid_job_lease/);
+ await assert.rejects(()=>submitJob(env,{...payload,svg_hash:'wrong'}),/card_content_mismatch/);
+ const result=await submitJob(env,payload);assert(!result.duplicate);assert.equal(objects.size,1);
+ assert.equal(sql.prepare('SELECT COUNT(*) AS count FROM drafts').get()!.count,1);
+ const repeat=await submitJob(env,payload);assert.equal(repeat.id,result.id);assert(repeat.duplicate);
+ assert.equal(sql.prepare('SELECT COUNT(*) AS count FROM publication_log').get()!.count,0);
+ assert.equal(sql.prepare('SELECT documents FROM model_jobs').get()!.documents,'[]');
+});
+test('SQLite transactions roll back partially completed jobs',async()=>{
+ const {env,sql}=await environment();
+ await assert.rejects(()=>env.DB.batch([env.DB.prepare("INSERT INTO system_state VALUES('test','1')"),env.DB.prepare('INSERT INTO nonexistent VALUES(1)')]));
+ assert.equal(sql.prepare("SELECT * FROM system_state WHERE key='test'").get(),undefined);
+});

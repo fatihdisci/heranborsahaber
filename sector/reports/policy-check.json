@@ -1,0 +1,65 @@
+[
+  {
+    "id": "fed-feeds",
+    "url": "https://www.federalreserve.gov/feeds/feeds.htm",
+    "http": 200,
+    "bytes": 90029
+  },
+  {
+    "id": "fed-terms",
+    "error": "HTTPError",
+    "status": 404
+  },
+  {
+    "id": "ecb-terms",
+    "url": "https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html",
+    "http": 200,
+    "bytes": 107794
+  },
+  {
+    "id": "bbc-terms",
+    "url": "https://www.bbc.co.uk/usingthebbc/terms/",
+    "http": 200,
+    "bytes": 323771
+  },
+  {
+    "id": "kap",
+    "url": "https://www.kap.org.tr/tr",
+    "http": 200,
+    "bytes": 163124
+  },
+  {
+    "id": "spk",
+    "url": "https://spk.gov.tr/spk-bultenleri/2026-yili-spk-bultenleri",
+    "http": 200,
+    "bytes": 53286
+  },
+  {
+    "id": "tuik",
+    "url": "https://www.tuik.gov.tr/",
+    "http": 200,
+    "bytes": 430781
+  },
+  {
+    "id": "cnbce-terms",
+    "url": "https://www.cnbce.com/kullanim-kosullari",
+    "http": 200,
+    "bytes": 156091
+  },
+  {
+    "id": "foreks-llms",
+    "url": "https://www.foreks.com/llms.txt",
+    "http": 200,
+    "bytes": 9189
+  },
+  {
+    "id": "bloomberght-terms",
+    "error": "HTTPError",
+    "status": 404
+  },
+  {
+    "id": "ekonomim-terms",
+    "error": "HTTPError",
+    "status": 404
+  }
+]

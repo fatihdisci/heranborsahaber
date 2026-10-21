@@ -1,0 +1,98 @@
+[
+  {
+    "id": "bloomberght",
+    "status": "ok",
+    "title": "Bundesbank: Alman ekonomisi geçici bir duraklama dönemine girdi",
+    "body_chars": 2412,
+    "url": "https://www.bloomberght.com/bundesbank-alman-ekonomisi-gecici-bir-duraklama-donemine-girdi-3792106"
+  },
+  {
+    "id": "trt-ekonomi",
+    "status": "ok",
+    "title": "Tanzanya'ya bir yılda ikinci demir yolu aracı ihracatı",
+    "body_chars": 1344,
+    "url": "https://www.trthaber.com/haber/ekonomi/tanzanyaya-bir-yilda-ikinci-demir-yolu-araci-ihracati-960755.html"
+  },
+  {
+    "id": "ekonomim",
+    "status": "ok",
+    "title": "İstanbul Valisi Gül: Selden etkilenen binalar “Yarısı Bizden” kampanyasıyla yenilenecek",
+    "body_chars": 4354,
+    "url": "https://www.ekonomim.com/gundem/istanbul-valisi-gul-selden-etkilenen-binalar-yarisi-bizden-kampanyasiyla-yenilenecek-haberi-926146"
+  },
+  {
+    "id": "cnbce",
+    "status": "ok",
+    "title": "Bulls Yatırım'da faaliyetler durduruldu: Şirketten sermaye açığı açıklaması",
+    "body_chars": 2753,
+    "url": "https://www.cnbce.com/sirket-haberleri/bulls-yatirimda-faaliyetler-durduruldu-sirketten-sermaye-acigi-aciklamasi-h39981"
+  },
+  {
+    "id": "bbc-business",
+    "status": "ok",
+    "title": "Faisal Islam: Inflation and borrowing figures illustrate chancellor's Budget challenge",
+    "body_chars": 3386,
+    "url": "https://www.bbc.co.uk/news/articles/cm3wv9pn22e5o"
+  },
+  {
+    "id": "bbc-technology",
+    "status": "ok",
+    "title": "Elon Musk confirms he is considering merging Tesla and SpaceX",
+    "body_chars": 4455,
+    "url": "https://www.bbc.co.uk/news/articles/cmlyl09xjke4o"
+  },
+  {
+    "id": "cnbc",
+    "status": "ok",
+    "title": "SpaceX up over 8% in premarket after earnings beat and Musk hints at Tesla tie-up",
+    "body_chars": 3617,
+    "url": "https://www.cnbc.com/2026/10/21/spacex-spcx-stock-musk-merger-tesla.html"
+  },
+  {
+    "id": "foreks",
+    "status": "ok",
+    "title": "Abbott ikiye bölünüyor: 8,5 milyar dolarlık beslenme işi ayrı şirket olacak",
+    "body_chars": 3071,
+    "url": "https://www.foreks.com/haber/detay/6ad8a90558b1b941c208e2e0/PICNEWS/tr/abbott-ikiye-bolunuyor-8-5-milyar-dolarlik-beslenme-isi-ayri-sirket-olacak-21-10-26/"
+  },
+  {
+    "id": "tcmb-press",
+    "status": "ok",
+    "title": "İstanbul Ekonomi Forumu'na İlişkin Basın Duyurusu (2026-44)",
+    "body_chars": 2754,
+    "url": "https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+menu/duyurular/basin/2026/duy2026-44"
+  },
+  {
+    "id": "tcmb-data",
+    "status": "ok",
+    "title": "İmalat Sanayi Kapasite Kullanım Oranı",
+    "body_chars": 529,
+    "url": "https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+menu/istatistikler/reel+sektor+istatistikleri/imalat+sanayi+kapasite+kullanim+orani"
+  },
+  {
+    "id": "tcmb-speech",
+    "status": "failed",
+    "error": "The encoded data was not valid for encoding utf-8"
+  },
+  {
+    "id": "ecb",
+    "status": "ok",
+    "title": "Euro liquidity lines and the international monetary system",
+    "body_chars": 10066,
+    "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp261021~401d6c4b70.en.html"
+  },
+  {
+    "id": "apple",
+    "status": "ok",
+    "title": "Apple unveils the 2026 Designers of Tomorrow",
+    "body_chars": 9869,
+    "url": "https://www.apple.com/newsroom/2026/10/apple-unveils-the-2026-designers-of-tomorrow/"
+  },
+  {
+    "id": "fed",
+    "status": "ok",
+    "title": "Board of Governors of the Federal Reserve System",
+    "body_chars": 816,
+    "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20261016a.htm"
+  }
+]

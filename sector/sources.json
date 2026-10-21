@@ -1,0 +1,318 @@
+[
+  {
+    "id": "bloomberght",
+    "name": "Bloomberg HT",
+    "url": "https://www.bloomberght.com/rss/tum-haberler.xml",
+    "family": "bloomberght",
+    "language": "tr",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:07.934328+00:00",
+    "terms_url": "https://www.bloomberght.com/kullanimkosullari",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "www.bloomberght.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "trt-ekonomi",
+    "name": "TRT Haber",
+    "url": "https://www.trthaber.com/ekonomi_articles.rss",
+    "family": "trt",
+    "language": "tr",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:07.934609+00:00",
+    "terms_url": "https://www.trthaber.com/kullanim-sartlari.html",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "www.trthaber.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "ekonomim",
+    "name": "Ekonomim",
+    "url": "https://www.ekonomim.com/rss",
+    "family": "ekonomim",
+    "language": "tr",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:07.934683+00:00",
+    "terms_url": "https://www.ekonomim.com/rss",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "www.ekonomim.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "cnbce",
+    "name": "CNBC-e",
+    "url": "https://www.cnbce.com/rss",
+    "family": "cnbce",
+    "language": "tr",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:07.934729+00:00",
+    "terms_url": "https://www.cnbce.com/kullanim-kosullari",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "www.cnbce.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "bbc-business",
+    "name": "BBC Business",
+    "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+    "family": "bbc",
+    "language": "en",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:07.934806+00:00",
+    "terms_url": "https://www.bbc.co.uk/usingthebbc/terms/",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "bbc.co.uk",
+      "bbc.com",
+      "feeds.bbci.co.uk",
+      "www.bbc.co.uk",
+      "www.bbc.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "bbc-technology",
+    "name": "BBC Technology",
+    "url": "https://feeds.bbci.co.uk/news/technology/rss.xml",
+    "family": "bbc",
+    "language": "en",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:08.060917+00:00",
+    "terms_url": "https://www.bbc.co.uk/usingthebbc/terms/",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "bbc.co.uk",
+      "bbc.com",
+      "feeds.bbci.co.uk",
+      "www.bbc.co.uk",
+      "www.bbc.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "cnbc",
+    "name": "CNBC",
+    "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "family": "cnbc",
+    "language": "en",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:08.231363+00:00",
+    "terms_url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "www.cnbc.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "foreks",
+    "name": "Foreks",
+    "url": "https://www.foreks.com/rss",
+    "family": "foreks",
+    "language": "tr",
+    "official": false,
+    "fresh_hours": 72,
+    "poll_seconds": 120,
+    "checked_at": "2026-10-21T12:02:08.253993+00:00",
+    "terms_url": "https://www.foreks.com/rss",
+    "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
+    "review_mode": "private_facts",
+    "allowed_hosts": [
+      "www.foreks.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "tcmb-press",
+    "name": "TCMB",
+    "url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Bottom+Menu/Diger/RSS/Basin+Duyurulari",
+    "family": "tcmb",
+    "language": "tr",
+    "official": true,
+    "fresh_hours": 600,
+    "poll_seconds": 180,
+    "checked_at": "2026-10-21T12:02:08.298703+00:00",
+    "terms_url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Bottom+Menu/Diger/RSS/Basin+Duyurulari",
+    "rights_note": "Private editorial monitoring only; original attributed facts; no publisher images or full-text republication.",
+    "review_mode": "official_facts",
+    "allowed_hosts": [
+      "www.tcmb.gov.tr"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "tcmb-data",
+    "name": "TCMB",
+    "url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Bottom+Menu/Diger/RSS/Veriler",
+    "family": "tcmb",
+    "language": "tr",
+    "official": true,
+    "fresh_hours": 240,
+    "poll_seconds": 180,
+    "checked_at": "2026-10-21T12:02:08.372310+00:00",
+    "terms_url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Bottom+Menu/Diger/RSS/Veriler",
+    "rights_note": "Private editorial monitoring only; original attributed facts; no publisher images or full-text republication.",
+    "review_mode": "official_facts",
+    "allowed_hosts": [
+      "www.tcmb.gov.tr"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "tcmb-speech",
+    "name": "TCMB",
+    "url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Bottom+Menu/Diger/RSS/Baskanin+Konusmalari",
+    "family": "tcmb",
+    "language": "tr",
+    "official": true,
+    "fresh_hours": 1000,
+    "poll_seconds": 180,
+    "checked_at": "2026-10-21T12:02:08.428181+00:00",
+    "terms_url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Bottom+Menu/Diger/RSS/Baskanin+Konusmalari",
+    "rights_note": "Private editorial monitoring only; original attributed facts; no publisher images or full-text republication.",
+    "review_mode": "official_facts",
+    "allowed_hosts": [
+      "www.tcmb.gov.tr"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "ecb",
+    "name": "ECB",
+    "url": "https://www.ecb.europa.eu/rss/press.html",
+    "family": "ecb",
+    "language": "en",
+    "official": true,
+    "fresh_hours": 240,
+    "poll_seconds": 180,
+    "checked_at": "2026-10-21T12:02:08.445145+00:00",
+    "terms_url": "https://www.ecb.europa.eu/rss/press.html",
+    "rights_note": "Private editorial monitoring only; original attributed facts; no publisher images or full-text republication.",
+    "review_mode": "official_facts",
+    "allowed_hosts": [
+      "ecb.europa.eu",
+      "www.ecb.europa.eu"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "apple",
+    "name": "Apple Newsroom",
+    "url": "https://www.apple.com/newsroom/rss-feed.rss",
+    "family": "apple",
+    "language": "en",
+    "official": true,
+    "fresh_hours": 240,
+    "poll_seconds": 180,
+    "checked_at": "2026-10-21T12:02:08.472287+00:00",
+    "terms_url": "https://www.apple.com/newsroom/rss-feed.rss",
+    "rights_note": "Private editorial monitoring only; original attributed facts; no publisher images or full-text republication.",
+    "review_mode": "official_facts",
+    "allowed_hosts": [
+      "www.apple.com"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "fed",
+    "name": "Federal Reserve",
+    "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+    "family": "fed",
+    "language": "en",
+    "official": true,
+    "fresh_hours": 240,
+    "poll_seconds": 180,
+    "checked_at": "2026-10-21",
+    "terms_url": "https://www.federalreserve.gov/disclaimer.htm",
+    "rights_note": "US government primary releases; attribute facts. Third-party content and logos excluded.",
+    "review_mode": "official_facts",
+    "allowed_hosts": [
+      "www.federalreserve.gov",
+      "federalreserve.gov"
+    ],
+    "enabled": true,
+    "article_mode": "html"
+  },
+  {
+    "id": "spk",
+    "name": "SPK",
+    "url": "https://spk.gov.tr/spk-bultenleri/2026-yili-spk-bultenleri",
+    "family": "spk",
+    "language": "tr",
+    "official": true,
+    "allowed_hosts": [
+      "spk.gov.tr",
+      "www.spk.gov.tr"
+    ],
+    "poll_seconds": 600,
+    "fresh_hours": 240,
+    "enabled": true,
+    "checked_at": "2026-10-21",
+    "terms_url": "https://spk.gov.tr/",
+    "rights_note": "Official public bulletin; attributed facts only; original tables retained privately for verification.",
+    "review_mode": "official_facts",
+    "method": "bridge_pdf"
+  },
+  {
+    "id": "kap",
+    "name": "KAP",
+    "url": "https://www.kap.org.tr/tr",
+    "family": "kap",
+    "language": "tr",
+    "official": true,
+    "allowed_hosts": [
+      "www.kap.org.tr",
+      "kap.org.tr"
+    ],
+    "poll_seconds": 600,
+    "fresh_hours": 72,
+    "enabled": false,
+    "checked_at": "2026-10-21",
+    "terms_url": "https://www.kap.org.tr/tr",
+    "rights_note": "Primary disclosure reference only. No inherited licensed API or cursor scanning.",
+    "review_mode": "official_facts",
+    "method": "reference"
+  }
+]

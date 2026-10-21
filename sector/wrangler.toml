@@ -1,0 +1,31 @@
+name = "sector-haber-review"
+main = "src/worker.ts"
+compatibility_date = "2026-10-21"
+workers_dev = true
+preview_urls = false
+
+[vars]
+MODE = "dry_run"
+TARGET_X_USERNAME = "sectorhaber"
+AI_MODEL = "gpt-6-luna"
+AI_EFFORT = "high"
+AI_DAILY_DRAFT_LIMIT = "60"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sector-haber-db"
+database_id = "28e6b518-e0b0-4ba9-b07e-27ce765fe163"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "sector-haber-media"
+
+[triggers]
+# Mac mini runs the active review pipeline. Keep this cloud replica inert until
+# its public transport is verified, to avoid two independent review queues.
+crons = []
+
+[observability]
+enabled = true
+head_sampling_rate = 0.1

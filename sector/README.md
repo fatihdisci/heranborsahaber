@@ -128,3 +128,21 @@ Tweet başlığı tek bir uygun emojiyle başlar (varsayılan 📢, gerçekten a
 ## Metin ve görseli alma
 
 Fotoğraflı taslaklarda “Tweet’i kopyala” bulunur. Telegram’ın CopyTextButton sınırı nedeniyle 256 karaktere kadar metin doğrudan panoya kopyalanır. Daha uzun tweetler kesilmez; tam metin, Telegram’ın kopyalama seçeneği bulunan biçimlendirilmiş metin mesajı olarak açılır. “Görseli al” düğmesi kaldırıldı; eski mesajlardaki düğmelerin uyumluluğu korunur. Bu ek mesajlar yalnız düğmeye basıldığında gönderilir, AI çağrısı yapılmaz. Yetki, kart kimliği ve sürüm doğrulanır; aynı Telegram update yeniden gelirse tekrar gönderilmez. Mevcut mesajlar topluca değiştirilmez; yeni ve düzenlenmiş taslaklarda düğmeler görünür.
+
+## Toparlanma ve güvenli güncelleme
+
+- `src/telegram-inbox.ts`, `src/telegram.ts`, `src/worker.ts` ve `scripts/local_service.ts`: Telegram update'leri offset ilerlemeden kalıcı kuyruğa yazılır. Geçici hatalar en fazla üç kez denenir; kalıcı ve sonucu belirsiz hatalar ayrı kaydedilir. Başarılı dış işlem makbuzları aynı update tekrar işlenirse yeniden gönderimi önler. Terminal kayıtlar mesaj gövdesini tutmaz.
+- `src/news-inbox.ts`, `src/delivery-recovery.ts`, `src/pipeline.ts`: Hazır taslağın teslimatı ile model hatası ayrıdır. Bilinen mesaj aynı yerde düzenlenir. Bilinmeyen teslimatta otomatik tekrar gönderim yapılmaz; kullanıcı çift mesaj olasılığını belirten ayrı düğmeyle onaylar. Teslimat denemesi üçle sınırlıdır.
+- `src/ingest.ts`, `src/model-recovery.ts`, `scripts/manual_reader.ts`: Aynı URL'nin açıkça yeniden gönderilmesi, uygun model hatasını yeni ve tam kanıtla en fazla iki kez yeniden sıraya alabilir. İş kimliği, deneme sayacı ve günlük bütçe korunur. Çalışan/tamamlanmış işler çoğaltılmaz; teslimatı belirsiz taslak yeniden üretilmez.
+- `src/kap/store.ts`, `src/kap-delivery.ts`, `src/pipeline.ts`: KAP tercihleri hazırlama sırasında ve gerçek gönderimden hemen önce yeniden okunur. Kapatılan bekleyen kayıtlar saklanır, gönderilmez ve kategori tekrar açıldığında geçmişe dönük oynatılmaz. Mevcut pay işlemi önceliği değişmez. Tercih deposuna erişilemiyorsa gönderim bekler.
+- `migrations/0003_recovery.sql`: Yalnız yeni gelen-kuyruk/işlem-makbuzu tabloları eklenir. Yerel başlangıç şeması aynı ekleri içerir; veri silen migration yoktur.
+
+`scripts/install_local.py --update`, temiz bir `releases/<kimlik>/app` dizininde bağımlılıkları, TypeScript/Python testlerini, dry-run build'i ve macOS OCR derlemesini tamamlar. Ardından yalnız SECTOR servisi durdurulur ve sürüm değiştirilir. Yeni süreç hazır olduğunu bildirene kadar haber/Telegram/model döngülerini başlatmaz (`scripts/startup_gate.ts`). Başlangıç doğrulanınca etkinleştirilir. Başlatma başarısızsa önceki uygulama, OCR ve servis dosyası geri yüklenir. Normal kurulum mevcut kurulumu değiştirmeyi reddeder.
+
+Geri dönüş kopyaları `backups/update-<kimlik>/rollback.json` içinde listelenir. Başarılı geçişten sonra manuel geri dönüş gerekirse önce yalnız SECTOR servisi durdurulmalı; bekleyen `telegram_updates` kayıtları uzlaştırılmalı, ardından listedeki önceki dosyalar ters sırayla geri alınmalıdır. Offset geri sarılmamalı ve veritabanı eski kopyayla değiştirilmemelidir. Önceki sürüm yeni gelen-kuyruk tablosunu tüketmediğinden bekleyen istekler göz ardı edilmemelidir. Makbuzu olmayan dış teslimat için exactly-once garantisi yoktur.
+
+## CI ve izole doğrulama
+
+`.github/workflows/checks.yml`, Node 22 ile `npm ci --ignore-scripts`, `npm run check`, `npm test`, `npm run build` ve Python testlerini çalıştırır. Canlı sır, servis kurulumu, gerçek Telegram gönderimi veya deploy adımı bulunmaz. GitHub Actions sürümleri commit kimliğiyle sabittir; izin yalnız repo okumadır.
+
+`test/telegram-recovery.test.ts`, `test/recovery.test.ts`, `test/kap-delivery.test.ts`, `test/startup-gate.test.ts` ve `test/test_install_local.py` hata/toparlanma senaryolarını geçici veritabanları ve sahte dış servislerle sınar. Native Vision OCR kontrolü ayrı macOS işidir (`test/test_macos_ocr.py`); Linux'ta bu test açıkça atlanır. Yerelde `SECTOR_TEST_OCR_BINARY` yalnız geçici dizinde derlenen test binary'sine verilmelidir.

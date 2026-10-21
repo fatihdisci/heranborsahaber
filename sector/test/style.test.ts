@@ -19,3 +19,13 @@ test('publisher attributions are rejected while true speaker and uncertainty rem
  assert.deepEqual(styleIssues(draft,[doc({equity_codes:['THYAO']})]),[]);
  assert(styleIssues({...draft,hashtags:['#Şirket','#Yatırım']},[doc({equity_codes:['THYAO']})]).includes('missing_market_hashtags'));
 });
+
+import {headlineWithEmoji,invalidEmojiPlacement} from '../src/style';
+test('one leading emoji only; body, tags, card text and trailing or compound emoji are rejected',()=>{
+ const d={headline:'📢 Şirket yeni yatırımını açıkladı',body:'İzin süreci devam ediyor.',card_headline:'Yeni yatırım planı',card_body:'İzin süreci sürüyor.',hashtags:['#Borsa','#BIST']} as Draft;
+ assert.equal(headlineWithEmoji('Şirket yatırım planlıyor'),'📢 Şirket yatırım planlıyor');
+ assert.equal(headlineWithEmoji(d.headline),d.headline);
+ assert.equal(invalidEmojiPlacement(d),false);
+ assert.equal(invalidEmojiPlacement({...d,headline:'🚨 Acil açıklama yapıldı'}),false);
+ for(const change of [{headline:'📢🚨 Açıklama'},{headline:'Açıklama 📢'},{headline:'📢 Açıklama 🚨'},{body:'Açıklama 📊'},{card_body:'📈 Yatırım arttı'},{hashtags:['#Borsa','📢#BIST']},{headline:'🇹🇷 Açıklama'},{headline:'👩‍💻 Açıklama'}])assert(invalidEmojiPlacement({...d,...change}));
+});

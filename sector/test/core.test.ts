@@ -54,7 +54,8 @@ test('numbers, units, entities and fabricated evidence fail closed',()=>{
 });
 test('semantic audit rejects conditional and subject errors',()=>{
  assert.throws(()=>acceptHermes(draft,{supported:false,issues:['plan gerçekleşmiş gibi yazılmış']},[document]),/semantic_review/);
- assert.equal(acceptHermes(draft,{supported:true,issues:[]},[document]).draft.headline,draft.headline);
+ assert.throws(()=>acceptHermes({...draft,body:draft.headline},{supported:true,issues:[]},[document]),/repeated_headline/);
+ assert.equal(acceptHermes(draft,{supported:true,issues:[]},[document]).draft.headline,'📢 '+draft.headline);
  assert.deepEqual(acceptHermes({...draft,hashtags:['#Yeni Yatırım','#İş-Dünyası']},{supported:true,issues:[]},[document]).draft.hashtags,['#YeniYatırım','#İşDünyası']);
 });
 test('syndicated wire copies are one family; unrelated entities never merge',()=>{

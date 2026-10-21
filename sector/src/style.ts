@@ -21,7 +21,16 @@ export function hasPublisherAttribution(text:string,names:string[]):boolean {
 }
 export function styleIssues(draft:Draft,documents:Document[]):string[]{
  const p=editorialPolicy(documents),issues:string[]=[];
+ if(invalidEmojiPlacement(draft))issues.push('invalid_emoji_placement');
  if(hasPublisherAttribution([draft.headline,draft.body,draft.card_headline,draft.card_body].join('\n'),p.publisher_names))issues.push('publisher_attribution');
  if(p.required_hashtags.some(tag=>!draft.hashtags.some(t=>fold(t)===fold(tag))))issues.push('missing_market_hashtags');
  return issues;
+}
+
+const emoji=/[\p{Extended_Pictographic}\p{Regional_Indicator}\u20e3]/u;
+export function headlineWithEmoji(headline:string):string{return !headline.trim()||emoji.test(headline)?headline:'📢 '+headline.trim();}
+export function invalidEmojiPlacement(draft:Draft):boolean {
+ const headline=draft.headline.trim();
+ const rest=headline.replace(/^(?:📢|🚨|📊|🏦|🏢|🌍|⚡|💻|📈|📉)\uFE0F?\s+/u,'');
+ return emoji.test(rest)||[draft.body,draft.card_headline,draft.card_body,...draft.hashtags].some(t=>emoji.test(t??''));
 }

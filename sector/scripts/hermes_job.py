@@ -69,11 +69,21 @@ def call(job,instructions,payload):
     if result.get('api_calls',1)!=1:raise RuntimeError('unexpected_call_count')
     return decode(result['final_response'])
 
+EMOJI=re.compile(r'[\U0001F000-\U0001FAFF\u2600-\u27BF\u20e3\u00a9\u00ae\u203c\u2049\u2122\u2139\u2194-\u21ff\u2300-\u23ff\u2b00-\u2bff\u3030\u303d\u3297\u3299]')
+
+def ensure_headline_emoji(draft):
+    if isinstance(draft,dict) and isinstance(draft.get('headline'),str) and draft['headline'].strip() and not EMOJI.search(draft['headline']):
+        return {**draft,'headline':'📢 '+draft['headline'].strip()}
+    return draft
+
 def presentation_issues(draft,policy=None):
     if not isinstance(draft,dict) or not isinstance(draft.get('body'),str) or not isinstance(draft.get('hashtags'),list):return []
     if not isinstance(draft.get('headline'),str) or any(not isinstance(t,str) for t in draft['hashtags']):return []
     text='\n\n'.join(p for p in [draft['headline'],draft['body'],' '.join(draft['hashtags'])] if p)
     issues=[]
+    rest=re.sub(r'^(?:📢|🚨|📊|🏦|🏢|🌍|⚡|💻|📈|📉)\ufe0f?\s+','',draft['headline'].strip())
+    if EMOJI.search(rest) or any(EMOJI.search(str(draft.get(k,''))) for k in ['body','card_headline','card_body']) or any(EMOJI.search(t) for t in draft['hashtags']):
+        issues.append('Yalnız tweet başlığının başında boşlukla ayrılmış tek uygun emoji bırak. Gövde, başlığın devamı, etiketler ve görsel metnindeki bütün emojileri kaldır; olgusal bilgileri sözcüklerle koru.')
     if len(text.encode('utf-16-le'))//2>1024:issues.append('Başlık, gövde ve etiketleri kritik olguları koruyarak toplam 1024 UTF-16 karakter içine yeniden yaz. Metni kesme veya bölme.')
     policy=policy or {}
     required=policy.get('required_hashtags',[])
@@ -91,6 +101,7 @@ def main(job):
     if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6.1-sol' or job.get('effort')!='low' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
     draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{})})
+    draft=ensure_headline_emoji(draft)
     if job.get('deadline',0)<time.time():raise RuntimeError('job_expired')
     audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
     calls=2
@@ -99,6 +110,7 @@ def main(job):
     if audit.get('supported') is not True or audit.get('issues'):
         if job.get('deadline',0)<time.time()+90:raise RuntimeError('repair_budget_expired')
         draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{}),'previous_draft':draft,'required_corrections':audit.get('issues',[])})
+        draft=ensure_headline_emoji(draft)
         audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
         calls=4
         layout_issues=presentation_issues(draft,job.get('editorial_policy'))

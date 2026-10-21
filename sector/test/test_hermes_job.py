@@ -28,7 +28,7 @@ class HermesJobContract(unittest.TestCase):
         self.assertEqual(captured['provider'],'openai-codex');self.assertEqual(captured['fallback_model'],[])
     def test_semantic_failure_has_one_bounded_repair(self):
         with patch.object(job_module,'call',side_effect=[{'headline':'bad'},{'supported':False,'issues':['condition lost']},{'headline':'fixed'},{'supported':True,'issues':[]}]) as call:
-            result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertEqual(result['draft']['headline'],'fixed')
+            result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertEqual(result['draft']['headline'],'📢 fixed')
     def test_persistent_failure_never_loops_or_changes_provider(self):
         with patch.object(job_module,'call',side_effect=[{}, {'supported':False,'issues':['unsupported']},{}, {'supported':False,'issues':['unsupported']}]) as call:
             result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertFalse(result['audit']['supported']);self.assertEqual(result['runtime']['fallback_count'],0)
@@ -40,7 +40,7 @@ class HermesJobContract(unittest.TestCase):
         long={'headline':'Başlık','body':'Uzun içerik '*120,'hashtags':['#Ekonomi','#Finans']}
         short={'headline':'Başlık','body':'Önemli bilgi korunmuş kısa metin.','hashtags':['#Ekonomi','#Finans']}
         with patch.object(job_module,'call',side_effect=[long,{'supported':True,'issues':[]},short,{'supported':True,'issues':[]}]) as call:
-            result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],short)
+            result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],{**short,'headline':'📢 Başlık'})
         self.assertTrue(job_module.presentation_issues({'headline':'🌍'*510,'body':'Açıklama','hashtags':['#Ekonomi','#Finans']}))
 
     def test_publisher_attribution_and_market_tags_trigger_bounded_repair(self):
@@ -51,8 +51,17 @@ class HermesJobContract(unittest.TestCase):
         self.assertEqual(job_module.presentation_issues(good,policy),[])
         with patch.object(job_module,'call',side_effect=[bad,{'supported':True,'issues':[]},good,{'supported':True,'issues':[]}]) as call:
             result=job_module.main(self.job()|{'editorial_policy':policy})
-            self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],good)
+            self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],{**good,'headline':'📢 '+good['headline']})
             self.assertEqual(call.call_args_list[0].args[2]['editorial_policy'],policy)
+
+    def test_single_headline_emoji_and_no_body_or_card_emoji(self):
+        d={'headline':'Şirket yeni yatırımını duyurdu','body':'İzin süreci sürüyor.','card_headline':'Yeni yatırım','card_body':'İzin süreci sürüyor.','hashtags':['#Borsa','#BIST']}
+        good=job_module.ensure_headline_emoji(d)
+        self.assertEqual(good['headline'],'📢 '+d['headline'])
+        self.assertEqual(job_module.ensure_headline_emoji(good),good)
+        self.assertEqual(job_module.presentation_issues(good),[])
+        for changes in [{'headline':'📢🚨 Açıklama'},{'headline':'Açıklama 📢'},{'body':'İzin süreci sürüyor. 📊'},{'card_body':'🏢 Yatırım planlanıyor'},{'headline':'🇹🇷 Açıklama'}]:
+            self.assertTrue(job_module.presentation_issues(good|changes))
 
     def test_json_fence_handling_does_not_accept_prose(self):
         self.assertEqual(job_module.decode('```json\n{"başlık":"Haber"}\n```'),{'başlık':'Haber'})

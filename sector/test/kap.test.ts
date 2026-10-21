@@ -82,7 +82,7 @@ test('KAP lease fences survive restart and reject stale writers, other applicati
  }finally{close();}
 });
 test('KAP circuit groups freeze after 12s without edge, max100 and late members start another group',()=>{
- const {store,close}=setup();try{const l=store.claim('live',NOW)!;for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
+ const {store,close}=setup();try{store.configure(pref({circuitNotifications:true}));const l=store.claim('live',NOW)!;for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
  const g=store.claim('groups',NOW)!;store.freeze(g,NOW+11_999);assert.equal(store.health().queue,0);store.freeze(g,NOW+12_000);const q=store.rows<{payload:string}>('SELECT payload FROM queue');assert.equal(q.length,2);assert.equal(JSON.parse(q[0].payload).disclosureIds.length,100);assert.deepEqual(JSON.parse(q[0].payload).codes,['AKBNK','THYAO']);
  store.save(item(202,{title:'Devre Kesici',stockCode:null,relatedStocks:'MEPET'}),l,NOW+13_000,true);store.freeze(g,NOW+24_999);assert.equal(store.health().queue,2);store.freeze(g,NOW+25_000);assert.equal(store.health().queue,3);
  }finally{close();}
@@ -127,4 +127,26 @@ test('KAP captured public metadata contracts remain valid across five actual dis
 });
 test('KAP older retry cannot starve behind an unending stream of newer discoveries',()=>{
  const {store,close}=setup();try{const lease=store.claim('live',NOW)!;store.gap(101,'error','kap_http_503',lease,NOW);store.run('INSERT INTO discovered VALUES(?,?,?)',102,new Date(NOW+60_000).toISOString(),NOW+60_000);assert.equal(store.nextRepair(NOW+60_000),101);}finally{close();}
+});
+
+test('KAP circuit opt-out overrides watchlists, selected topics, index priority and mixed titles',()=>{
+ const p=pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}],otherCompanies:'topics',otherTopics:['circuit','financial','business']});
+ for(const d of [item(101,{title:'Devre Kesici'}),item(102,{title:'Pay Alım Bildirimi',summary:'Devre Kesici uygulanmıştır.'})]){
+  const r=decide(d,p,{bist30:['TEST'],bist100:['TEST'],checkedAt:'',source:''});assert.equal(r.action,'off');assert.equal(r.reason,'circuit_disabled');assert.equal(r.store,true);
+ }
+ for(const title of ['Yeni İş İlişkisi','Sözleşme İmzalanması','İhale Sonucu','Sipariş Alınması','Finansal Rapor','Finansal Tablolar','Bilanço Açıklaması','Kar Payı Dağıtımı','Bedelsiz Sermaye Artırımı'])assert.equal(decide(item(101,{title}),pref(),null).action,'instant',title);
+ assert.deepEqual(classify(item(101,{title:'Bilanço Açıklaması'})),['financial']);
+ const legacy={...DEFAULTS} as Partial<Preferences>;delete legacy.circuitNotifications;assert.equal(preferences(legacy).circuitNotifications,false);
+});
+test('KAP disabling circuits suppresses queued and not-yet-frozen groups without deleting source history',()=>{
+ const {store,close}=setup();try{
+  store.configure(pref({circuitNotifications:true}));const l=store.claim('live',NOW)!;
+  store.save(item(101,{title:'Devre Kesici'}),l,NOW,true);const g=store.claim('groups',NOW)!;store.freeze(g,NOW+12_000);
+  store.save(item(102,{title:'Devre Kesici'}),l,NOW+13_000,true);store.save(item(103,{title:'Yeni İş İlişkisi'}),l,NOW+13_000,true);
+  store.configure(pref());store.freeze(g,NOW+25_000);
+  assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='circuit' AND state='ready'")!.n,0);
+  assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='circuit' AND state='suppressed'")!.n,2);
+  assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='instant' AND state='ready'")!.n,1);
+  store.save(item(104,{title:'Devre Kesici'}),l,NOW+25_000,true);assert.equal(store.health().sources,4);assert.equal(store.health().circuitPending,0);
+ }finally{close();}
 });

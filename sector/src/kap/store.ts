@@ -37,7 +37,10 @@ export class KapStore {
  get<T>(key:string):T|null {const row=this.row<{value:string}>('SELECT value FROM settings WHERE key=?',key);return row?JSON.parse(row.value):null;}
  set(key:string,value:unknown){this.run('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',key,JSON.stringify(value));}
  prefs(){return preferences(this.get('preferences'));}
- configure(value:unknown){this.set('preferences',preferences(value));}
+ configure(value:unknown){const p=preferences(value);this.transaction(()=>{this.set('preferences',p);if(!p.circuitNotifications)this.suppressCircuits();});}
+ private suppressCircuits(){
+  this.run("UPDATE queue SET state='suppressed' WHERE sent_at IS NULL AND state='ready' AND (kind='circuit' OR EXISTS(SELECT 1 FROM queue_members m JOIN disclosures d ON d.id=m.disclosure_id JOIN json_each(d.decision,'$.topics') t WHERE m.queue_id=queue.id AND t.value='circuit'))");
+ }
  claim(job:Job,now:number):Lease|null {
   const token=randomUUID();const changed=this.run('UPDATE jobs SET lease_token=?,lease_until=? WHERE name=? AND next_at<=? AND lease_until<=?',token,now+120_000,job,now,now).changes;
   if(!changed)return null;const row=this.row<{cursor:number;ceiling:number|null;failures:number}>('SELECT * FROM jobs WHERE name=?',job)!;return {job,token,...row};
@@ -95,12 +98,14 @@ export class KapStore {
  });}
  freeze(lease:Lease,now:number){this.transaction(()=>{
   this.guard(lease,now);
+  const circuitsEnabled=this.prefs().circuitNotifications;if(!circuitsEnabled)this.suppressCircuits();
   // Close by the first member's wall clock window, independent of live cursor/edge.
   for(let group=0;group<10;group++){
    const first=this.row<{first_seen:number}>('SELECT first_seen FROM circuit_pending ORDER BY first_seen,disclosure_id LIMIT 1');if(!first||now<first.first_seen+12_000)break;
    const members=this.rows<{disclosure_id:number;codes:string}>('SELECT disclosure_id,codes FROM circuit_pending WHERE first_seen<? ORDER BY first_seen,disclosure_id LIMIT 100',first.first_seen+12_000);
    const ids=members.map(m=>m.disclosure_id),codes=[...new Set(members.flatMap(m=>JSON.parse(m.codes) as string[]))].sort(),key=`kap:circuit:${ids[0]}`;
    this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart:first.first_seen,windowEnd:first.first_seen+12_000}));
+   if(!circuitsEnabled)this.run("UPDATE queue SET state='suppressed' WHERE id=?",key);
    for(const id of ids){this.run('INSERT INTO queue_members VALUES(?,?)',id,key);this.run('DELETE FROM circuit_pending WHERE disclosure_id=?',id);}
   }
  });}

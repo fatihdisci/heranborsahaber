@@ -2,14 +2,14 @@ import {EQUITY,normalize,type Disclosure,type Indices} from './parser';
 export const TOPICS=['dividend','buyback','financial','capital','business','share_trade','circuit','other'] as const;
 export type Topic=typeof TOPICS[number];
 export interface Preferences {
- version:1; funds:'instant'|'digest'|'off'; fundDigestTime:string; priorityIndices:boolean;
+ version:1; circuitNotifications:boolean; funds:'instant'|'digest'|'off'; fundDigestTime:string; priorityIndices:boolean;
  otherCompanies:'important'|'topics'|'off'; otherTopics:Topic[];
  watchlist:{ticker:string;mode:'all'|'important'|'topics';topics:Topic[]}[]; excludedTitles:string[];
 }
-export const DEFAULTS:Preferences={version:1,funds:'off',fundDigestTime:'19:00',priorityIndices:true,otherCompanies:'important',otherTopics:[],watchlist:[],excludedTitles:['İhraç Belgesi','Fon İhraç Sözleşmesi','Kredi Kullanımı']};
+export const DEFAULTS:Preferences={version:1,circuitNotifications:false,funds:'off',fundDigestTime:'19:00',priorityIndices:true,otherCompanies:'important',otherTopics:[],watchlist:[],excludedTitles:['İhraç Belgesi','Fon İhraç Sözleşmesi','Kredi Kullanımı']};
 export function preferences(value:unknown):Preferences {
- const p=value as Preferences;const topics=(x:unknown)=>Array.isArray(x)&&x.every(t=>TOPICS.includes(t));
- if(!p||p.version!==1||!['instant','digest','off'].includes(p.funds)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(p.fundDigestTime)||typeof p.priorityIndices!=='boolean'||!['important','topics','off'].includes(p.otherCompanies)||!topics(p.otherTopics)||!Array.isArray(p.watchlist)||!Array.isArray(p.excludedTitles)||p.excludedTitles.some(t=>typeof t!=='string'||!t.trim()||t.length>200))throw new Error('kap_preferences_invalid');
+ const raw=value as Preferences;const p={...raw,circuitNotifications:raw?.circuitNotifications??false};const topics=(x:unknown)=>Array.isArray(x)&&x.every(t=>TOPICS.includes(t));
+ if(!p||p.version!==1||typeof p.circuitNotifications!=='boolean'||!['instant','digest','off'].includes(p.funds)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(p.fundDigestTime)||typeof p.priorityIndices!=='boolean'||!['important','topics','off'].includes(p.otherCompanies)||!topics(p.otherTopics)||!Array.isArray(p.watchlist)||!Array.isArray(p.excludedTitles)||p.excludedTitles.some(t=>typeof t!=='string'||!t.trim()||t.length>200))throw new Error('kap_preferences_invalid');
  if(p.watchlist.some(w=>!w||!EQUITY.test(w.ticker)||!['all','important','topics'].includes(w.mode)||!topics(w.topics))||new Set(p.watchlist.map(w=>w.ticker)).size!==p.watchlist.length)throw new Error('kap_watchlist_invalid');
  return structuredClone(p);
 }
@@ -17,7 +17,7 @@ export function classify(d:Disclosure):Topic[] {
  const t=normalize(d.title),result:Topic[]=[];
  if(/TEMETTU|KAR PAYI/.test(t))result.push('dividend');
  if(/GERI ALIM|GERI ALIN|GERI SATIM|GERI SATIS|GERI SATIL/.test(t))result.push('buyback');
- if(/FINANSAL (RAPOR|TABLO|SONUC)|FAALIYET RAPOR/.test(t))result.push('financial');
+ if(/FINANSAL (RAPOR|TABLO|SONUC)|BILANCO|FAALIYET RAPOR/.test(t))result.push('financial');
  if(/SERMAYE ART|SERMAYE AZAL|BEDELLI|BEDELSIZ/.test(t))result.push('capital');
  if(/YENI IS ILISK|SOZLESME|IHALE|SIPARIS/.test(t))result.push('business');
  if(/PAY (ALIM|SATIM|ALIS|SATIS)/.test(t)&&!result.includes('buyback'))result.push('share_trade');
@@ -47,6 +47,8 @@ export function decide(d:Disclosure,p:Preferences,indices:Indices|null):Decision
  const store=significant||explicit||selected||shares||topics.includes('circuit')||(d.isFund&&p.funds!=='off');
  const indexTier=indices&&d.subjectCodes.some(c=>indices.bist30.includes(c))?30:indices&&d.subjectCodes.some(c=>indices.bist100.includes(c))?100:null;
  const result=(action:Decision['action'],reason:string):Decision=>({store,action:store?action:'off',reason,topics,important:significant,critical,indexTier});
+ // Explicit user opt-out wins over share overrides, watchlists and index priority.
+ if(topics.includes('circuit')&&!p.circuitNotifications)return result('off','circuit_disabled');
  if(d.isFund&&p.funds==='off')return result('off','funds_off');
  if(shares)return result('instant','share_transaction_override');
  if(muted(d.title))return result('off','mandatory_mute');

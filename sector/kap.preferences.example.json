@@ -6,5 +6,10 @@
   "otherCompanies": "important",
   "otherTopics": [],
   "watchlist": [],
-  "excludedTitles": ["İhraç Belgesi", "Fon İhraç Sözleşmesi", "Kredi Kullanımı"]
+  "excludedTitles": [
+    "İhraç Belgesi",
+    "Fon İhraç Sözleşmesi",
+    "Kredi Kullanımı"
+  ],
+  "circuitNotifications": false
 }

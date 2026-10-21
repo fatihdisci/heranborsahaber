@@ -39,3 +39,9 @@ Tam metin yalnız `.disclosureScrollableArea` içeriği ve tablolarından çıka
 - Kaynak `disclosures`, kullanıcı akışı `feed`, karar ve teslimata hazır işler `queue/queue_members` tablolarında; filtrelenenlerin kimlikleri `checks` içinde tutulur. Aynı kaynak kimliği ikinci akış veya kuyruk işi üretmez. Farklı düzeltme kimlikleri birleştirilmez.
 - Fon özet tercihi ilgili kaydı 19:00 İstanbul zamanına erteleyen `digest` kuyruğu oluşturur. Özet metni hazırlamak/göndermek bu kapsamda yoktur.
 - Gönderim tüketicisi özellikle bağlanmamıştır. `sent_at` boş kalır; kuyruk girdileri Telegram veya X mesajı değildir. İleride bir tüketici eklenecekse kuyruğun yaşı, güncel tercihler ve teslimat belirsizliği ayrıca ele alınmalıdır.
+
+## Güncel tercih: devre kesici gönderimi kapalı
+
+`circuitNotifications: false` varsayılandır ve eski tercih kayıtlarında alan yoksa da kapalı kabul edilir. Başlık veya özette devre kesici saptanırsa hisse takibi, endeks önceliği ve pay işlemi istisnasından önce gönderim engellenir. Kaynak/akış kayıtları korunur; hazır devre kesici kuyrukları silinmeden `suppressed` yapılır. Henüz kapanmamış gruplar da gönderime kapalı kaydedilir.
+
+Yeni iş ilişkisi, sözleşme, ihale, sipariş, finansal rapor/tablolar ve bilanço `business`/`financial` konularında kalır. Temettü ve önemli sermaye işlemleri de mevcut önemli bildirim kapsamındadır. Rutin fon raporları ve susturulan başlıklar açılmaz. KAP hattı halen yalnız kayıt/kuyruk üretir; Telegram göndericisi bağlı değildir.

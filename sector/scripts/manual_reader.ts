@@ -51,13 +51,13 @@ export async function runManual(env:Env):Promise<void> {
    }
    await env.DB.prepare("UPDATE manual_requests SET state='complete' WHERE update_id=?").bind(row.update_id).run();
   }
-  else if(j?.state==='needs_review'||j?.state==='expired'||d?.state==='needs_review'||d?.delivery_state==='uncertain')await env.DB.prepare("UPDATE manual_requests SET state='needs_review',error=? WHERE update_id=?").bind(j?.error??'draft_review_required',row.update_id).run();
+  else if(j?.state==='needs_review'||j?.state==='expired'||d?.state==='needs_review'||['uncertain','failed','suppressed'].includes(d?.delivery_state??''))await env.DB.prepare("UPDATE manual_requests SET state='needs_review',error=? WHERE update_id=?").bind(d?.delivery_state==='uncertain'?'delivery_uncertain':d?.delivery_state==='failed'?'delivery_failed':d?.delivery_state==='suppressed'?'delivery_suppressed':j?.error??'draft_review_required',row.update_id).run();
  }
  const failed=await env.DB.prepare("SELECT update_id,message_id,error FROM manual_requests WHERE state='needs_review' AND notified=0 LIMIT 1").first<{update_id:number;message_id:number;error:string}>();
  if(failed&&env.MODE==='telegram_review'){
   // Claim before sending an error reply; never flood on a delivery timeout.
   await env.DB.prepare('UPDATE manual_requests SET notified=1 WHERE update_id=?').bind(failed.update_id).run();
-  const text=/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
+  const text=failed.error==='delivery_uncertain'?'Tweet ve görsel hazır; teslimatın sonucu belirsiz. Aynı içerik otomatik olarak tekrar gönderilmeyecek.':failed.error==='delivery_failed'?'Tweet ve görsel hazır ancak Telegram teslimatı başarısız oldu. Yeniden AI kullanılmadı.':failed.error==='delivery_suppressed'?'Bu içerik güncel gönderim tercihlerine göre kapatıldı.':failed.error==='model_retry_unavailable'?'Bu içerik için yeniden deneme sınırına ulaşıldı veya mevcut hata güvenli biçimde yeniden denenemiyor. Hazır içerik varsa tekrar oluşturulmaz.':/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
   const statusId=await manualStatusId(env,failed.update_id);
   await telegram(env,statusId?'editMessageText':'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,...(statusId?{message_id:String(statusId)}:{reply_parameters:JSON.stringify({message_id:failed.message_id,allow_sending_without_reply:true})})}));
  }
@@ -69,7 +69,7 @@ export async function runManual(env:Env):Promise<void> {
   const docs=await manualDocuments(env,row.kind,row.input,row.message_id),job=await enqueueEvidence(env,docs,'manual');
   await env.DB.prepare("UPDATE manual_requests SET state='model_queued',job_id=?,lease_until=0,error=NULL WHERE update_id=?").bind(job,row.update_id).run();
  }catch(e){const error=e instanceof Error&&/^[a-z_]{3,70}$/.test(e.message)?e.message:'manual_read_failed';
-  const permanent=/unsupported|limit|invalid/.test(error)||row.attempts>=2;
+  const permanent=/unsupported|limit|invalid|model_retry_unavailable/.test(error)||row.attempts>=2;
   await env.DB.prepare('UPDATE manual_requests SET state=?,lease_until=?,error=? WHERE update_id=?').bind(permanent?'needs_review':'queued',now+60,error,row.update_id).run();
  }
 }

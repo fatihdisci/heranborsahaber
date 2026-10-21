@@ -1,3 +1,4 @@
+import {retryManualModel} from './model-recovery';
 import type {Document,Env} from './types';
 import {sha256} from './utils/text';
 // Trusted local readers only. This is not an endpoint accepting arbitrary evidence.
@@ -9,7 +10,12 @@ export async function enqueueEvidence(env:Env,documents:Document[],kind:'kap'|'m
   env.DB.prepare('INSERT OR IGNORE INTO sources(id,config,enabled) VALUES(?,?,0)').bind(doc.source_id,JSON.stringify({id:doc.source_id,name:doc.source_name,method:'reference'})),
   env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,status) VALUES(?,?,?,?,?,?,?,?)').bind(id,doc.source_id,doc.url,doc.title,'',doc.published_at??new Date().toISOString(),time,'model_queued'),
   env.DB.prepare('UPDATE articles SET status=\'model_queued\',lease_until=0 WHERE id=? AND status=\'queued\'').bind(id),
-  env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind) VALUES(?,?,?,?,?,?) ON CONFLICT(article_id,expected_revision) DO UPDATE SET documents=excluded.documents,input_hash=excluded.input_hash,created_at=excluded.created_at,kind=excluded.kind,state='queued',error=NULL WHERE model_jobs.state='paused'").bind(jobId,id,input,await sha256(input),time,kind)
+  env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind) VALUES(?,?,?,?,?,?) ON CONFLICT(article_id,expected_revision) DO UPDATE SET documents=excluded.documents,input_hash=excluded.input_hash,created_at=excluded.created_at,kind=excluded.kind,state='queued',error=NULL WHERE model_jobs.state='paused' AND excluded.kind='kap'").bind(jobId,id,input,await sha256(input),time,kind)
  ]);
- const job=await env.DB.prepare('SELECT id FROM model_jobs WHERE article_id=? AND expected_revision=0').bind(id).first<{id:string}>();if(!job)throw Error('evidence_job_missing');return job.id;
+ const job=await env.DB.prepare('SELECT id,state FROM model_jobs WHERE article_id=? AND expected_revision=0').bind(id).first<{id:string;state:string}>();if(!job)throw Error('evidence_job_missing');
+ if(kind==='manual'&&['needs_review','expired','paused'].includes(job.state)){
+  const retried=await retryManualModel(env,job.id,documents,time);
+  if(!retried){const current=await env.DB.prepare('SELECT state FROM model_jobs WHERE id=?').bind(job.id).first<{state:string}>();if(!current||!['queued','retry_pending','leased','complete'].includes(current.state))throw Error('model_retry_unavailable');}
+ }
+ return job.id;
 }

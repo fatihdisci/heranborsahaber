@@ -1,4 +1,4 @@
-import {manualStatusId} from './manual-status';
+import {deliveryTarget} from './delivery-recovery';
 import {announceNews,refreshNewsRequests} from './news-inbox';
 import registry from '../sources.json';
 import type {Env,Source,Document,Draft} from './types';
@@ -95,18 +95,18 @@ export async function deliver(env:Env):Promise<void> {
  const lock=await env.DB.prepare("UPDATE drafts SET lease_until=?,delivery_state='sending',delivery_attempts=delivery_attempts+1 WHERE id=? AND lease_until<? AND delivery_state='waiting'").bind(time+120,row.id,time).run();if(!lock.meta.changes)return;
  try {
   const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
-  const previous=await env.DB.prepare('SELECT value FROM system_state WHERE key=?').bind('telegram_photo:'+row.id).first<{value:string}>();
-  const manual=await env.DB.prepare('SELECT m.update_id FROM manual_requests m JOIN model_jobs j ON j.id=m.job_id WHERE j.result_draft=? ORDER BY m.created_at LIMIT 1').bind(row.id).first<{update_id:number}>();
-  const statusMessage=manual?await manualStatusId(env,manual.update_id):undefined;
-  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,previous?Number(previous.value):statusMessage);
+  const target=await deliveryTarget(env,row.id,row.message_id);
+  if(target)await env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_target:'+row.id,String(target)).run();
+  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,target);
   await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id),
    env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_photo:'+row.id,String(message))]);
  } catch(e) {
   // Retrying an ambiguous timeout can duplicate a card already accepted by
   // Telegram. Only an explicit API rejection is eligible for an automatic retry.
-  const retry=e instanceof TelegramError&&e.code===429;
-  await env.DB.prepare('UPDATE drafts SET lease_until=0,delivery_state=?,next_delivery=? WHERE id=?').bind(retry?'waiting':'uncertain',time+(e instanceof TelegramError?e.retryAfter:300),row.id).run();
+  const attempts=await env.DB.prepare('SELECT delivery_attempts FROM drafts WHERE id=?').bind(row.id).first<{delivery_attempts:number}>();
+  const retry=e instanceof TelegramError&&e.code===429&&(attempts?.delivery_attempts??3)<3;
+  await env.DB.prepare('UPDATE drafts SET lease_until=0,delivery_state=?,next_delivery=? WHERE id=?').bind(retry?'waiting':e instanceof TelegramError&&e.code>=400&&e.code<500?'failed':'uncertain',time+(e instanceof TelegramError?e.retryAfter:300),row.id).run();
  }
 }
 export async function tick(env:Env):Promise<void> {

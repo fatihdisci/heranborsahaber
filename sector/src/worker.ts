@@ -45,8 +45,9 @@ async function webhook(request:Request,env:Env):Promise<Response> {
   await sendDraftAsset(env,cb.data,cb.message.message_id,Number(id),cb.id);
   return json({ok:true});
  }
- if(/^news:[a-f0-9-]{36}$/.test(cb.data)){
-  const answer=await requestNews(env,cb.data.slice(5),cb.message.message_id);
+ const retryNews=cb.data?.match(/^newsretry:([a-f0-9-]{36}):(\d+)$/);
+ if(retryNews||/^news:[a-f0-9-]{36}$/.test(cb.data)){
+  const answer=await requestNews(env,retryNews?.[1]??cb.data.slice(5),cb.message.message_id,retryNews?Number(retryNews[2]):undefined);
   await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});
   return json({ok:true});
  }

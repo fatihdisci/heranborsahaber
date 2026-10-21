@@ -15,7 +15,7 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 
 `RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → tek fotoğraflı Telegram mesajı`
 
-Yazım ve kart metinleri `gpt-6-luna`, `high` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
+Yazım ve kart metinleri `gpt-6.1-sol`, `low` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
 Araç, MCP, bellek enjeksiyonu, alternatif model ve ücretli API sağlayıcısı kapalıdır.
 Oturum yenilemesini Hermes’in kendi kilitli kimlik çözümleyicisi yapar; tokenlar kopyalanmaz veya Cloudflare’a aktarılmaz.
 Üyeliğin kota sınırları geçerlidir. Bir aday en fazla bir kaynak denetimli düzeltme turu alır.

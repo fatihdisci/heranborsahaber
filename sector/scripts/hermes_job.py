@@ -46,7 +46,7 @@ def call(job,instructions,payload):
     AIAgent,credentials=runtime(job['profile'])
     agent=AIAgent(model=job['model'],provider='openai-codex',api_mode='codex_responses',api_key=credentials['api_key'],base_url=credentials['base_url'],
         enabled_toolsets=[],quiet_mode=True,skip_context_files=True,skip_memory=True,load_soul_identity=False,save_trajectories=False,
-        verbose_logging=False,max_iterations=1,max_tokens=8000,reasoning_config={'effort':'high'},fallback_model=[],credential_pool=None,
+        verbose_logging=False,max_iterations=1,max_tokens=8000,reasoning_config={'effort':'low'},fallback_model=[],credential_pool=None,
         request_overrides={'max_output_tokens':8000})
     if agent.model!=job['model'] or agent.provider!='openai-codex' or getattr(agent,'tools',[]) or getattr(agent,'_fallback_chain',[]) or getattr(agent,'_credential_pool',None) or getattr(agent,'compression_enabled',True):raise RuntimeError('unsafe_agent_configuration')
     if hasattr(agent.client,'with_options'):agent.client=agent.client.with_options(max_retries=0)
@@ -65,7 +65,7 @@ def presentation_issues(draft):
     return []
 
 def main(job):
-    if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6-luna' or job.get('effort')!='high' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
+    if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6.1-sol' or job.get('effort')!='low' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
     draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request')})
     if job.get('deadline',0)<time.time():raise RuntimeError('job_expired')
@@ -80,7 +80,7 @@ def main(job):
         calls=4
         layout_issues=presentation_issues(draft)
         if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
-    return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':'high','provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
+    return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':'low','provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
 
 if __name__=='__main__':
     try:

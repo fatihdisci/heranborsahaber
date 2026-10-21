@@ -1,4 +1,4 @@
-# SECTOR HABER — onaylı deneme sürümü
+# SECTOR HABER — Telegram haber masası
 
 Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalışır.
 `@habernewssbot`, sahibinin açık izniyle SECTOR HABER editör botu olarak yeniden kullanılır.
@@ -9,11 +9,11 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 - `heranborsahaber` kaynak geçmişi ayrı `sector-haber` dalında korundu; eski kurulum yeniden başlatılmadı.
 - Heranborsacode’un **commit edilmiş** ana metin, tablo ve metin yardımcıları `src/reused/` içine alındı. Eski çalışma ağacındaki değişikliklere dokunulmadı.
 - Hisse fiyatı, AKD, Terane, kurum dağılımı, eski OAuth/MKK anahtarları ve eski X yayın hedefi taşınmadı.
-- Yeni kaynak kaydı, Türkçe editör promptu, kaynak denetimi, marka kartları, olay gruplama ve Telegram onay kuyruğu eklendi.
+- Yeni kaynak kaydı, Türkçe editör promptu, kaynak denetimi, marka kartları, olay gruplama ve Telegram içerik kuyruğu eklendi.
 
 ## Akış
 
-`RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → özel Telegram onayı`
+`RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → tek fotoğraflı Telegram mesajı`
 
 Yazım ve kart metinleri `gpt-6-luna`, `high` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
 Araç, MCP, bellek enjeksiyonu, alternatif model ve ücretli API sağlayıcısı kapalıdır.
@@ -29,7 +29,7 @@ Eksik/çelişkili kanıtlar, belirsiz galeri/PDF veya doğrulamadan geçmeyen me
 `sources.json` ortak kayıttır. Sağlık, etag, son başarılı kontrol ve hata bekleme süreleri ayrı veritabanında tutulur.
 Kaynaklar tek tek `sources.candidates.json` ve `reports/source-check.json` üzerinden doğrulanmıştır.
 Kurulumda eski RSS arşivi canlı kuyruğa boşaltılmaz; başlangıç anı ve kısa zaman payı kaydedilir. Önem ve güncellik birlikte sıralanır.
-İlk denemede günlük en fazla 60 model adayı ve aynı anda 12 bekleyen onay kullanılır; bu sayılar X otomatik yayını açmaz.
+Günlük en fazla 60 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X yayını kalıcı olarak kapsam dışıdır.
 NTV’nin denenen RSS’i ve TCMB’nin özel PPK beslemesi eski kaldığı için etkinleştirilmedi. PPK basın duyuruları genel TCMB basın akışından takip edilir.
 TÜİK RSS adayı 404, güncel veri portalı ise otomatik istemciye koruma sayfası verdi; bültenler okunmuş gibi sisteme eklenmedi.
 KAP, haberlerin kendi metninde verilen resmî bildirim bağlantılarından birincil kaynak olarak okunur; lisanslı API veya varsayılan sayısal bildirim taraması kullanılmaz.
@@ -46,7 +46,7 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 - Tekrarlanan/eski düğmeler sürüm kontrolünden geçemez.
 - Fotoğraf, Telegram’a PNG dosyası olarak yüklenir; link önizlemesi değildir.
 - Belirsiz gönderim zaman aşımı otomatik tekrar edilmez; çift kart oluşturulmaz.
-- **Bu sürümde X’e gönderim yapan kod yoktur.** Onay yalnız kayıt oluşturur; sonraki sürümde eski onaylar kendiliğinden yayımlanmaz.
+- **X yayını kalıcı olarak yoktur.** X hedef ayarı ve yayın hazırlığı kaldırılmıştır. Eski onay düğmeleri yalnız yerel taslak durumu değiştirir; yayın kaydı oluşturmaz.
 
 ## Kurulum ve işletim
 
@@ -73,7 +73,7 @@ Ana Hermes gateway’i ve başka proje servisleri bu komutlara dahil değildir.
 Yeni ve ayrı Worker `sector-haber-review`, D1 `sector-haber-db`, R2 `sector-haber-media` oluşturuldu.
 Genel `workers.dev` / `pages.dev` ulaşımında TLS/erişim sorunu doğrulandığı için aktif yayın akışı bu adrese bağlanmaz.
 Cloudflare cron kapalı ve `MODE=dry_run` durumundadır. Aynı pipeline D1/R2 adaptörleriyle burada da çalışabilecek şekilde korunur.
-API anahtarı / ChatGPT oturumu buluta aktarılmaz. Yeni X hesabının canlı yayını sahibinin ayrıca açık onayını bekler.
+API anahtarı / ChatGPT oturumu buluta aktarılmaz. X yayını planlanmaz; hiçbir onay veya ayar X gönderimi açmaz.
 
 Instagram projesi kullanıcının ek talebiyle kaldırıldı: Worker, workflow, D1 ve 69 dosyalı R2 deposu silindi. `evb-temp` korundu.
 
@@ -86,3 +86,11 @@ Gerçek haber denemeleri `scripts/demo.ts`, erişim raporları `reports/` içind
 ## Ayrı KAP toplama hattı
 
 KAP bildirimleri için ayrı cursor, kurallar, kalıcı kayıt ve kuyruk uygulaması: [KAP.md](KAP.md). Bu hat RSS/AI taslaklarına veri aktarmaz; dış servise gönderim yapmaz.
+
+## Tek mesaj ve sade kartlar
+
+Her yeni haber bir PNG ve açıklamasındaki tweet metniyle tek Telegram mesajıdır. Kaynak, önem puanı ve teknik durum için ikinci mesaj gönderilmez. “Kaynağı aç” birincil belgeyi açar; “Düzenle” kaynak denetimli revizyon ister. Yeni biçimde teslim edilmiş bir taslağın revizyonu aynı fotoğraflı mesajı günceller. Eski iki mesajlı geçmiş silinmez.
+
+Telegram fotoğraf açıklamasının teknik sınırı 1024 UTF-16 karakterdir. Başlık/gövde/etiketler bu sınırı aşarsa Hermes aynı sınırlı düzeltme turunda anlamı koruyarak yeniden yazar ve tekrar denetlenir. Metin kesilmez, ikinci mesaja bölünmez; sığmayan doğrulanmamış sonuç gönderilmez. [Telegram sözleşmesi](https://core.telegram.org/bots/api#sendphoto).
+
+1080×1350 kartlarda yalnız marka, güçlü başlık ve kısa açıklama bulunur; gerçek son dakika şablonunda küçük bir konu etiketi vardır. Tarih, kullanıcı adı, kaynak listesi, yan şeritler, puan ve DENEME filigranı kaldırılmıştır. Renkler ve onaylı logo korunur; başlık boyutu ve satır yerleşimi metne uyarlanır, taşma sessizce kesilmez.

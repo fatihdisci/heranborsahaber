@@ -51,7 +51,7 @@ async function quota(env:Env):Promise<boolean> {
  return !!result.meta.changes;
 }
 export async function prepare(env:Env):Promise<void> {
- const pending=await env.DB.prepare("SELECT COUNT(*) AS count FROM drafts WHERE state IN ('pending','deferred')").first<{count:number}>();if((pending?.count??0)>=12)return;
+ const pending=await env.DB.prepare("SELECT COUNT(*) AS count FROM drafts WHERE state IN ('pending','deferred') AND delivery_state!='sent'").first<{count:number}>();if((pending?.count??0)>=12)return;
  const time=now();
  const started=(await env.DB.prepare("SELECT value FROM system_state WHERE key='live_since'").first<{value:string}>())?.value??'1970';
  const cutoff=[started,new Date(Date.now()-24*3600_000).toISOString()].sort().at(-1)!;
@@ -93,8 +93,11 @@ export async function deliver(env:Env):Promise<void> {
  const lock=await env.DB.prepare("UPDATE drafts SET lease_until=?,delivery_state='sending',delivery_attempts=delivery_attempts+1 WHERE id=? AND lease_until<? AND delivery_state='waiting'").bind(time+120,row.id,time).run();if(!lock.meta.changes)return;
  try {
   const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
-  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification);
-  await env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id).run();
+  const previous=await env.DB.prepare('SELECT value FROM system_state WHERE key=?').bind('telegram_photo:'+row.id).first<{value:string}>();
+  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,previous?Number(previous.value):undefined);
+  await env.DB.batch([
+   env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id),
+   env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_photo:'+row.id,String(message))]);
  } catch(e) {
   // Retrying an ambiguous timeout can duplicate a card already accepted by
   // Telegram. Only an explicit API rejection is eligible for an automatic retry.
@@ -103,7 +106,6 @@ export async function deliver(env:Env):Promise<void> {
  }
 }
 export async function tick(env:Env):Promise<void> {
- if(env.TARGET_X_USERNAME!=='sectorhaber')throw new Error('forbidden_publication_target');
  const time=now();
  const lease=await env.DB.prepare("INSERT INTO system_state(key,value) VALUES('tick_lease',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE CAST(value AS INTEGER)<?").bind(String(time+300),time).run();
  if(!lease.meta.changes)return;

@@ -57,6 +57,13 @@ def call(job,instructions,payload):
     if result.get('api_calls',1)!=1:raise RuntimeError('unexpected_call_count')
     return decode(result['final_response'])
 
+def presentation_issues(draft):
+    if not isinstance(draft,dict) or not isinstance(draft.get('body'),str) or not isinstance(draft.get('hashtags'),list):return []
+    if not isinstance(draft.get('headline'),str) or any(not isinstance(t,str) for t in draft['hashtags']):return []
+    text='\n\n'.join(p for p in [draft['headline'],draft['body'],' '.join(draft['hashtags'])] if p)
+    if len(text.encode('utf-16-le'))//2>1024:return ['Başlık, gövde ve etiketleri kritik olguları koruyarak toplam 1024 UTF-16 karakter içine yeniden yaz. Metni kesme veya bölme.']
+    return []
+
 def main(job):
     if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6-luna' or job.get('effort')!='high' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
@@ -64,11 +71,15 @@ def main(job):
     if job.get('deadline',0)<time.time():raise RuntimeError('job_expired')
     audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
     calls=2
+    layout_issues=presentation_issues(draft)
+    if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
     if audit.get('supported') is not True or audit.get('issues'):
         if job.get('deadline',0)<time.time()+90:raise RuntimeError('repair_budget_expired')
         draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'previous_draft':draft,'required_corrections':audit.get('issues',[])})
         audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
         calls=4
+        layout_issues=presentation_issues(draft)
+        if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
     return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':'high','provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
 
 if __name__=='__main__':

@@ -6,7 +6,6 @@ preview_urls = false
 
 [vars]
 MODE = "dry_run"
-TARGET_X_USERNAME = "sectorhaber"
 AI_MODEL = "gpt-6-luna"
 AI_EFFORT = "high"
 AI_DAILY_DRAFT_LIMIT = "60"

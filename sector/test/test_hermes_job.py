@@ -24,6 +24,13 @@ class HermesJobContract(unittest.TestCase):
         with patch.object(job_module,'call') as call:
             with self.assertRaises(RuntimeError):job_module.main(self.job()|{'deadline':0})
             call.assert_not_called()
+    def test_caption_overflow_is_rewritten_and_reaudited_without_truncation(self):
+        long={'headline':'Başlık','body':'Uzun içerik '*120,'hashtags':['#Ekonomi','#Finans']}
+        short={'headline':'Başlık','body':'Önemli bilgi korunmuş kısa metin.','hashtags':['#Ekonomi','#Finans']}
+        with patch.object(job_module,'call',side_effect=[long,{'supported':True,'issues':[]},short,{'supported':True,'issues':[]}]) as call:
+            result=job_module.main(self.job());self.assertEqual(call.call_count,4);self.assertEqual(result['draft'],short)
+        self.assertTrue(job_module.presentation_issues({'headline':'🌍'*510,'body':'Açıklama','hashtags':['#Ekonomi','#Finans']}))
+
     def test_json_fence_handling_does_not_accept_prose(self):
         self.assertEqual(job_module.decode('```json\n{"başlık":"Haber"}\n```'),{'başlık':'Haber'})
         with self.assertRaises(ValueError):job_module.decode('Result is not a JSON object')

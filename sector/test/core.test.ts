@@ -11,7 +11,7 @@ import {cardSvg,draftCard} from '../src/card';
 import {png} from '../scripts/render_local';
 import {pngBytes} from '../src/bridge';
 import {transition,callback,parseCallback,publicationGate} from '../src/approval';
-import {isOwner,splitMessage,sendDraft} from '../src/telegram';
+import {isOwner,sendDraft} from '../src/telegram';
 import {secretEqual} from '../src/worker';
 import {parseSpk} from '../src/official';
 import type {Source,Document,Draft,Env} from '../src/types';
@@ -81,10 +81,9 @@ test('approval callbacks preserve revision and reject repeats, stale and expired
 });
 test('owner/chat and X publication isolation fail closed',async()=>{
  const env={TELEGRAM_USER_ID:'123',TELEGRAM_CHAT_ID:'123'} as Env;assert(isOwner(env,'123','123','private'));assert(!isOwner(env,'456','123','private'));assert(!isOwner(env,'123','123','group'));
- assert.equal(publicationGate('sectorhaber').allowed,false);assert.throws(()=>publicationGate('heranborsa'));
+ assert.equal(publicationGate('sectorhaber').allowed,false);assert.equal(publicationGate('heranborsa').allowed,false);assert.equal(publicationGate().reason,'x_publishing_permanently_disabled');
  assert(await secretEqual('a','a'));assert(!await secretEqual('a','b'));assert(!await secretEqual('',''));
 });
-test('long Telegram posts split safely and dry run sends nothing',async()=>{
- const value=('Türkçe içerik 🌍 '+document.body+'\n').repeat(80);const parts=splitMessage(value);assert(parts.length>1);assert(parts.every(p=>p.length<=3900&&!/[\uD800-\uDBFF]$/.test(p)));
+test('Telegram dry run sends nothing',async()=>{
  await assert.rejects(()=>sendDraft({MODE:'dry_run'} as Env,'id',1,draft,[document],new Uint8Array(),'official_attributed'),/dry_run/);
 });

@@ -1,8 +1,8 @@
 import registry from '../sources.json';
 import {tick,seed,deliver,errorCode,type DraftRow} from './pipeline';
 import {leaseJob,submitJob,enqueueEdit,ingestOfficial} from './bridge';
-import {isOwner,telegram} from './telegram';
-import {parseCallback,transition,publicationGate} from './approval';
+import {isOwner,telegram,sourceKeyboard} from './telegram';
+import {parseCallback,transition} from './approval';
 import type {Env,Status} from './types';
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export async function secretEqual(a:string,b:string):Promise<boolean>{
@@ -49,11 +49,9 @@ async function webhook(request:Request,env:Env):Promise<Response> {
    ]);
    if(!result[1].meta.changes)throw new Error('stale_callback');
    if(action.action==='approve') {
-    publicationGate(env.TARGET_X_USERNAME);
-    await env.DB.prepare('INSERT OR IGNORE INTO publication_log(id,draft_id,revision,target,status,created_at) VALUES(?,?,?,?,?,?)').bind(crypto.randomUUID(),row.id,row.revision,'sectorhaber','approved_x_disabled',time).run();
-    answer='Onaylandı. X yayını sen açtırana kadar paylaşılmayacak.';
+    answer='Taslak kaydedildi.';
    }else if(action.action==='defer')answer='1 saat ertelendi.';else answer='Reddedildi.';
-   await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(row.message_id),reply_markup:JSON.stringify({inline_keyboard:[]})}));
+   await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(row.message_id),reply_markup:JSON.stringify({inline_keyboard:sourceKeyboard(JSON.parse(row.documents))})}));
   }
  }catch{answer='Bu kart güncellenmiş, süresi dolmuş veya işlem daha önce tamamlanmış.';}
  await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});

@@ -1,8 +1,8 @@
 # SECTOR HABER
 
-Aktif SECTOR HABER deneme sistemi, ayrı Hermes profili ve Telegram onay masasıyla
+Aktif SECTOR HABER sistemi, ayrı Hermes profili ve Telegram haber masasıyla
 [`sector/`](sector/README.md) altında bulunur. Mac mini mevcut ChatGPT üyeliğini kullanır;
-eski X hesabına veya yeni X hesabına otomatik yayın yapmaz.
+X yayını içermez; her haber tek görsel ve metinle Telegram’a iletilir.
 
 Aşağıdaki `habnews` notları önceki Her An Borsa sürümünün arşividir. Eski canlı kurulum
 kaldırılmıştır; bu notlar SECTOR HABER'in güncel kaynak/karakter/yayın ayarlarını tanımlamaz.

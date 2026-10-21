@@ -13,9 +13,7 @@ export function parseCallback(value:string):{action:Action;id:string;revision:nu
  const m=value.match(/^s:(approve|reject|edit|defer):([a-f\d-]{36}):(\d{1,6})$/);
  if(!m)throw new Error('invalid_callback');return {action:m[1] as Action,id:m[2],revision:Number(m[3])};
 }
-// There is intentionally no X network writer in this review release. Even an
-// approved Telegram draft cannot publish until a later human-authorized release.
-export function publicationGate(target:string):{allowed:false;reason:string} {
- if(target.replace(/^@/,'').toLowerCase()!=='sectorhaber')throw new Error('forbidden_publication_target');
- return {allowed:false,reason:'sector_x_launch_requires_owner_approval'};
+// Publication is permanently outside this product. No approval enables it.
+export function publicationGate(_target?:string):{allowed:false;reason:string} {
+ return {allowed:false,reason:'x_publishing_permanently_disabled'};
 }

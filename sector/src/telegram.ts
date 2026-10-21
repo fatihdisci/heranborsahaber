@@ -11,23 +11,27 @@ export async function telegram(env:Env,method:string,body:URLSearchParams|FormDa
  const data=await r.json() as {ok:boolean;error_code?:number;parameters?:{retry_after?:number};result:Record<string,unknown>};
  if(!r.ok||!data.ok)throw new TelegramError(data.error_code??r.status,Math.min(3600,data.parameters?.retry_after??60));return data.result;
 }
-export function keyboard(id:string,revision:number) {
- return {inline_keyboard:[[{text:'Onayla',callback_data:callback('approve',id,revision)},{text:'Reddet',callback_data:callback('reject',id,revision)}],[{text:'Düzenle',callback_data:callback('edit',id,revision)},{text:'1 saat ertele',callback_data:callback('defer',id,revision)}]]};
+export function sourceKeyboard(docs:Document[]) {
+ const urls=[...new Set(docs.map(d=>d.url))];
+ if(!urls.length)throw new Error('source_url_missing');
+ for(const value of urls){const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)throw new Error('source_url_invalid');}
+ return [[{text:'Kaynağı aç',url:urls[0]}]];
 }
-export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,verification:string):Promise<number> {
+export function keyboard(id:string,revision:number,docs:Document[]) {
+ return {inline_keyboard:[...sourceKeyboard(docs),[{text:'Düzenle',callback_data:callback('edit',id,revision)}]]};
+}
+export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
  if(env.MODE!=='telegram_review')throw new Error('telegram_dry_run');
- const caption=postText(draft,docs.map(d=>d.source_name));
- const meta=`SECTOR HABER · Önem: ${draft.importance}/100\n${verification==='official_attributed'?'Resmî kaynağa dayalı':verification==='multiple_families_attributed'?'Birden çok kaynak ailesi':'Kaynak aktarımı'}\n\n${docs.map(d=>d.url).join('\n')}\n\nDeneme yayını: X kapalı.`;
- // Photo bytes are uploaded; a link preview is never substituted for an image.
+ const caption=postText(draft);
+ // Fail before uploading anything; never produce an orphan photo or split post.
+ if(caption.length>1024)throw new Error('telegram_caption_too_long');
+ const markup=keyboard(id,revision,docs);
  const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'sector-haber.png');
- if(caption.length<=1000)form.set('caption',caption);
- const photo=await telegram(env,'sendPhoto',form);
- if(caption.length>1000)for(const chunk of splitMessage(caption))await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:chunk,link_preview_options:JSON.stringify({is_disabled:true})}));
- const card=await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:meta,reply_to_message_id:String(photo.message_id),link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(keyboard(id,revision))}));
- return Number(card.message_id);
-}
-export function splitMessage(value:string):string[] {
- const result:string[]=[];let rest=value;
- while(rest.length>3900){let cut=rest.lastIndexOf('\n',3900);if(cut<1900)cut=rest.lastIndexOf(' ',3900);if(cut<1900)cut=3900;if(/[\uD800-\uDBFF]/.test(rest[cut-1]))cut--;result.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart();}
- if(rest)result.push(rest);return result;
+ form.set('reply_markup',JSON.stringify(markup));
+ if(existingMessageId){
+  form.set('message_id',String(existingMessageId));form.set('media',JSON.stringify({type:'photo',media:'attach://photo',caption}));
+  const result=await telegram(env,'editMessageMedia',form,fetcher);return Number(result.message_id??existingMessageId);
+ }
+ form.set('caption',caption);
+ const result=await telegram(env,'sendPhoto',form,fetcher);return Number(result.message_id);
 }

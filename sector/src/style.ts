@@ -1,3 +1,4 @@
+import {repairKapShareWording} from './kap-unit-evidence';
 import type {Document,Draft} from './types';
 const fold=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('tr-TR').replace(/ı/g,'i');
 export function editorialPolicy(documents:Document[]){
@@ -50,5 +51,5 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  const tags=Array.isArray(value.hashtags)?[...new Set(value.hashtags.filter((t):t is string=>typeof t==='string').map(t=>'#'+t.trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'')))]:[];
  const valid=tags.filter(t=>/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));
  const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,3):valid;
- return {...value,headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags};
+ return repairKapShareWording({...value,headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
 }

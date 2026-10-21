@@ -29,3 +29,7 @@ test('one leading emoji only; body, tags, card text and trailing or compound emo
  assert.equal(invalidEmojiPlacement({...d,headline:'🚨 Acil açıklama yapıldı'}),false);
  for(const change of [{headline:'📢🚨 Açıklama'},{headline:'Açıklama 📢'},{headline:'📢 Açıklama 🚨'},{body:'Açıklama 📊'},{card_body:'📈 Yatırım arttı'},{hashtags:['#Borsa','📢#BIST']},{headline:'🇹🇷 Açıklama'},{headline:'👩‍💻 Açıklama'}])assert(invalidEmojiPlacement({...d,...change}));
 });
+test('fund categories override equity tags and do not match unrelated word fragments',()=>{
+ for(const title of ['Fon tasfiyesi açıklandı','Yatırım fonlarının getirisi','Fonların ödeme süreci','TEFAS işlemleri','PBLK açıklaması'])assert.deepEqual(editorialPolicy([doc({title,equity_codes:['TEST']})]).required_hashtags,['#Fon','#PBLK','#Tasfiye']);
+ for(const title of ['Telefon satışları arttı','Şirket fonlama sağladı','Yeni fonksiyon duyuruldu'])assert.deepEqual(editorialPolicy([doc({title})]).required_hashtags,[]);
+});

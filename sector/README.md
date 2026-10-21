@@ -4,10 +4,10 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 `@habernewssbot`, sahibinin açık izniyle SECTOR HABER editör botu olarak yeniden kullanılır.
 `@Minihermesimbot` gateway’i, ana Hermes ayarları ve eski X hesabı değiştirilmez.
 
-## Korunan / değişen parçalar
+## Kod ve kapsam
 
-- Aktif SECTOR HABER kodu `heranborsahaber` reposunun `main` dalında, `sector/` dizinindedir. Eski kod arşiv olarak korunur; eski kurulum yeniden başlatılmadı.
-- Heranborsacode’un **commit edilmiş** ana metin, tablo ve metin yardımcıları `src/reused/` içine alındı. Eski çalışma ağacındaki değişikliklere dokunulmadı.
+- Aktif SECTOR HABER kodu `fatihdisci/sector` reposunun `main` dalında, `sector/` dizinindedir. Repo yalnız bu sistemi içerir; önceki uygulamanın dosyaları Git geçmişinde kalır.
+- `src/reused/` içindeki ana metin, tablo ve metin yardımcıları aktif okuyucular tarafından kullanılır. Bu bağımsız dosyalar korunur; önceki uygulama veya başka repo çalışma anında gerekmez.
 - Hisse fiyatı, AKD, Terane, kurum dağılımı, eski OAuth/MKK anahtarları ve eski X yayın hedefi taşınmadı.
 - Yeni kaynak kaydı, Türkçe editör promptu, kaynak denetimi, marka kartları, olay gruplama ve Telegram içerik kuyruğu eklendi.
 
@@ -56,7 +56,7 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
 Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
 
-Güncel kararlar: X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala ve Düzenle düğmeleri; model `gpt-6-luna` / `high`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
+Güncel kararlar: X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `high`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
@@ -83,12 +83,10 @@ Genel `workers.dev` / `pages.dev` ulaşımında TLS/erişim sorunu doğrulandı�
 Cloudflare cron kapalı ve `MODE=dry_run` durumundadır. Aynı pipeline D1/R2 adaptörleriyle burada da çalışabilecek şekilde korunur.
 API anahtarı / ChatGPT oturumu buluta aktarılmaz. X yayını planlanmaz; hiçbir onay veya ayar X gönderimi açmaz.
 
-Instagram projesi kullanıcının ek talebiyle kaldırıldı: Worker, workflow, D1 ve 69 dosyalı R2 deposu silindi. `evb-temp` korundu.
-
 ## Doğrulamalar
 
 `npm test` XML/Atom, yönlendirme güvenliği, tam metin, kaynak kimliği, sayısal ölçek/para birimi, kanıtlar, olay tekrarları,
-beş PNG şablonu, Telegram yetkisi/onayları, SQLite işlemleri, iş kiralama ve tekrar sonuç teslimini test eder.
+altı kart yerleşimi ve iki renk teması, Telegram yetkisi/onayları, SQLite işlemleri, iş kiralama ve tekrar sonuç teslimini test eder.
 Gerçek haber denemeleri `scripts/demo.ts`, erişim raporları `reports/` içindedir. Ham yayıncı metinleri/görselleri Git’e eklenmez.
 
 ## Ayrı KAP toplama hattı
@@ -101,7 +99,7 @@ Haberler önce metin önizlemesi olarak gelir. Sahibin istediği taslak bir PNG 
 
 Telegram fotoğraf açıklamasının teknik sınırı 1024 UTF-16 karakterdir. Başlık/gövde/etiketler bu sınırı aşarsa Hermes aynı sınırlı düzeltme turunda anlamı koruyarak yeniden yazar ve tekrar denetlenir. Metin kesilmez, ikinci mesaja bölünmez; sığmayan doğrulanmamış sonuç gönderilmez. [Telegram sözleşmesi](https://core.telegram.org/bots/api#sendphoto).
 
-1080×1350 kartlarda yalnız marka, güçlü başlık ve kısa açıklama bulunur; gerçek son dakika şablonunda küçük bir konu etiketi vardır. Tarih, kullanıcı adı, kaynak listesi, yan şeritler, puan ve DENEME filigranı kaldırılmıştır. Renkler ve onaylı logo korunur; başlık boyutu ve satır yerleşimi metne uyarlanır, taşma sessizce kesilmez.
+1080×1350 kartlarda yalnız marka, güçlü başlık ve kısa açıklama bulunur; gerçek son dakika şablonunda küçük bir konu etiketi vardır. Tarih, kullanıcı adı, kaynak listesi, puan ve DENEME filigranı bulunmaz. Altı farklı yerleşim ve iki renk teması vardır; yeni içerikte rastgele seçilir ve revizyon boyunca saklanır. Kartı yeniden tasarla düğmesi metni değiştirmeden, AI çağrısı yapmadan aynı mesajda farklı bir yerleşim uygular. Renkler ve onaylı logo korunur; başlık boyutu ve satır yerleşimi metne uyarlanır, taşma sessizce kesilmez.
 
 ## Akış kapasitesi ve KAP teslimatı
 
@@ -111,7 +109,7 @@ Haber teslimatı kaynak taramasından ayrı 10 saniyelik döngüde çalışır. 
 
 ## Kendi haberini gönder
 
-@habernewssbot özel sohbetine desteklenen kaynaklardan haber bağlantısı, KAP bağlantısı, PDF dosyası veya en az 100 karakterlik haber metni gönder. Yalnız kayıtlı hesap sahibi kabul edilir. Aynı kaynak denetimi ve görsel üretimi uygulanır; X yayını yoktur. @Minihermesimbot genel Hermes sohbetidir. Bilinmeyen sitelerde tam metni veya PDF'yi gönder. Dosya/metin taslaklarının kaynak düğmesi orijinal Telegram gönderisini açmak için bot bağlantısını kullanır.
+@habernewssbot özel sohbetine desteklenen kaynaklardan haber bağlantısı, KAP bağlantısı, PDF dosyası veya en az 100 karakterlik haber metni gönder. Yalnız kayıtlı hesap sahibi kabul edilir. Hazırlanıyor bildirimi tamamlanan tweet ve görselle aynı mesajda değiştirilir. Aynı kaynak denetimi ve görsel üretimi uygulanır; X yayını yoktur. @Minihermesimbot genel Hermes sohbetidir. Bilinmeyen sitelerde tam metni veya PDF'yi gönder. Dosya/metin taslaklarının kaynak düğmesi orijinal Telegram gönderisini açmak için bot bağlantısını kullanır.
 
 ## Haberler: önce önizleme, sonra istek üzerine üretim
 

@@ -71,3 +71,12 @@ test('fresh model jobs precede old KAP retries; retry leases remain exclusive',a
  assert.equal((await leaseJob(env))!.id,'fresh');assert.equal((await leaseJob(env))!.id,'old');assert.equal(await leaseJob(env),null);
  assert.equal(sql.prepare("SELECT state FROM model_jobs WHERE id='old'").get()!.state,'leased');
 });
+test('explicit news request precedes older automatic KAP work',async()=>{
+ const {env,sql}=await environment();sql.prepare('INSERT INTO sources(id,config) VALUES(?,?)').run('test','{}');
+ for(const [id,kind,age] of [['auto','kap',100],['clicked','news',0]] as const){
+  sql.prepare('INSERT INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').run(id,'test',document.url+id,document.title,'',document.published_at!,Date.now()/1000);
+  sql.prepare('INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,state) VALUES(?,?,?,?,?,?,?)').run(id,id,JSON.stringify([document]),'hash',Date.now()/1000-age,kind,'queued');
+ }
+ sql.prepare("INSERT INTO news_cards(id,article_id,state,created_at) VALUES('card','clicked','model_queued',?)").run(Date.now()/1000);
+ assert.equal((await leaseJob(env))!.id,'clicked');assert.equal((await leaseJob(env))!.id,'auto');
+});

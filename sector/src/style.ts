@@ -6,7 +6,12 @@ export function editorialPolicy(documents:Document[]){
  const codes=[...new Set(documents.flatMap(d=>d.equity_codes??[]).concat(
   [...text.matchAll(/(?:BIST|hisse kodu|borsa kodu)\s*[:：]\s*([A-Z]{4,5})(?![A-Z])/g)].map(m=>m[1])
  ).filter(c=>/^[A-Z]{4,5}$/.test(c)))];
- const fund=/(?:^|[^\p{L}\p{N}])(?:fon(?:lar(?:i(?:n(?:in)?)?|da|dan|a|in)?|un|u|a|da|dan|daki|unun)?|tefas|pblk)(?=$|[^\p{L}\p{N}])/u.test(fold(text));
+ const fundWord=/(?:^|[^\p{L}\p{N}])(?:fon(?:lar(?:i(?:n(?:in)?)?|da|dan|a|in)?|un|u|a|da|dan|daki|unun)?|tefas|pblk)(?=$|[^\p{L}\p{N}])/u;
+ // KAP templates contain empty "İlgili Fonlar" fields and buyback budget
+ // labels. Neither makes a company's contract/buyback a fund story.
+ const fund=documents.some(d=>d.source_id==='kap'
+  ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
+  :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
  return {required_hashtags:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(codes.length===1?['#'+codes[0]]:[])]:[],verified_equity_codes:codes,
   publisher_names:[...new Set(documents.filter(d=>!d.official).map(d=>d.source_name))],

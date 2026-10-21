@@ -61,3 +61,8 @@ CREATE TABLE IF NOT EXISTS card_redesigns (
 );
 CREATE INDEX IF NOT EXISTS card_redesigns_state ON card_redesigns(state,created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS card_redesigns_active ON card_redesigns(draft_id) WHERE state IN ('queued','rendering');
+-- Bounded model recovery and diagnostic reasons; never a delivery receipt.
+CREATE TABLE IF NOT EXISTS model_reviews (
+ job_id TEXT PRIMARY KEY REFERENCES model_jobs(id), issues TEXT NOT NULL DEFAULT '[]',
+ retries INTEGER NOT NULL DEFAULT 0, next_retry INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL
+);

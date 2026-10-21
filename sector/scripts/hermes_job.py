@@ -106,11 +106,19 @@ def deterministic_issues(draft,documents):
     if not isinstance(issues,list) or any(not isinstance(i,str) for i in issues):raise RuntimeError('local_validation_failed')
     return issues
 
+def prepare_draft(draft,documents):
+    draft=ensure_headline_emoji(draft)
+    check=subprocess.run(['node','--import','tsx','scripts/validate_draft.ts','--normalize'],input=json.dumps({'draft':draft,'documents':documents},ensure_ascii=False),capture_output=True,text=True,timeout=15,check=False)
+    if check.returncode:raise RuntimeError('local_validation_failed')
+    normalized=json.loads(check.stdout)
+    if not isinstance(normalized,dict):raise RuntimeError('local_validation_failed')
+    return normalized
+
 def main(job):
     if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6-luna' or job.get('effort')!='high' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
-    draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{})})
-    draft=ensure_headline_emoji(draft)
+    draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{}),'previous_validation_issues':job.get('previous_validation_issues',[])})
+    draft=prepare_draft(draft,job['documents'])
     if job.get('deadline',0)<time.time():raise RuntimeError('job_expired')
     audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
     calls=2
@@ -119,7 +127,7 @@ def main(job):
     if audit.get('supported') is not True or audit.get('issues'):
         if job.get('deadline',0)<time.time()+90:raise RuntimeError('repair_budget_expired')
         draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{}),'previous_draft':draft,'required_corrections':audit.get('issues',[])})
-        draft=ensure_headline_emoji(draft)
+        draft=prepare_draft(draft,job['documents'])
         audit=call(job,job['audit_prompt'],{'documents':job['documents'],'draft':draft})
         calls=4
         layout_issues=presentation_issues(draft,job.get('editorial_policy'))+deterministic_issues(draft,job['documents'])

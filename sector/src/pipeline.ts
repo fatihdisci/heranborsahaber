@@ -119,7 +119,7 @@ export async function tick(env:Env):Promise<void> {
   env.DB.prepare('UPDATE articles SET document=NULL WHERE document_expires<? AND document IS NOT NULL').bind(now()),
   env.DB.prepare('DELETE FROM edits WHERE expires_at<?').bind(now()),
   env.DB.prepare("UPDATE drafts SET state='expired',delivery_state='expired' WHERE expires_at<? AND state IN ('pending','deferred','needs_review')").bind(now()),
-  env.DB.prepare("UPDATE model_jobs SET documents='[]',state='expired' WHERE created_at<? AND state IN ('queued','needs_review')").bind(now()-24*3600),
+  env.DB.prepare("UPDATE model_jobs SET documents='[]',state='expired' WHERE created_at<? AND state IN ('queued','retry_pending','needs_review')").bind(now()-24*3600),
   env.DB.prepare("UPDATE drafts SET delivery_state='uncertain',lease_until=0 WHERE delivery_state='sending' AND lease_until<?").bind(now()),
   env.DB.prepare("INSERT INTO system_state(key,value) VALUES('last_tick',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(new Date().toISOString())]);
 }

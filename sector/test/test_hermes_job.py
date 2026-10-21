@@ -8,12 +8,24 @@ class HermesJobContract(unittest.TestCase):
     def setUp(self):
         self.preflight=patch.object(job_module,'deterministic_issues',return_value=[])
         self.preflight.start();self.addCleanup(self.preflight.stop)
+        self.normalize=patch.object(job_module,'prepare_draft',side_effect=lambda d,docs:job_module.ensure_headline_emoji(d))
+        self.normalize.start();self.addCleanup(self.normalize.stop)
     def test_deterministic_numeric_failure_is_repaired_in_existing_bounded_round(self):
         with patch.object(job_module,'deterministic_issues',side_effect=[['card_body: exact amount required'],[]]),patch.object(job_module,'call',side_effect=[{'headline':'first'},{'supported':True,'issues':[]},{'headline':'fixed'},{'supported':True,'issues':[]}]) as call:
             result=job_module.main(self.job())
             self.assertEqual(call.call_count,4)
             self.assertIn('card_body: exact amount required',call.call_args_list[2].args[2]['required_corrections'])
             self.assertTrue(result['audit']['supported'])
+
+    def test_locator_preparation_precedes_each_semantic_audit_and_retry_feedback_is_preserved(self):
+        fixed={'headline':'Doğrulanmış başlık','claims':[]}
+        with patch.object(job_module,'prepare_draft',return_value=fixed) as prepare,patch.object(job_module,'call',side_effect=[{}, {'supported':False,'issues':['repair']},{}, {'supported':True,'issues':[]}]) as call:
+            result=job_module.main(self.job()|{'previous_validation_issues':['previous failure']})
+            self.assertEqual(prepare.call_count,2)
+            self.assertEqual(call.call_args_list[1].args[2]['draft'],fixed)
+            self.assertEqual(call.call_args_list[3].args[2]['draft'],fixed)
+            self.assertEqual(call.call_args_list[0].args[2]['previous_validation_issues'],['previous failure'])
+            self.assertEqual(result['draft'],fixed)
 
     def job(self):return {'id':'test','provider':'openai-codex','model':'gpt-6-luna','effort':'high','allowed_tools':[],'deadline':time.time()+600,'prompt':'Grounded editor','schema':{},'documents':[],'audit_prompt':'Check facts'}
     def test_no_paid_provider_or_tools_can_run(self):

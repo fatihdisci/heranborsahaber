@@ -14,7 +14,7 @@ export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface Draft {
   headline:string;body:string;hashtags:string[];category:Category;importance:number;
-  template:Template;claims:Claim[];entities:string[];event_key:string;uncertainties:string[];
+  template:Template;claims:Claim[];entities:string[];event_key:string;uncertainties:string[];source_notes?:string[];
   card_headline:string;card_body:string;
 }
 export interface Env {

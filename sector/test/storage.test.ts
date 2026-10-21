@@ -81,3 +81,9 @@ test('explicit news request precedes older automatic KAP work',async()=>{
  sql.prepare("INSERT INTO news_cards(id,article_id,state,created_at) VALUES('card','clicked','model_queued',?)").run(Date.now()/1000);
  assert.equal((await leaseJob(env))!.id,'clicked');assert.equal((await leaseJob(env))!.id,'auto');
 });
+
+test('internal source notes do not enter a tweet and cannot override blocking uncertainty',()=>{
+ const note={...draft,source_notes:['Kaynakta aktarılmayan ikincil bir alan açıklanmadı.']};
+ assert.equal(validateDraft(note,[document]).verification,'official_attributed');
+ assert.equal(validateDraft({...note,uncertainties:['Şirketin yatırım yapıp yapmayacağı kaynaklardan doğrulanamıyor.']},[document]).verification,'needs_review');
+});

@@ -80,3 +80,44 @@ test('KAP table units stay scoped to their exact column and row',()=>{
  assert(!row.text.includes('21.10.2026 TL'));
  assert.deepEqual(withKapTableEvidence([out]),[out]);assert.equal(out.passages[0].text,doc.passages[0].text);
 });
+
+import {recordModelReview,retryKapModel} from '../src/model-recovery';
+test('KAP review failures retry with delay and bounded budget; exhausted review stays visible',async()=>{
+ const {s,env,docs}=await setup();let ms=NOW;const consumer=new KapDelivery(s,env,async()=>docs,()=>ms);
+ try{
+  await consumer.run();const job=(await env.DB.prepare('SELECT id FROM model_jobs').first<{id:string}>())!;const seconds=Math.floor(NOW/1000);
+  const fail=async()=>{await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error='semantic_review_failed' WHERE id=?").bind(job.id).run();await recordModelReview(env,job.id,{supported:false,issues:['Wrong passage reference']},Math.floor(ms/1000));};
+  await fail();assert.equal((await consumer.run()).state,'needs_review');
+  ms=NOW+31_000;assert.equal((await consumer.run()).state,'model_retry_queued');
+  assert.equal(await retryKapModel(env,job.id,seconds+32),false);
+  await fail();ms=NOW+60_000;assert.equal((await consumer.run()).state,'needs_review');
+  ms=NOW+332_000;assert.equal((await consumer.run()).state,'model_retry_queued');
+  await fail();ms=NOW+700_000;assert.equal((await consumer.run()).state,'needs_review');
+  const review=await env.DB.prepare('SELECT retries,issues FROM model_reviews WHERE job_id=?').bind(job.id).first<{retries:number;issues:string}>();
+  assert.equal(review!.retries,2);assert.match(review!.issues,/Wrong passage/);
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) n FROM model_jobs').first<{n:number}>())!.n,1);
+  assert.equal(s.row<{sent_at:number|null}>('SELECT sent_at FROM queue')!.sent_at,null);
+ }finally{s.close();}
+});
+test('recovery never replays completed/uncertain delivery, incomplete evidence or old jobs',async()=>{
+ const {s,env,docs}=await setup();try{
+  const id=await enqueueEvidence(env,docs,'kap'),sec=Math.floor(NOW/1000);
+  for(const values of [
+   {error:'semantic_review_failed',result:'existing',input:JSON.stringify(docs),created:sec},
+   {error:'telegram_timeout',result:null,input:JSON.stringify(docs),created:sec},
+   {error:'semantic_review_failed',result:null,input:'[]',created:sec},
+   {error:'semantic_review_failed',result:null,input:JSON.stringify(docs),created:sec-86401}
+  ]){
+   await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error=?,result_draft=?,documents=?,created_at=? WHERE id=?").bind(values.error,values.result,values.input,values.created,id).run();
+   assert.equal(await retryKapModel(env,id,sec),false);
+  }
+ }finally{s.close();}
+});
+test('KAP reconciliation recognizes a delivered draft even after queue entered review',async()=>{
+ const {s,env,docs}=await setup();try{
+  const c=new KapDelivery(s,env,async()=>docs,()=>NOW);await c.run();
+  await env.DB.prepare("INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,delivery_state,delivered_at,message_id) VALUES('receipt','event','fp','{}','[]','official','pending',0,9999999999,'sent',100,123)").run();
+  await env.DB.prepare("UPDATE model_jobs SET state='complete',result_draft='receipt',documents='[]'").run();s.run("UPDATE queue SET state='needs_review'");
+  await c.run();assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'sent');assert.equal(s.row<{message_id:number}>('SELECT message_id FROM kap_model_jobs')!.message_id,123);
+ }finally{s.close();}
+});

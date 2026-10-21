@@ -33,3 +33,11 @@ test('fund categories override equity tags and do not match unrelated word fragm
  for(const title of ['Fon tasfiyesi açıklandı','Yatırım fonlarının getirisi','Fonların ödeme süreci','TEFAS işlemleri','PBLK açıklaması'])assert.deepEqual(editorialPolicy([doc({title,equity_codes:['TEST']})]).required_hashtags,['#Fon','#PBLK','#Tasfiye']);
  for(const title of ['Telefon satışları arttı','Şirket fonlama sağladı','Yeni fonksiyon duyuruldu'])assert.deepEqual(editorialPolicy([doc({title})]).required_hashtags,[]);
 });
+
+test('KAP empty fund fields and buyback budgets do not override company tags',()=>{
+ const body='İlgili Fonlar\nRelated Funds\n[]\nGeri Alım İçin Ayrılan Fonun Toplam Tutarı (TL): 1.400.000.000';
+ for(const [title,code] of [['BÜLBÜLOĞLU VİNÇ — Yeni İş İlişkisi','BVSAN'],['CVK MADEN — Payların Geri Alınmasına İlişkin Bildirim','CVKMD']]){
+  assert.deepEqual(editorialPolicy([doc({source_id:'kap',official:true,title,body,equity_codes:[code]})]).required_hashtags,['#Borsa','#BIST','#'+code]);
+ }
+ assert.deepEqual(editorialPolicy([doc({source_id:'kap',title:'Özel Durum Açıklaması',body:'Yatırım fonlarının tasfiye sürecine ilişkin açıklama.',equity_codes:['TEST']})]).required_hashtags,['#Fon','#PBLK','#Tasfiye']);
+});

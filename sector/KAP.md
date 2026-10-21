@@ -65,3 +65,11 @@ Genel özel durum başlıklarında konu özette aranır. Yönetim kurulu/persone
 KAP tablo hücreleri birimleriyle birlikte satır pasajlarına dönüştürülür; orijinal metin ve tablolar korunur. Sayı/birim kontrolü modelin mevcut tek düzeltme turuna geri bildirim sağlar. Yanlış/yuvarlanmış sayı kontrolü kaldırılmaz. İçerik doğrulama hatasında bütün model hattı 60 saniye yerine 2 saniye bekler; kota ve bağlantı beklemeleri korunur. Sayı kanıtları her kontrol için bir kez indekslenir.
 
 `node --import tsx scripts/review_kap.ts` yeniden inceleme adaylarını gösterir; `--apply` son 24 saatteki uygun hata kayıtlarını sürüm başına yalnız bir kez `retry_pending` durumuna alır. Yeni işler bu yeniden denemelerden önce işlenir. Mevcut filtreye uymayanlar susturulur, tamamlanmış veya belirsizlik içeren taslaklar otomatik onaylanmaz. Kaynak kayıtları silinmez.
+
+## Hazırlama hatalarında kontrollü toparlanma
+
+Kaynak keşfi ile içerik hazırlama ayrı izlenir. Toplanmış fakat model denetiminde kalan kayıt, taramada kaçmış sayılmaz. Hazır yeni işler önce işlenir; son 24 saatin tam kaynaklı KAP model hataları günlük KAP bütçesinden sayılarak en fazla iki ek deneme alır. İlk deneme için en az 30 saniye, ek denemeler arasında en az 5 dakika beklenir. Denetim gerekçeleri `model_reviews` içinde iş başına saklanır ve sonraki yazım turuna aktarılır. Tamamlanmış taslaklar, eksik belgeler ve belirsiz Telegram teslimatı otomatik yeniden üretilmez. İncelemede kalan kuyruk varsa sağlık durumu `idle` yerine `needs_review` gösterir.
+
+Boş “İlgili Fonlar” alanı veya geri alım bütçesindeki “fon” sözcüğü şirket haberini fon haberi yapmaz. Gerçek fon/TEFAS/PBLK içeriklerinin etiketleri korunur. Alıntı metni aynı belgede birebir varsa yanlış paragraf kimliği bağımsız denetimden önce düzeltilir; alıntı, rakam veya iddia değiştirilmez. Kaynakta olmayan alıntı onaylanmaz; düzeltme turuna gerçek pasaj bilgisi verilir.
+
+Kaynak içi ikincil çelişki aktarılacak olguları etkilemiyorsa `source_notes` içinde saklanabilir. Bu notlar Telegram metnine eklenmez. Aktarılan tutar, taraf, dönem veya işlem niteliğini etkileyen belirsizlik `uncertainties` içinde kalır ve teslimatı engeller. Her iki alan da bağımsız kaynak denetçisine açıktır.

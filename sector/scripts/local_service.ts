@@ -1,3 +1,4 @@
+import {saveTelegramUpdates,processTelegramUpdates} from '../src/telegram-inbox';
 import {redesignOne} from '../src/card-redesign';
 import {recordModelReview} from '../src/model-recovery';
 import {readFile,writeFile,open,unlink,access} from 'node:fs/promises';
@@ -72,7 +73,8 @@ async function telegramLoop(){
  while(!stopping){try{
   const result=await telegram(env,'getUpdates',new URLSearchParams({offset:String(offset),timeout:'15',allowed_updates:JSON.stringify(['callback_query','message'])}));
   const updates=result as unknown as {update_id:number}[];
-  for(const update of updates){const response=await worker.fetch(new Request('https://local.sector/telegram/webhook',{method:'POST',headers:{'x-telegram-bot-api-secret-token':env.TELEGRAM_WEBHOOK_SECRET!,'Content-Type':'application/json'},body:JSON.stringify(update)}),env,{waitUntil:()=>{}} as unknown as ExecutionContext);if(!response.ok)throw new Error('telegram_update_failed');offset=update.update_id+1;await env.DB.prepare("INSERT INTO system_state(key,value) VALUES('telegram_offset',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(String(offset)).run();}
+  offset=await saveTelegramUpdates(env,updates)??offset;
+  await processTelegramUpdates(env,update=>worker.fetch(new Request('https://local.sector/telegram/webhook',{method:'POST',headers:{'x-telegram-bot-api-secret-token':env.TELEGRAM_WEBHOOK_SECRET!,'Content-Type':'application/json'},body:JSON.stringify(update)}),env,{waitUntil:()=>{}} as unknown as ExecutionContext));
   await status('telegram_health',{ok:true,at:new Date().toISOString()});
  }catch(e){await status('telegram_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});await pause(10_000);}}
 }

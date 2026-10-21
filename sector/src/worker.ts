@@ -5,7 +5,7 @@ import registry from '../sources.json';
 import {queueManual,type InputMessage} from './manual';
 import {tick,seed,deliver,errorCode,type DraftRow} from './pipeline';
 import {leaseJob,submitJob,enqueueEdit,ingestOfficial} from './bridge';
-import {isOwner,telegram,sourceKeyboard} from './telegram';
+import {isOwner,telegram,sourceKeyboard,TelegramError} from './telegram';
 import {parseCallback,transition} from './approval';
 import type {Env,Status} from './types';
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -24,6 +24,7 @@ async function body(request:Request,max=80_000):Promise<Record<string,unknown>> 
 async function webhook(request:Request,env:Env):Promise<Response> {
  if(!await secretEqual(request.headers.get('x-telegram-bot-api-secret-token')??'',env.TELEGRAM_WEBHOOK_SECRET??''))return json({error:'unauthorized'},401);
  const update=await body(request);const id=update.update_id;if(!Number.isSafeInteger(id))return json({ok:true});
+ env={...env,TELEGRAM_UPDATE_ID:Number(id)};
  const message=update.message as InputMessage|undefined;
  if(message?.chat&&message.from&&isOwner(env,String(message.from.id),String(message.chat.id),message.chat.type)) {
   const edit=await env.DB.prepare('SELECT * FROM edits WHERE user_id=? AND expires_at>?').bind(env.TELEGRAM_USER_ID!,Math.floor(Date.now()/1000)).first<{draft_id:string;revision:number;prompt_message_id:number}>();
@@ -71,7 +72,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
    }else if(action.action==='defer')answer='1 saat ertelendi.';else answer='Reddedildi.';
    await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(row.message_id),reply_markup:JSON.stringify({inline_keyboard:sourceKeyboard(JSON.parse(row.documents))})}));
   }
- }catch{answer='Bu kart güncellenmiş, süresi dolmuş veya işlem daha önce tamamlanmış.';}
+ }catch(e){if(e instanceof TelegramError)throw e;answer='Bu kart güncellenmiş, süresi dolmuş veya işlem daha önce tamamlanmış.';}
  await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});
  return json({ok:true});
 }
@@ -79,7 +80,7 @@ export default {
  async fetch(request:Request,env:Env,ctx:ExecutionContext):Promise<Response> {
   const url=new URL(request.url);
   if(url.pathname==='/health')return json({service:'SECTOR HABER',mode:env.MODE,x_publishing:false,model:'Hermes / '+env.AI_MODEL});
-  if(url.pathname==='/telegram/webhook'&&request.method==='POST'){try{return await webhook(request,env);}catch{return json({error:'invalid_update'},400);}}
+  if(url.pathname==='/telegram/webhook'&&request.method==='POST'){try{return await webhook(request,env);}catch(e){const failure=e instanceof TelegramError?e.failure:e instanceof SyntaxError||['invalid_request','request_too_large','empty_request','manual_input_limit'].includes(errorCode(e))?'permanent':'retryable';return json({error:errorCode(e),failure,retry_after:e instanceof TelegramError?e.retryAfter:30},failure==='retryable'?503:400);}}
   const bridge=url.pathname.startsWith('/api/bridge/');
   const key=bridge?env.BRIDGE_TOKEN:env.ADMIN_TOKEN;
   if(!await secretEqual(request.headers.get('authorization')??'',key?'Bearer '+key:''))return json({error:'unauthorized'},401);

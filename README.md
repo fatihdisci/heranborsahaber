@@ -8,7 +8,7 @@ Türkiye ve dünya ekonomisi, finans, şirketler, teknoloji ve önemli küresel 
 - Bağımsız [KAP toplayıcısı](sector/KAP.md), seçilen bildirimleri toplar; ana metin, tablolar ve PDF ekleri içerik üretiminde incelenir.
 - Bota doğrudan haber metni, desteklenen bağlantı veya PDF gönderilebilir. Hazırlanıyor mesajı tamamlandığında aynı mesajda tweet ve görselle değiştirilir.
 - Altı kart yerleşimi ve iki renk teması kullanılır. **Kartı yeniden tasarla** aynı mesajın görselini değiştirir; yeniden AI çağrısı yapmaz.
-- İçerik üretimi ayrı Hermes profili üzerinden `gpt-6-luna` / `high` ile çalışır. Telegram işlemleri yalnız kayıtlı sahibine açıktır. **X yayını yoktur.**
+- İçerik üretimi ayrı Hermes profili üzerinden `gpt-5.6-terra` / `medium` ile çalışır. Telegram işlemleri yalnız kayıtlı sahibine açıktır. **X yayını yoktur.**
 
 ## Geliştirme ve doğrulama
 

@@ -20,7 +20,7 @@ export interface Draft {
 export interface Env {
   DB:D1Database; MEDIA:R2Bucket;
   MODE:'dry_run'|'telegram_review';
-  ADMIN_TOKEN?:string; BRIDGE_TOKEN?:string; AI_MODEL:string; AI_EFFORT:'high';
+  ADMIN_TOKEN?:string; BRIDGE_TOKEN?:string; AI_MODEL:string; AI_EFFORT:'medium';
   TELEGRAM_BOT_TOKEN?:string; TELEGRAM_CHAT_ID?:string; TELEGRAM_USER_ID?:string;
   TELEGRAM_WEBHOOK_SECRET?:string; TELEGRAM_VERIFIED_BOT_ID?:string;
   AI_DAILY_DRAFT_LIMIT:string;

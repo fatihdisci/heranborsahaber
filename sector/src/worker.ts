@@ -1,4 +1,5 @@
 import {requestNews} from './news-inbox';
+import {sendDraftAsset} from './draft-assets';
 import registry from '../sources.json';
 import {queueManual,type InputMessage} from './manual';
 import {tick,seed,deliver,errorCode,type DraftRow} from './pipeline';
@@ -33,6 +34,10 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;
  if(!cb||!cb.message||!isOwner(env,String(cb.from?.id),String(cb.message.chat?.id),cb.message.chat?.type))return json({ok:true});
+ if(cb.data?.startsWith('asset:')){
+  await sendDraftAsset(env,cb.data,cb.message.message_id,Number(id),cb.id);
+  return json({ok:true});
+ }
  if(/^news:[a-f0-9-]{36}$/.test(cb.data)){
   const answer=await requestNews(env,cb.data.slice(5),cb.message.message_id);
   await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});

@@ -17,15 +17,18 @@ export function sourceKeyboard(docs:Document[]) {
  for(const value of urls){const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)throw new Error('source_url_invalid');}
  return [[{text:'Kaynağı aç',url:urls[0]}]];
 }
-export function keyboard(id:string,revision:number,docs:Document[]) {
- return {inline_keyboard:[...sourceKeyboard(docs),[{text:'Düzenle',callback_data:callback('edit',id,revision)}]]};
+export function keyboard(id:string,revision:number,docs:Document[],caption:string) {
+ // Telegram's native clipboard button accepts at most 256 characters. Never
+ // truncate a post to fit it; longer posts use a copyable preformatted message.
+ const copy=caption.length<=256?{text:'Tweet’i kopyala',copy_text:{text:caption}}:{text:'Tweet’i kopyala',callback_data:`asset:text:${id}:${revision}`};
+ return {inline_keyboard:[...sourceKeyboard(docs),[copy,{text:'Görseli al',callback_data:`asset:image:${id}:${revision}`}],[{text:'Düzenle',callback_data:callback('edit',id,revision)}]]};
 }
 export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
  if(env.MODE!=='telegram_review')throw new Error('telegram_dry_run');
  const caption=postText(draft);
  // Fail before uploading anything; never produce an orphan photo or split post.
  if(caption.length>1024)throw new Error('telegram_caption_too_long');
- const markup=keyboard(id,revision,docs);
+ const markup=keyboard(id,revision,docs,caption);
  const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'sector-haber.png');
  form.set('reply_markup',JSON.stringify(markup));
  if(existingMessageId){

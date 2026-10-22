@@ -94,3 +94,21 @@ test('missing mandatory tags are repaired without a model call or invented ticke
  assert.deepEqual(repairDraftStyle(d,[doc({title:'Fon tasfiyesi'})]).hashtags,['#Fon','#PBLK','#Tasfiye']);
  assert.deepEqual(repairDraftStyle(d,[doc({title:'Tesla yatırım planlıyor'})]).hashtags,['#YeniYatırım','#İşDünyası']);
 });
+test('verified equity .E suffix is removed from visible text and table cells without changing evidence',()=>{
+ const source=doc({source_id:'kap',official:true,equity_codes:['KARCL','A1CAP'],title:'Devre Kesici Bildirimi',body:'KARCL.E işlem sırasında sürekli işleme ara verildi.'});
+ const quote=source.body;
+ const original={...groundedDraft,headline:'📢 KARCL.E’de devre kesici uygulandı',body:"KARCL.E'de emir toplama başladı. A1CAP.E işlem sırasında da ara verildi.",card_headline:'KARCL.E devre kesici',card_body:'KARCL.E için emir toplama başladı.',card_data:{ticker:'KARCL.E',buy:[{label:'KARCL.E',value:'100 adet'}]},claims:[{text:quote,evidence:[{document:0,passage:'p1',quote}]}]};
+ const snapshot=JSON.stringify(source),fixed=repairDraftStyle(original,[source]);
+ assert.equal(fixed.headline,'📢 KARCL’de devre kesici uygulandı');
+ assert.equal(fixed.body,"KARCL'de emir toplama başladı. A1CAP işlem sırasında da ara verildi.");
+ assert.equal(fixed.card_headline,'KARCL devre kesici');assert.equal(fixed.card_body,'KARCL için emir toplama başladı.');
+ assert.equal(fixed.card_data?.ticker,'KARCL');assert.equal(fixed.card_data?.buy?.[0].label,'KARCL');
+ assert.deepEqual(fixed.claims,original.claims);assert.equal(JSON.stringify(source),snapshot);
+ assert.equal(original.card_data.ticker,'KARCL.E');assert.deepEqual(repairDraftStyle(fixed,[source]),fixed);
+ assert(styleIssues(original,[source]).includes('market_suffix_in_display'));
+});
+test('equity display normalization does not strip other instruments, unknown codes or URL paths',()=>{
+ const body='KARCL.TE temerrüt sırası; KARCL.EPS, YKARCL.E, OTHER.E; https://example.test/KARCL.E';
+ const fixed=repairDraftStyle({...groundedDraft,body},[doc({equity_codes:['KARCL']})]);
+ assert.equal(fixed.body,body);
+});

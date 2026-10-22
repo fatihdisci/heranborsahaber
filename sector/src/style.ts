@@ -32,6 +32,8 @@ export function hasPublisherAttribution(text:string,names:string[]):boolean {
 }
 export function styleIssues(draft:Draft,documents:Document[]):string[]{
  const p=editorialPolicy(documents),issues:string[]=[];
+ const display=normalizeEquityDisplay(draft,documents);
+ if(['headline','body','card_headline','card_body'].some(k=>display[k as keyof Draft]!==draft[k as keyof Draft])||JSON.stringify(display.card_data)!==JSON.stringify(draft.card_data))issues.push('market_suffix_in_display');
  if(invalidEmojiPlacement(draft))issues.push('invalid_emoji_placement');
  if([draft.headline,draft.body,draft.card_headline,draft.card_body].some(t=>typeof t==='string'&&hasTextHashtags(t)))issues.push('misplaced_hashtags');
  if(hasPublisherAttribution([draft.headline,draft.body,draft.card_headline,draft.card_body].join('\n'),p.publisher_names))issues.push('publisher_attribution');
@@ -46,6 +48,23 @@ export function styleIssues(draft:Draft,documents:Document[]):string[]{
 const tagToken='#[\\p{L}\\p{N}_]{2,40}';
 function withoutUrls(text:string,change:(s:string)=>string):string {
  return text.split(/(https?:\/\/[^\s]+)/u).map(s=>/^https?:\/\//u.test(s)?s:change(s)).join('');
+}
+// .E identifies the equity trading series, not part of the display ticker.
+// Only strip it for verified equities. Other series (e.g. .TE) can carry a
+// different transaction meaning and must not be blindly treated as equities.
+export function normalizeEquityDisplay(value:Draft,documents:Document[]):Draft {
+ const codes=editorialPolicy(documents).verified_equity_codes;if(!codes.length)return value;
+ const pattern=new RegExp(`(?<![\\p{L}\\p{N}_./])(${codes.join('|')})\\.E(?![\\p{L}\\p{N}_])`,'giu');
+ const clean=(text:string)=>withoutUrls(text,part=>part.replace(pattern,(_match,code:string)=>code.toUpperCase()));
+ const result={...value};
+ for(const key of ['headline','body','card_headline','card_body'] as const)if(typeof value[key]==='string')result[key]=clean(value[key]);
+ if(value.card_data&&typeof value.card_data==='object'&&!Array.isArray(value.card_data)){
+  const data={...value.card_data};
+  for(const key of ['ticker','as_of'] as const)if(typeof data[key]==='string')data[key]=clean(data[key]);
+  for(const key of ['buy','sell','holdings','metrics'] as const)if(Array.isArray(data[key]))data[key]=data[key].map(row=>!row||typeof row!=='object'?row:{...row,...(typeof row.label==='string'?{label:clean(row.label)}:{}),...(typeof row.value==='string'?{value:clean(row.value)}:{})});
+  result.card_data=data;
+ }
+ return result;
 }
 function hasTextHashtags(text:string):boolean {
  let found=false;withoutUrls(text,s=>{found ||= /(?<![\p{L}\p{N}_#])#[\p{L}\p{N}_]{2,40}/u.test(s);return s;});return found;
@@ -76,7 +95,7 @@ export function invalidEmojiPlacement(draft:Draft):boolean {
 // Run before the semantic audit as well as at the submission boundary.
 export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  if(!value||typeof value!=='object')return value;
- value=normalizeHashtagPlacement(value);
+ value=normalizeEquityDisplay(normalizeHashtagPlacement(value),documents);
  const required=editorialPolicy(documents).required_hashtags;
  const tags=Array.isArray(value.hashtags)?[...new Set(value.hashtags.filter((t):t is string=>typeof t==='string').map(t=>'#'+t.trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'')))]:[];
  const valid=tags.filter(t=>/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));

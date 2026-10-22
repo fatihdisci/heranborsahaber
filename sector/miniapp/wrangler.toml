@@ -1,0 +1,18 @@
+name = "endeks-haber-panel"
+main = "../src/miniapp/worker.ts"
+compatibility_date = "2026-10-21"
+workers_dev = true
+preview_urls = false
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+[vars]
+ENABLED = "true"
+[[r2_buckets]]
+binding = "PANEL"
+bucket_name = "endeks-haber-panel"
+[triggers]
+crons = ["23 3 * * *"]
+[observability]
+enabled = false

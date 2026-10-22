@@ -1,3 +1,4 @@
+import {cardDataFields} from './card-data';
 import {repairKapShareWording} from './kap-unit-evidence';
 import type {Document,Draft} from './types';
 const fold=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('tr-TR').replace(/ı/g,'i');
@@ -41,7 +42,7 @@ export function headlineWithEmoji(headline:string):string{headline=headline.repl
 export function invalidEmojiPlacement(draft:Draft):boolean {
  const headline=draft.headline.trim();
  const rest=headline.replace(/^(?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\uFE0F?\s+/u,'');
- return emoji.test(rest)||[draft.body,draft.card_headline,draft.card_body,...draft.hashtags].some(t=>emoji.test(t??''));
+ return emoji.test(rest)||[draft.body,draft.card_headline,draft.card_body,...draft.hashtags,...cardDataFields(draft.card_data).map(([,value])=>value)].some(t=>emoji.test(t??''));
 }
 
 // These repairs select only source-backed category/ticker tags, never facts.

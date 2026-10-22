@@ -29,3 +29,12 @@ Her servisin `backups/update-<kimlik>/rollback.json` dosyası önceki app/plist 
 ## Doğrulama
 
 `npm ci --ignore-scripts`, TypeScript kontrolü, Node testleri, Python testleri, native macOS OCR ve dry-run build canlı sırlara ihtiyaç duymaz. `test/endeks.test.ts` 84 kombinasyonun gerçek PNG'sini üretir. `test/kap-delivery.test.ts` donmuş devre kesici grubundan tam kaynak → model sözleşmesi → gerçek PNG → taklit Telegram gönderimi → tek makbuz akışını sınar. Gerçek bot mesajı veya yeni AI çağrısı test amacıyla yapılmaz. Görsel galerisindeki rakamlar/şirketler çevrimdışı örnektir.
+
+
+## Konuya özel görsel aileleri
+
+`news`: haber başlığı ve özet; `circuit`: hisse/durum odaklı devre kesici; `institutional`: en çok alınan/satılan hisseler için yan yana listeler; `akd`: tek hissenin alıcı/satıcı kurumları için geniş üst üste tablolar; `volume`: büyük ana hacim ve iki karşılaştırma metriği. İki renk teması ve altı yeniden tasarlama seçeneği korunur.
+
+`Draft.card_data` isteğe bağlıdır. `ticker`, kaynak zamanı `as_of`, en çok beşer `{label,value}` satırlı `buy`/`sell` listeleri ve en çok üç satırlı `metrics` taşır. Bütün satırlarda miktar ve birim açık olmalıdır. Sayı/birim, hisse kodu ve kurum adı kontrol edilir; bağımsız kaynak denetçisi satır/yön/dönem eşleşmelerini değerlendirir. Eski taslaklar bu alan olmadan çalışır. Veri yoksa tablo veya grafik uydurulmaz; yalnız doğrulanabilen haber metni gösterilir.
+
+Bu değişiklik AKD veya hacim API'si bağlamaz. Kaynak belge/metin/PDF'de sağlanan doğrulanabilir verileri görselleştirir. `scripts/preview_content_templates.ts` içindeki veriler kurmaca çevrimdışı tasarım örnekleridir; Telegram'a veya canlı kuyruğa gönderilmez. Görseller `reports/content-templates/` altındadır. Mevcut kopyalama, kaynak düğmesi ve yeniden tasarım aynı mesaj üzerinde çalışır.

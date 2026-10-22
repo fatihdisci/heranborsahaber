@@ -1,5 +1,5 @@
 export type Category = 'turkiye'|'central_banks'|'companies'|'technology'|'energy'|'global'|'data'|'bist'|'kap';
-export type Template = 'breaking'|'economic_data'|'company'|'global'|'info'|'circuit'|'kap'|'market'|'finance';
+export type Template = 'breaking'|'economic_data'|'company'|'global'|'info'|'circuit'|'kap'|'market'|'finance'|'news'|'institutional'|'akd'|'volume';
 export type Status = 'pending'|'deferred'|'rejected'|'approved'|'needs_review'|'published';
 export interface Source {
   id:string; name:string; url:string; family:string; language:string; official:boolean;
@@ -13,7 +13,10 @@ export interface Item {title:string;url:string;summary:string;published_at:strin
 export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];index_tier?:30|100;language?:string;images?:string[];coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
+export interface CardRow {label:string;value:string;}
+export interface CardData {ticker?:string;as_of?:string;buy?:CardRow[];sell?:CardRow[];metrics?:CardRow[];}
 export interface Draft {
+  card_data?:CardData;
   headline:string;body:string;hashtags:string[];category:Category;importance:number;
   template:Template;claims:Claim[];entities:string[];event_key:string;uncertainties:string[];source_notes?:string[];
   card_headline:string;card_body:string;

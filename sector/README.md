@@ -155,3 +155,6 @@ Görünür marka ENDEKS HABER, hesap referansı `@endeks_haber` oldu. Teknik `se
 `src/brand.ts` ortak kimliği, `scripts/generate_brand.ts` profil/banner SVG ve PNG'lerini üretir. `scripts/preview_endeks.ts` altı yerleşim ve iki tema için çevrimdışı örnekleri `reports/endeks-previews/` altına yazar. `circuit`, `kap`, `market`, `finance` şablonları ve `bist`, `kap` kategorileri eski değerleri kaldırmadan eklendi. Özet/etiket/kanıt/birim denetimleri ve mevcut kart yeniden tasarlama korunur.
 
 Yeni RSS eklenmedi. 14 mevcut beslemenin HTTP/XML/tarih sonuçları `reports/endeks-source-check.json` içindedir. Kaynak önceliği ve içerik alt eşiği merkezi `sources.json` kaydında bulunur. KAP bağımsız toplayıcıyla, SPK mevcut PDF hattıyla, TCMB/Fed/ECB kendi kaynaklarıyla izlenir. Borsa İstanbul açıklamaları KAP üzerinden resmî kaynak olarak alınır; doğrulanmamış yeni bir Borsa RSS adresi etkinleştirilmez. [Canlı geçiş](ENDEKS.md).
+
+
+Haber, devre kesici, kurumların alıp sattığı hisseler, tek hisse AKD ve hacim için ayrı [görsel aileleri](reports/content-templates/contact-sheet.png) vardır. İsteğe bağlı kaynak denetimli `card_data` alanı sayıları ve tabloları taşır; otomatik AKD/hacim veri kaynağı kurulmaz. Ayrıntılar: [ENDEKS.md](ENDEKS.md#konuya-özel-görsel-aileleri).

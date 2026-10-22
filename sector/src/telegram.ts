@@ -63,7 +63,7 @@ export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,do
  // Fail before uploading anything; never produce an orphan photo or split post.
  if(caption.length>1024)throw new Error('telegram_caption_too_long');
  const markup=keyboard(id,revision,docs,caption);
- const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'sector-haber.png');
+ const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'endeks-haber.png');
  form.set('reply_markup',JSON.stringify(markup));
  if(existingMessageId){
   form.set('message_id',String(existingMessageId));form.set('media',JSON.stringify({type:'photo',media:'attach://photo',caption}));

@@ -74,7 +74,7 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
  if(!meta||meta.model!==env.AI_MODEL||meta.effort!==env.AI_EFFORT||meta.provider!=='openai-codex'||meta.tool_count!==0||meta.fallback_count!==0)throw new Error('model_route_mismatch');
  const documents=JSON.parse(job.documents) as Document[];
  const checked=acceptHermes(input.draft,input.audit,documents),draft=checked.draft;
- draft.importance=Math.min(draft.importance,documentScore(documents[0]).score+10);
+ draft.importance=Math.min(draft.importance,documentScore(documents[0],job.kind==='manual'||job.kind==='edit').score+10);
  const existingCard=job.kind==='edit'?await env.DB.prepare('SELECT content FROM drafts WHERE id=?').bind(job.draft_id).first<{content:string}>():null;
  const theme=existingCard?(await savedTheme(env,'draft:'+job.draft_id)??legacyTheme((JSON.parse(existingCard.content) as Draft).template)):(await savedTheme(env,job.article_id)??legacyTheme(draft.template));
  const layout=await savedLayout(env,job.kind==='edit'?'draft:'+job.draft_id:job.article_id)??'editorial';

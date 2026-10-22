@@ -1,3 +1,4 @@
+import {KapReports} from './kap_reports';
 import {publishX,refreshXButton} from '../src/x-publish';
 import {xClient,validXKeys} from './x_client';
 import {awaitActivation} from './startup_gate';
@@ -29,6 +30,7 @@ const directory=`${homedir()}/Library/Application Support/sector-haber`;
 const secrets=JSON.parse(await readFile(directory+'/secrets.json','utf8'));
 const env={...secrets,DB:await localDatabase(directory+'/sector-haber.sqlite',await readFile('migrations/0001_sector.sql','utf8')),MEDIA:await localMedia(directory+'/media'),MODE:'telegram_review',AI_MODEL:'gpt-6-luna',AI_EFFORT:'high',AI_DAILY_DRAFT_LIMIT:'240'} as Env;
 try{const keys=JSON.parse(await readFile(directory+'/x-credentials.json','utf8'));if(validXKeys(keys))env.X_PUBLISH_ENABLED='true';}catch{/* X stays disabled until credentials are saved locally. */}
+env.RENDER_REPORT=png;
 await seed(env);
 const lockPath=directory+'/service.lock';let lock;
 try{lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}
@@ -69,13 +71,14 @@ async function kapLoop(){
  // Absence of the separate KAP database must not create/bootstrap one here.
  const path=directory+'/kap/kap.sqlite';let store:KapStore|undefined,consumer:KapDelivery|undefined;
  while(!stopping){try{
-  if(!store){await access(path);store=new KapStore(path);consumer=new KapDelivery(store,env,id=>kapDocuments(id,readPdf));env.KAP_DELIVERY_CHECK=documents=>consumer!.deliveryDecision(documents);}
+  if(!store){await access(path);store=new KapStore(path);consumer=new KapDelivery(store,env,id=>kapDocuments(id,readPdf));const reports=new KapReports(store);env.KAP_REPORT=(kind,at)=>reports.build(kind,at);env.KAP_DELIVERY_CHECK=documents=>consumer!.deliveryDecision(documents);}
   const result=await consumer!.run();await status('kap_delivery_health',{ok:!['uncertain','needs_review'].includes(result.state),at:new Date().toISOString(),...result});
  }catch(e){await status('kap_delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}
  await pause(5_000);}
  delete env.KAP_DELIVERY_CHECK;store?.close();
 }
 async function requestsLoop(){while(!stopping){try{await refreshNewsRequests(env);await prepare(env);}catch(e){await status('news_requests_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}
+async function reportCacheLoop(){let store:KapStore|undefined,reports:KapReports|undefined;while(!stopping){try{if(!store){await access(directory+'/kap/kap.sqlite');store=new KapStore(directory+'/kap/kap.sqlite');reports=new KapReports(store);}await reports!.cacheOne();}catch(e){await status('kap_report_health',{ok:false,code:errorCode(e)});}await pause(5_000);}store?.close();}
 async function manualLoop(){while(!stopping){try{await runManual(env);}catch(e){await status('manual_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(5_000);}}
 async function telegramLoop(){
  let offset=Number((await env.DB.prepare("SELECT value FROM system_state WHERE key='telegram_offset'").first<{value:string}>())?.value??0);
@@ -92,4 +95,4 @@ else if(process.argv.includes('--prepare-once')){try{await tick(env);console.log
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}
-}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),requestsLoop(),designLoop(),xLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}
+}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}

@@ -8,6 +8,13 @@ export interface InputMessage {message_id:number;date?:number;text?:string;capti
 export async function queueManual(env:Env,updateId:number,m:InputMessage):Promise<boolean> {
  if(!m.from||!m.chat||!isOwner(env,String(m.from.id),String(m.chat.id),m.chat.type)||!Number.isSafeInteger(m.message_id)||!Number.isSafeInteger(updateId))return false;
  let text=(m.text??m.caption??'').trim();const focus=marketSelection(text);
+ if(/^\/(devrekesici|gerial[ıi]m)(?:@[a-zA-Z0-9_]+)?$/iu.test(text)&&!m.forward_origin){
+  const input=JSON.stringify({report:text.toLocaleLowerCase('tr-TR').startsWith('/devre')?'circuit':'buyback',at:(m.date??Math.floor(Date.now()/1000))*1000,text:''});
+  const r=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,'kap_report',input,Math.floor(Date.now()/1000)).run();
+  if(r.meta.changes)await ensureManualStatus(env,updateId,m.message_id,'Komut saatine kadar kaydedilmiş KAP bildirimlerini sayıp raporunu hazırlıyorum.');
+  return true;
+ }
+
  if(text==='/sorgular'||/^\/(?:kurum|akd|takas)(?:@[a-zA-Z0-9_]+)?(?:\s|$)/iu.test(text)){
   // Forwarded commands are source material, never authority to query a bot.
   if(m.forward_origin)return false;
@@ -18,9 +25,10 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
   if(inserted.meta.changes)await ensureManualStatus(env,updateId,m.message_id,'Sorgunu aldım. İlgili bottan verileri alıp tweet ve görselini hazırlıyorum. Sonuç bu mesajda görünecek.');
   return true;
  }
- const reply=focus?m.reply_to_message:undefined;
+ const ownerInstruction=!m.forward_origin?splitManualText(text).editor_request:'';
+ const reply=focus||ownerInstruction?m.reply_to_message:undefined;
  const draft=reply?await env.DB.prepare('SELECT id,documents FROM drafts WHERE message_id=?').bind(reply.message_id).first<{id:string;documents:string}>():null;
- const reuse=draft&&JSON.parse(draft.documents).some((d:{market_data?:unknown;body?:string})=>d.market_data||marketInput(d.body??''))?draft:null;
+ const reuse=draft&&(ownerInstruction||JSON.parse(draft.documents).some((d:{market_data?:unknown;body?:string})=>d.market_data||marketInput(d.body??'')))?draft:null;
  let sourceMessageId=reply?.message_id;
  if(reuse)try{
   const original=JSON.parse(reuse.documents)[0],start=new URL(original.url).searchParams.get('start')?.match(/^source_(\d+)$/);
@@ -33,7 +41,7 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
   const source=text.match(/^\/start source_(\d+)$/);
   if(source){const id=Number(source[1]),row=await env.DB.prepare('SELECT message_id,input FROM manual_requests WHERE message_id=?').bind(id).first<{message_id:number;input:string}>();
    if(row){const target=JSON.parse(row.input).source_message_id??id;if(!Number.isSafeInteger(target)||target<=0)throw Error('manual_source_invalid');await telegram(env,'copyMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,from_chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(target)}));}
-  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber veya KAP bağlantısını, PDF dosyasını, metni ya da görseli buraya gönder. Otomatik bot sorgularını görmek için /sorgular yaz. Diğer botun /kurum, /akd ve /takas yanıtlarını da iletebilirsin. BoPT kurum analizini de iletebilirsin. Kaynak mesaja veya oluşan karta “Sadece alınanlar” / “Sadece satılanlar” diye yanıt vererek ayrı içerik isteyebilirsin. Kaynağı okuyup ENDEKS HABER tarzında tweet ve kart hazırlayacağım. Veri tarihini tahmin etmem; okunamayan sayıdan içerik üretmem.'}));
+  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber veya KAP bağlantısını, PDF dosyasını, metni ya da görseli buraya gönder. Günlük KAP raporları: /devrekesici ve /gerialım. Otomatik bot sorgularını görmek için /sorgular yaz. Diğer botun /kurum, /akd ve /takas yanıtlarını da iletebilirsin. BoPT kurum analizini de iletebilirsin. Kaynak mesaja veya oluşan karta “Sadece alınanlar” / “Sadece satılanlar” diye yanıt vererek ayrı içerik isteyebilirsin. Kaynağı okuyup ENDEKS HABER tarzında tweet ve kart hazırlayacağım. Veri tarihini tahmin etmem; okunamayan sayıdan içerik üretmem.'}));
   return true;
  }
  if(focus&&!reply&&!m.photo?.length&&!m.document&&!/https:\/\//.test(text)&&text.length<240){
@@ -41,15 +49,15 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
   return true;
  }
  const separated=splitManualText(text,!!source.forward_origin);
- let editorRequest=separated.editor_request;
+ let editorRequest=reply&&ownerInstruction?ownerInstruction:separated.editor_request;
  text=separated.text;
  const url=text.match(/https:\/\/[^\s<>]+/)?.[0]?.replace(/[),.;]+$/,'');
  const photo=Array.isArray(source.photo)?source.photo.filter(p=>p&&typeof p.file_id==='string'&&Number.isSafeInteger(p.width)&&p.width>0&&Number.isSafeInteger(p.height)&&p.height>0).sort((a,b)=>b.width*b.height-a.width*a.height)[0]:undefined;
  const imageDocument=source.document&&(/^image\/(?:jpeg|png|webp)$/.test(source.document.mime_type??'')||/\.(?:jpe?g|png|webp)$/i.test(source.document.file_name??''))?source.document:undefined;
  const image=photo??imageDocument;
- if((image||source.document)&&!source.forward_origin&&!editorRequest&&text&&!marketInput(text)){editorRequest=text;text='';}
- const kind=reuse?'market_reuse':image?'image':source.document?'pdf':marketInput(text)?'text':url?'url':text.length>=100?'text':null;
- if(!kind)return false;
+ if((image||source.document)&&!source.forward_origin&&!editorRequest&&text&&!marketInput(text)&&/tweet|görsel|başlık|içerik|sadece|yalnızca/iu.test(text)){editorRequest=text;text='';}
+ const kind=reuse?(ownerInstruction?'source_reuse':'market_reuse'):image?'image':source.document?'pdf':marketInput(text)?'text':url?'url':text.length>=20&&!text.startsWith('/')?'text':null;
+ if(!kind){if(text&&!text.startsWith('/')&&env.MODE==='telegram_review')await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'İçerik için olayın veya verinin kendisini de gönder. İsteğini ayrı bir satırda Talimat: ile yazabilirsin.'}));return false;}
  const username=source.forward_origin?.type==='user'&&source.forward_origin.sender_user?.is_bot?source.forward_origin.sender_user.username:undefined;
  const input=JSON.stringify({url,text,editor_request:editorRequest,...(Number.isSafeInteger(source.date)&&source.date!>0?{submitted_at:source.date}:{}),document:source.document??null,image:image??null,...(focus?{focus}:{}),...(reuse?{draft_id:reuse.id}:{}),...(sourceMessageId?{source_message_id:sourceMessageId}:{}),...(username&&/^[a-zA-Z0-9_]{5,32}$/.test(username)?{origin_bot:username}:{})});if(input.length>150_000)throw Error('manual_input_limit');
  const inserted=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,kind,input,Math.floor(Date.now()/1000)).run();

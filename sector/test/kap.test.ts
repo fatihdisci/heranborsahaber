@@ -61,7 +61,7 @@ test('KAP full text preserves labeled transaction/board dates and never substitu
 });
 test('KAP indices require exact 30/100 counts and subset, with no bundled fallback',()=>{
  const codes=Array.from({length:100},(_,i)=>'T'+String(i).padStart(3,'0'));
- const html=(a:string[],b:string[])=>`<script>self.__next_f.push(${JSON.stringify([1,JSON.stringify([{code:'XU030',content:a.map(stockCode=>({stockCode}))},{code:'XU100',content:b.map(stockCode=>({stockCode}))}])])})</script>`;
+ const html=(a:string[],b:string[])=>`<script>self.__next_f.push(${JSON.stringify([1,JSON.stringify([{code:'XU030',content:a.map(stockCode=>({stockCode}))},{code:'XU050',content:b.slice(0,50).map(stockCode=>({stockCode}))},{code:'XU100',content:b.map(stockCode=>({stockCode}))}])])})</script>`;
  assert.equal(parseIndices(html(codes.slice(0,30),codes)).bist100.length,100);assert.throws(()=>parseIndices(html(codes.slice(0,29),codes)));assert.throws(()=>parseIndices(html([...codes.slice(0,29),'NOPE'],codes)));
 });
 test('KAP source/feed/queue/cursor transaction rolls back on queue failure; duplicates stay single',()=>{

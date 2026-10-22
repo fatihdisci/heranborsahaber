@@ -1,3 +1,4 @@
+import {saveReport} from '../src/kap-report-save';
 import {botDocuments} from './bot_query_reader';
 import {withMarketTiming} from '../src/market-timing';
 import {ensureManualStatus,manualStatusId} from '../src/manual-status';
@@ -32,10 +33,10 @@ export async function manualDocuments(env:Env,kind:string,input:string,messageId
  const sourceUrl=`https://t.me/habernewssbot?start=source_${messageId}`;
  const base={source_id:'manual-input',source_name:'Gönderdiğin belge',family:'owner-submitted',official:false,url:sourceUrl,published_at:null,language:'tr'};
  const selection=(d:Document):Document=>selectMarketDocument(d,value.focus&&['buy','sell','both'].includes(value.focus)?value.focus:undefined);
- if(kind==='market_reuse'){
+ if(kind==='market_reuse'||kind==='source_reuse'){
   const row=await env.DB.prepare('SELECT documents FROM drafts WHERE id=?').bind(value.draft_id).first<{documents:string}>();
   const docs=row?JSON.parse(row.documents) as Document[]:[];
-  if(!docs.length||!docs.some(d=>d.market_data||withMarketText(d).market_data))throw Error('manual_market_source_missing');
+  if(!docs.length||kind==='market_reuse'&&!docs.some(d=>d.market_data||withMarketText(d).market_data))throw Error('manual_market_source_missing');
   return docs.map(d=>selection({...withMarketText(d),url:sourceUrl}));
  }
  if(kind==='image'){
@@ -52,7 +53,7 @@ export async function manualDocuments(env:Env,kind:string,input:string,messageId
   return [{...base,title:value.document.file_name??'Gönderilen PDF',...pdf}];
  }
  if(kind==='text'){
-  const text=value.text.trim();if(text.length<100||text.length>100_000)throw Error('manual_text_length');
+  const text=value.text.trim();if(text.length<20||text.length>100_000)throw Error('manual_text_length');
   return [withMarketTiming(selection(withMarketText({...base,source_name:value.origin_bot?'İlettiğin @'+value.origin_bot+' metni':'Gönderdiğin metin',title:text.split('\n')[0].slice(0,180),body:text,passages:[{id:'provided_text',text}]})),value.submitted_at)];
  }
  throw Error('manual_kind');
@@ -85,11 +86,12 @@ export async function runManual(env:Env):Promise<void> {
   const statusId=await manualStatusId(env,failed.update_id);
   await telegram(env,statusId?'editMessageText':'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,...(statusId?{message_id:String(statusId)}:{reply_parameters:JSON.stringify({message_id:failed.message_id,allow_sending_without_reply:true})})}));
  }
- const busy=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state IN ('queued','leased')").first<{n:number}>();if((busy?.n??0)>=5)return;
+ const busy=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state IN ('queued','leased')").first<{n:number}>();const reportPending=await env.DB.prepare("SELECT 1 FROM manual_requests WHERE state='queued' AND kind='kap_report' AND lease_until<=? LIMIT 1").bind(now).first();if((busy?.n??0)>=5&&!reportPending)return;
  await env.DB.prepare("UPDATE manual_requests SET state='queued' WHERE state='reading' AND lease_until<?").bind(now).run();
- const row=await env.DB.prepare("SELECT * FROM manual_requests WHERE state='queued' AND lease_until<=? ORDER BY created_at LIMIT 1").bind(now).first<{update_id:number;message_id:number;kind:string;input:string;attempts:number}>();if(!row)return;
+ const row=await env.DB.prepare("SELECT * FROM manual_requests WHERE state='queued' AND lease_until<=? ORDER BY CASE kind WHEN 'kap_report' THEN 0 ELSE 1 END,created_at LIMIT 1").bind(now).first<{update_id:number;message_id:number;kind:string;input:string;attempts:number}>();if(!row)return;
  const claimed=await env.DB.prepare("UPDATE manual_requests SET state='reading',lease_until=?,attempts=attempts+1 WHERE update_id=? AND state='queued'").bind(now+(row.kind==='bot_query'?600:300),row.update_id).run();if(!claimed.meta.changes)return;
  try{
+  if(row.kind==='kap_report'){if(!env.KAP_REPORT)throw Error('kap_report_unavailable');const input=JSON.parse(row.input);await saveReport(env,row,await env.KAP_REPORT(input.report,input.at));return;}
   const docs=await manualDocuments(env,row.kind,row.input,row.message_id);
   const request=JSON.parse(row.input).editor_request??'';
   const job=await enqueueEvidence(env,docs,'manual',request);

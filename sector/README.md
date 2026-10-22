@@ -206,3 +206,14 @@ Bağlantıyı kapatmak için `x-credentials.json` dosyasını güvenli bir yere 
 ### Kaynakla birlikte editoryal açıklama
 
 Haber bağlantısı, PDF, metin veya görselle aynı mesajda `Talimat:`, `İstek:` ya da `Notum:` başlığıyla isteğini ekleyebilirsin. Örnek: haber bağlantısı + yeni satırda `Talimat: Yatırım tutarını başlıkta vurgula, kısa yaz. Görselde şirket adı öne çıksın.` Kısa yaz / Bunu kısa yaz gibi açık üretim istekleri de ayrı algılanır. Tercih kaynak kanıtı sayılmaz, sayı veya olgu uydurmaya izin vermez. İletilmiş mesaj içindeki komutlar kaynak verisi olarak kalır. Aynı bağlantıya farklı bir editoryal istek verilirse eski çıktı sessizce geri dönmez; aynı isteğin tekrar iletilmesi ise aynı işi kullanır. X paylaşımı yine yalnız Paylaş düğmesiyle yapılır.
+
+### Günlük KAP raporları ve bağımsız içerik
+
+Editör botuna doğrudan metin, görsel veya PDF gönderilebilir; haber bağlantısı zorunlu değildir. `Talimat:` satırı kaynak olgulardan ayrı tutulur. Kısa metinler (20+ karakter) de işlenir. Önceki kaynak/karta `Talimat: ...` diye yanıt verilerek aynı kanıtla yeni içerik istenebilir.
+
+- `/devrekesici`: İstanbul gün başlangıcından komut zamanına kadar kayıtlı bildirimleri sayar; tekrar eden hisseleri ve birbirini tekrar etmeyen BIST 30 → BIST 50 → BIST 100 gruplarını gösterir. Güncel endeks verisi yoksa sınıflandırma uydurulmaz.
+- `/gerialım` (`/gerialim`): o gün yayımlanmış geri alım kayıtlarını sayar; **işlem tarihi de bugün olan** doğrulanmış alımları lot miktarına göre sıralar. Önceki günün işlemini bugün yapılmış saymaz. En yüksek 10 hisse tweet ve kartta yer alır.
+
+Raporlar model çağrısı yapmaz; normal taslak/Telegram teslimat ve manuel X paylaşım kayıtlarını kullanır. KAP veritabanındaki `report_buybacks` tablosuna her bildirimin işlem satırları arka planda birer birer kaydedilir. Yeniden başlatmada başarıyla okunan kayıtlar tekrar indirilmez. Başarısız okumalar sınırlı tekrar edilir. Program karar tarihi ve işlem satırları bulunamayan/PDF-only kayıtlar tahmini miktarla sıralanmaz; rapor kısmi olarak işaretlenir. Sonraki program tablosu öncekinin yerine geçer; geçmiş satırlar ve program toplamı tekrar toplanmaz. Düzeltme bağlantıları korunur. Yalnız doğrulanmış borsada işlem gören pay tablosunun nominal TL miktarı işlem birimine dönüştürülür; ISKUR ve belirsiz birimler dahil edilmez.
+
+Raporlar tüm piyasanın eksiksiz sayımı iddiasında bulunmaz; toplayıcı kapsamı, gecikme ve başarısız okumalar belirtilir. Yoğun devre kesici günlerinde kart en çok 30 hisse gösterir ve kalan sayıyı belirtir; toplam sayım tüm kayıtları içerir. Geri dönüşte önceki uygulama sürümü etkinleştirilebilir; eklenen önbellek tablosu silinmek zorunda değildir.

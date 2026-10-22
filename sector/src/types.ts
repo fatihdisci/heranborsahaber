@@ -14,7 +14,7 @@ export interface Document {source_id:string;source_name:string;family:string;off
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface CardRow {label:string;value:string;}
-export interface CardData {broker?:string;ticker?:string;tickers?:string[];as_of?:string;buy?:CardRow[];sell?:CardRow[];holdings?:CardRow[];metrics?:CardRow[];}
+export interface CardData {report?:{rows:CardRow[];footer:string};broker?:string;ticker?:string;tickers?:string[];as_of?:string;buy?:CardRow[];sell?:CardRow[];holdings?:CardRow[];metrics?:CardRow[];}
 export interface Draft {
   card_data?:CardData;
   headline:string;body:string;hashtags:string[];category:Category;importance:number;
@@ -22,6 +22,8 @@ export interface Draft {
   card_headline:string;card_body:string;
 }
 export interface Env {
+  KAP_REPORT?:(kind:'circuit'|'buyback',at:number)=>Promise<{draft:Draft;documents:Document[]}>;
+  RENDER_REPORT?:(svg:string)=>Promise<Uint8Array>;
   X_PUBLISH_ENABLED?:string;
   DB:D1Database; MEDIA:R2Bucket;
   MODE:'dry_run'|'telegram_review';

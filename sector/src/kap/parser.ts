@@ -81,15 +81,15 @@ export function parseListing(value:unknown,now=Date.now()):Listing[] {
  if(new Set(result.map(x=>x.id)).size!==result.length||result.some(x=>Date.parse(x.publishedAt)>now+300_000))throw new Error('kap_listing_invalid');
  return result.sort((a,b)=>a.id-b.id);
 }
-export interface Indices {bist30:string[];bist100:string[];checkedAt:string;source:string;}
+export interface Indices {bist30:string[];bist50?:string[];bist100:string[];checkedAt:string;source:string;}
 export function parseIndices(html:string,now=Date.now()):Indices {
  const text=flightText(html);
  const read=(code:string,count:number)=>{const m=new RegExp('"code"\\s*:\\s*"'+code+'"\\s*,\\s*"content"\\s*:\\s*(?=\\[)').exec(text);if(!m)throw new Error('kap_index_missing');
   const rows=jsonValue(text,m.index+m[0].length);if(!Array.isArray(rows))throw new Error('kap_index_array');
   const values=rows.map(r=>string(object(r).stockCode,'index_code',true)!);
   if(values.length!==count||new Set(values).size!==count||values.some(c=>!EQUITY.test(c)))throw new Error('kap_index_members');return values.sort();};
- const bist30=read('XU030',30),bist100=read('XU100',100);if(bist30.some(c=>!bist100.includes(c)))throw new Error('kap_index_subset');
- return {bist30,bist100,checkedAt:new Date(now).toISOString(),source:`${ORIGIN}/tr/Endeksler`};
+ const bist30=read('XU030',30),bist50=read('XU050',50),bist100=read('XU100',100);if(bist30.some(c=>!bist50.includes(c))||bist50.some(c=>!bist100.includes(c)))throw new Error('kap_index_subset');
+ return {bist30,bist50,bist100,checkedAt:new Date(now).toISOString(),source:`${ORIGIN}/tr/Endeksler`};
 }
 export function fullText(html:string,id:number) {
  const disclosure=parseDisclosure(html,id),{document}=parseHTML(html);

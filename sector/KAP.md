@@ -79,3 +79,5 @@ Kaynak keşfi ile içerik hazırlama ayrı izlenir. Toplanmış fakat model dene
 Boş “İlgili Fonlar” alanı veya geri alım bütçesindeki “fon” sözcüğü şirket haberini fon haberi yapmaz. Gerçek fon/TEFAS/PBLK içeriklerinin etiketleri korunur. Alıntı metni aynı belgede birebir varsa yanlış paragraf kimliği bağımsız denetimden önce düzeltilir; alıntı, rakam veya iddia değiştirilmez. Kaynakta olmayan alıntı onaylanmaz; düzeltme turuna gerçek pasaj bilgisi verilir.
 
 Kaynak içi ikincil çelişki aktarılacak olguları etkilemiyorsa `source_notes` içinde saklanabilir. Bu notlar Telegram metnine eklenmez. Aktarılan tutar, taraf, dönem veya işlem niteliğini etkileyen belirsizlik `uncertainties` içinde kalır ve teslimatı engeller. Her iki alan da bağımsız kaynak denetçisine açıktır.
+
+Günlük komut raporları: `/devrekesici`, `/gerialım`. Üyelik okuyucu artık resmî Endeksler sayfasında 30/50/100 sayıları ve 30 ⊂ 50 ⊂ 100 ilişkisini doğrular. Güncelleme başarısız olursa önceki doğrulanmış kayıt korunur. Rapor miktar önbelleği ve kapsam sınırları README'de açıklanmıştır; canlı toplama cursor'u veya bildirim tercihleri değiştirilmez.

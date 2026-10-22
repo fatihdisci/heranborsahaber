@@ -17,6 +17,7 @@ import {refreshNewsRequests} from '../src/news-inbox';
 import {tick,seed,deliver,errorCode} from '../src/pipeline';
 import {leaseJob,submitJob,ingestOfficial} from '../src/bridge';
 import {telegram} from '../src/telegram';
+import {registerTelegramCommands} from '../src/telegram-commands';
 import {KapStore} from '../src/kap/store';
 import {KapDelivery} from '../src/kap-delivery';
 import {kapDocuments} from '../src/kap-evidence';
@@ -96,9 +97,16 @@ async function telegramLoop(){
   await status('telegram_health',{ok:true,at:new Date().toISOString()});
  }catch(e){await status('telegram_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});await pause(10_000);}}
 }
+async function telegramCommandsLoop(){
+ let retry=0;
+ while(!stopping){
+  try{await registerTelegramCommands(env);retry=0;await status('telegram_commands_health',{ok:true,at:new Date().toISOString(),count:9});await pause(24*3600_000);}
+  catch(e){retry++;await status('telegram_commands_health',{ok:false,at:new Date().toISOString(),code:errorCode(e),retry});await pause(Math.min(15*60_000,30_000*retry));}
+ }
+}
 if(!await awaitActivation(directory,process.env.SECTOR_RELEASE_ID,()=>stopping)){await lock.close();await unlink(lockPath);}
 else if(process.argv.includes('--prepare-once')){try{await tick(env);console.log('Sources scanned and model jobs prepared.');}finally{await lock.close();await unlink(lockPath);}}
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}
-}else {try{await Promise.all([spkXLoop(),fintablesXLoop(),newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}
+}else {try{await Promise.all([spkXLoop(),fintablesXLoop(),newsLoop(),modelLoop(),telegramLoop(),telegramCommandsLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}

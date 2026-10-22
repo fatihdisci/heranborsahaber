@@ -67,6 +67,21 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 - Belirsiz gönderim zaman aşımı otomatik tekrar edilmez; çift kart oluşturulmaz.
 - **X paylaşımı isteğe bağlıdır.** OAuth 1.0 bağlantısı kurulduğunda yalnız @endeks_haber için açık Paylaş düğmesi kullanılır. Eski onay düğmeleri yalnız yerel taslak durumu değiştirir; yayın kaydı oluşturmaz.
 
+### Telegram komut menüsü
+
+Bot, özel sohbetlerde Türkçe komut menüsünü servis açılışında Telegram'a kaydeder ve günde bir kez yeniler. Kayıt geçici olarak başarısız olursa servis çalışmayı sürdürür ve yeniden dener.
+
+| Komut | Açıklama |
+| --- | --- |
+| `/start`, `/help` | Kullanım bilgisi |
+| `/devrekesici` | Günün devre kesici raporu |
+| `/gerialim` | Günün ilk 10 pay geri alımı |
+| `/genelgerialim` | Tüm pay geri alımlarının tablosu |
+| `/kurum` | Aracı kurum özeti; kurum adı eklenirse kurum analizi |
+| `/akd TICKER` | Hisse aracı kurum dağılımı, ör. `/akd ASELS` |
+| `/takas TICKER` | Hisse takas dağılımı, ör. `/takas THYAO` |
+| `/sorgular` | Diğer botlardan alınan piyasa sorguları hakkında yardım |
+
 ## Kurulum ve işletim
 
 ### MacBook üzerinden geliştirmeye devam

@@ -85,7 +85,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
    });return svg;
   };
   art+=panel(`${brokerLabel} ÜZERİNDEN ALIM`,data.buy,left,layout!=='masthead')+panel(`${brokerLabel} ÜZERİNDEN SATIM`,data.sell,both?left+col+gap:left,layout==='masthead');
-  art+=block(d.body,left,1200,width,100,29,fg,22);
+  // Institutional tables carry their own units; no generated prose footer.
  }else{
   art+=block(d.headline,left,268,width,192,61,fg,38,700,align);
   if(data?.ticker)art+=text(data.ticker,1004,486,34,fg,700,'end');

@@ -346,5 +346,28 @@
     "method": "reference",
     "editorial_priority": 100,
     "minimum_score": 60
+  },
+  {
+    "id": "spk-x",
+    "name": "SPK · X",
+    "url": "https://x.com/spkgovtr",
+    "family": "spk",
+    "language": "tr",
+    "official": false,
+    "allowed_hosts": [
+      "spk.gov.tr",
+      "www.spk.gov.tr",
+      "pbs.twimg.com"
+    ],
+    "poll_seconds": 600,
+    "fresh_hours": 168,
+    "enabled": true,
+    "checked_at": "2026-10-22",
+    "terms_url": "https://spk.gov.tr",
+    "rights_note": "Public Nitter RSS discovery; attributed X copy is not independent official verification. Linked official SPK documents and all supported attachments are required before generation. No X API reads or credentials.",
+    "review_mode": "owner_requested",
+    "method": "reference",
+    "editorial_priority": 100,
+    "minimum_score": 0
   }
 ]

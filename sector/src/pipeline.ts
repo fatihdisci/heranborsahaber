@@ -60,11 +60,14 @@ export async function prepare(env:Env):Promise<void> {
  const priority=(a:{title:string;summary:string;published_at:string;config:string})=>topicScore(a.title,a.summary,JSON.parse(a.config).official).score-(Date.now()-Date.parse(a.published_at))/3600_000*2;
  const selected=(queue.results??[]).sort((a,b)=>priority(b)-priority(a)).slice(0,2);
  for(const article of selected) {
-  const lock=await env.DB.prepare('UPDATE articles SET lease_until=? WHERE id=? AND lease_until<?').bind(time+360,article.id,time).run();if(!lock.meta.changes)continue;
+  const lock=await env.DB.prepare('UPDATE articles SET lease_until=? WHERE id=? AND lease_until<?').bind(time+(JSON.parse(article.config).id==='spk-x'?1800:360),article.id,time).run();if(!lock.meta.changes)continue;
   try {
    const source=JSON.parse(article.config) as Source;
-   const doc=source.method==='bridge_pdf'&&article.document?JSON.parse(article.document) as Document:await readDocument(article,source);doc.family=evidenceFamily(doc);
-   const documents=[doc];
+   if(source.id==='spk-x'&&(!env.READ_SPK_X||!article.document))throw Error('x_reader_unavailable');
+   const documents=source.id==='spk-x'?await env.READ_SPK_X!(article.document!):[source.method==='bridge_pdf'&&article.document?JSON.parse(article.document) as Document:await readDocument(article,source)];
+   if(!documents.length)throw Error('x_evidence_empty');
+   for(const d of documents)d.family=evidenceFamily(d);const doc=documents[0];
+   if(source.id==='spk-x'){article.document=JSON.stringify({...JSON.parse(article.document!),cached_documents:documents});await env.DB.prepare('UPDATE articles SET document=?,document_expires=? WHERE id=?').bind(article.document,time+7*86400,article.id).run();}
    const kap=(registry as Source[]).find(s=>s.id==='kap');
    for(const url of doc.primary_urls??[])if(kap)try{documents.push(await readDocument({title:doc.title,url,summary:'',published_at:doc.published_at},kap));}catch{/* Missing primary document leaves attribution intact, never an invented official confirmation. */}
    // Merge closely matching reports before generating. Unrelated companies,
@@ -82,7 +85,7 @@ export async function prepare(env:Env):Promise<void> {
    const jobId=crypto.randomUUID(),input=JSON.stringify(documents);
    await env.DB.batch([
     env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,related_ids,input_hash,created_at,kind) VALUES(?,?,?,?,?,?,'news') ON CONFLICT(article_id,expected_revision) DO UPDATE SET documents=excluded.documents,related_ids=excluded.related_ids,input_hash=excluded.input_hash,created_at=excluded.created_at,kind='news',state='queued',error=NULL,lease_until=0 WHERE model_jobs.state IN ('needs_review','expired','paused')").bind(jobId,article.id,input,JSON.stringify(relatedIds),await sha256(input),time),
-    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(JSON.stringify(doc),time+7*24*3600,article.id),
+    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(source.id==='spk-x'?article.document:JSON.stringify(doc),time+7*24*3600,article.id),
     env.DB.prepare("UPDATE news_cards SET state='model_queued' WHERE article_id=? AND state='requested'").bind(article.id)
    ]);
   } catch(e) {

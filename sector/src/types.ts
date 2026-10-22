@@ -22,6 +22,7 @@ export interface Draft {
   card_headline:string;card_body:string;
 }
 export interface Env {
+  READ_SPK_X?:(manifest:string)=>Promise<Document[]>;
   KAP_REPORT?:(kind:'circuit'|'buyback',at:number)=>Promise<{draft:Draft;documents:Document[]}>;
   RENDER_REPORT?:(svg:string)=>Promise<Uint8Array>;
   X_PUBLISH_ENABLED?:string;

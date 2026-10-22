@@ -1,4 +1,4 @@
-import {refreshPublicationCard} from './publication-assistant';
+import {refreshPublicationCard,publicationSummary} from './publication-assistant';
 import {postText} from './editorial';
 import {telegram} from './telegram';
 import type {DraftRow} from './pipeline';
@@ -23,7 +23,7 @@ export async function requestX(env:Env,data:string,messageId:number,callbackId:s
     (SELECT COUNT(*) FROM x_posts WHERE day=? AND state IN ('queued','uploading','posting','sent','uncertain'))<?
     AND NOT EXISTS(SELECT 1 FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain')) AND NOT EXISTS(SELECT 1 FROM publication_marks WHERE draft_id=? AND state='published')`)
     .bind(crypto.randomUUID(),row.id,row.revision,xDay(),postText(JSON.parse(row.content)),row.media_key,Date.now(),env.TELEGRAM_UPDATE_ID??null,xDay(),X_LIMIT,row.id,row.id).run();
-   if(result.meta.changes)text=`Paylaşım sıraya alındı. Bugün ${await xCount(env)}/${X_LIMIT}.`;
+   if(result.meta.changes){const s=await publicationSummary(env);text=`Sıraya alındı. API ${await xCount(env)}/${X_LIMIT}. ${s.note}`;}
    else {
     const manual=await env.DB.prepare("SELECT 1 FROM publication_marks WHERE draft_id=? AND state='published'").bind(row.id).first();
     const old=await env.DB.prepare("SELECT state FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain')").bind(row.id).first<{state:string}>();

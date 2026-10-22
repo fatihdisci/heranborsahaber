@@ -1,18 +1,15 @@
+import {publicationAdvice,dailyAdvice,cadence,publicationPlan} from './publication-policy';
+export {cadence} from './publication-policy';
 import type {Env} from './types';
 import {telegram,keyboard} from './telegram';
 import {postText} from './editorial';
 export const publicationSQL=`SELECT draft_id,MIN(finished_at) published_at,'api' method FROM x_posts WHERE state='sent' GROUP BY draft_id UNION ALL SELECT draft_id,published_at,'manual' method FROM publication_marks m WHERE state='published' AND NOT EXISTS(SELECT 1 FROM x_posts x WHERE x.draft_id=m.draft_id AND x.state='sent')`;
-export function cadence(last:number|null,now=Date.now()){
- if(!last)return 'İlk kayıt. Son dakika haberini bekletme.';
- const minutes=Math.max(0,Math.floor((now-last)/60000)),hour=new Date(now+10800000).getUTCHours();
- return `${minutes} dakika geçti. `+(hour<8||hour>=22?'Dinlenme saatleri; paylaşım zorunlu değil.':minutes<20?'Çok yakın. Rutin içerikse bekletebilirsin; son dakika hariç.':minutes<45?'Kısa aralık. Rutin içerik biraz bekleyebilir.':minutes<=90?'Rutin paylaşım için uygun aralık.':'Uzun ara. Yeni, değerli haber varsa paylaşabilirsin; zorunlu değil.');
-}
 export async function publicationSummary(env:Env,now=Date.now()){
  const day=new Date(now+10800000).toISOString().slice(0,10),start=Date.parse(day+'T00:00:00+03:00');
  const all=(await env.DB.prepare(publicationSQL).all<{draft_id:string;published_at:number;method:string}>()).results;
  const today=all.filter(r=>r.published_at>=start&&r.published_at<start+86400000);const last=all.length?Math.max(...all.map(r=>r.published_at)):null;
  const reserved=(await env.DB.prepare("SELECT COUNT(*) n FROM x_posts WHERE day=? AND state IN ('queued','uploading','posting','sent','uncertain')").bind(day).first<{n:number}>())?.n??0;
- const api=today.filter(r=>r.method==='api').length;return {day,reserved,total:today.length,manual:today.length-api,api,last,note:cadence(last,now)};
+ const api=today.filter(r=>r.method==='api').length;return {day,reserved,total:today.length,manual:today.length-api,api,last,note:publicationAdvice(last,today.length,now)};
 }
 export async function refreshPublicationCard(env:Env,id:string){
  const r=await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<any>();if(!r?.message_id)return;
@@ -44,9 +41,17 @@ export async function publicationAction(env:Env,action:string,id:string,update:n
   ]);
  }
  await refreshPublicationCard(env,id);
- const s=await publicationSummary(env,now);return `${action==='mark'?'✅ Manuel yayın kaydedildi. ':action==='undo'?'↩️ İşaret geri alındı. ':action==='defer'?'⏸ Ertelendi (otomatik paylaşılmaz). ':''}Bugün ${s.total}: ${s.manual} manuel / ${s.api} API. Bütçe ${s.reserved}/20. Son: ${s.last?new Date(s.last).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}):'—'}. ${action==='mark'?before.note:s.note}`;
+ const s=await publicationSummary(env,now);return `${action==='mark'?'✅ ':action==='undo'?'↩️ ':action==='defer'?'⏸ ':''}${s.total} yayın (${s.manual} elle/${s.api} API), bütçe ${s.reserved}/20. Son ${s.last?new Date(s.last).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}):'—'}. ${cadence(action==='mark'?before.last:s.last,now)} ${dailyAdvice(s.total,now)}`;
 }
 export async function publicationMessage(env:Env,m:any,update:number){
+ if(m.text==='/yayinplani'||m.text==='/yayınplanı'){await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:publicationPlan}));return true;}
+ if(m.text==='/yayinraporu'||m.text==='/yayınraporu'){
+  const {publicationCsv}=await import('./publication-report');const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);
+  form.set('document',new Blob([await publicationCsv(env)],{type:'text/csv;charset=utf-8'}),'endeks-yayin-raporu.csv');
+  form.set('caption','Son 28 günün kayıtlı yayınları. Manuel X bağlantısı ve performans alanları bilinmiyorsa boş; sıfır değildir. Başlık/kategori/şablon mevcut kartı yansıtır. Gerçek yayın verisiyle eşleştir; acil/rutin ve deney grubunu elle belirt.');
+  await telegram(env,'sendDocument',form);return true;
+ }
+
  if(m.text==='/yayinlar'||m.text==='/yayınlar'){const s=await publicationSummary(env);await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:`Bugün ${s.total} paylaşım: ${s.manual} manuel / ${s.api} API. API bütçesi ${s.reserved}/20. Son yayın: ${s.last?new Date(s.last).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'}):'—'}. ${s.note}`}));return true;}
  const start=m.text?.match(/^\/start pub_(mark|undo|defer|time|stats)_([a-f0-9-]{36})$/);
  if(start){const text=await publicationAction(env,start[1],start[2],update);await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text}));return true;}

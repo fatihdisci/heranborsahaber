@@ -142,3 +142,22 @@ Bu çalışma sırasında gerçek bir A/B yayın deneyi, otomatik analitik topla
 - Herkese açık hesap verisinde 22 Ekim dışındaki içerikler ve yinelenen kimlikler çıkarıldı. Profil geçmişinin tamamına ulaşıldığı varsayılmadı.
 - Sayımlar `hesap-ornegi.json` içindeki gönderilerden tekrar hesaplanabilir. Yalnız kamuya açık gönderi kimlikleri, başlıkları, saatleri ve etiketleri kaydedildi; token, Telegram kimliği veya özel mesaj yok.
 - Canlı sistem değiştirilmedi. Rapor için uygulama testleri gerekmiyor; veri sayımı, bağlantı biçimleri ve Git diff kontrol edildi.
+
+## 8. Uygulama takibi — 22 Ekim 2026
+
+Araştırmadan sonra eklenenler:
+
+- Manuel ✅ işaretleri ve başarılı API yayınlarını tekilleştiren ortak sayaç; İstanbul gün sınırı, son yayın zamanı, geri alma ve saat düzeltme.
+- Telegram ve Mini App’te aralık/günlük toplam önerisi. Rutin 45–75 dakika, büyük tablolar için 60–90 dakika; 12/16/20 toplamda seçicilik uyarısı. Hafta sonu daha hafif plan. Bunlar engelleyici algoritma kuralları değildir; son dakika bekletilmez.
+- `/yayinplani`: yayın pencereleri, içerik seçimi ve dört haftalık karşılaştırma planı.
+- `/yayinraporu`: son 28 günün kayıtlı yayınlarını CSV olarak verir. Yayın zamanı, yöntem, bilinen API tweet bağlantısı, önceki yayına dakika, mevcut kart başlığı/kategorisi/şablonu ve doğrulanmış kodlar bulunur. Acil/rutin, deney grubu ve 15 dk/1/3/24/48 saat gösterim alanları boş bırakılır. Bilinmeyen metrik sıfır değildir. Başlık ve türler mevcut taslağa aittir; geçmiş X içeriğinin değişmez kopyası sayılmaz.
+- Mevcut 20 API/gün limiti korunur. Manuel sayım bütçeyi tüketmez; rapordaki editoryal toplam önerisiyle API limiti farklıdır.
+
+Hesap sahibinin yapacakları:
+
+1. Elle yayımladığını ✅ ile kaydet; geç işaretliyorsan gerçek yayın saatini 🕒 ile düzelt. Önceki kayıt dışı paylaşımlar otomatik bulunmuş sayılmaz.
+2. Normal gün 8–12 güçlü içerikle dene; sayı doldurma. Rutin geri alımlarda genel tabloyu, AKD’de gün ortası/gün sonu kesitlerini, devre kesicide önemli dalgaları seç. Acil haberi takvim uğruna bekletme.
+3. İlk iki haftada 8/12 planlarını dengeli karşılaştır; sonraki iki haftada günlük sayıyı sabit tutarak aralığı karşılaştır. CSV’de acil/rutin ve deney grubunu belirt.
+4. X Analytics üzerinden aynı yaştaki gönderim sonuçlarını ve günlük takipçi değişimini kaydet. CSV’de elle paylaşılan gönderi URL’lerini ekle. Gösterim toplamı tekil erişim değildir.
+
+Açık kalan veri ihtiyacı: özel X Analytics erişimi/çıktısı olmadan gerçek performans, takipçi artışı veya hesaba özel en iyi saat hesaplanamaz. Ücretli okuma, otomatik metrik taraması, yeni hatırlatma görevi veya otomatik paylaşım başlatılmadı. Önce ölçüm biriktirilecek; optimum iddiası yapılmayacak.

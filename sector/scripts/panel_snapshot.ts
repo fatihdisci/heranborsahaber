@@ -1,4 +1,5 @@
-import {publicationSQL,cadence} from '../src/publication-assistant';
+import {publicationSQL} from '../src/publication-assistant';
+import {publicationAdvice} from '../src/publication-policy';
 import {DatabaseSync} from 'node:sqlite';import {createHash} from 'node:crypto';
 import {postText} from '../src/editorial';import type {Snapshot,PanelItem} from '../src/miniapp/types';
 const parse=(s:unknown,fallback:any={})=>{try{return JSON.parse(String(s));}catch{return fallback;}};
@@ -23,6 +24,6 @@ export function snapshot(newsPath:string,kapPath:string,now=Date.now()):{snapsho
  for(const r of records.slice(0,750)){const d=parse(r.metadata),decision=parse(r.decision),u=url(d.url);if(sourceURLs.has(u))continue;items.push({id:'kap:'+r.id,kind:'kap',title:String(d.company?d.company+' — '+d.title:d.title).slice(0,1000),summary:String(d.summary??'').slice(0,6000),source:'KAP',url:u,at:Date.parse(d.publishedAt),topics:Array.isArray(decision.topics)?decision.topics:['other'],codes:(d.subjectCodes??[]).filter((c:string)=>/^[A-Z][A-Z0-9]{3,4}$/.test(c)),state:'source'});}
  const day=new Date(now+10800000).toISOString().slice(0,10);const count=news.prepare("SELECT COUNT(*) n FROM x_posts WHERE day=? AND state IN ('queued','uploading','posting','sent','uncertain')").get(day);
  const start=Date.parse(day+'T00:00:00+03:00'),today=publications.filter(p=>Number(p.published_at)>=start&&Number(p.published_at)<start+86400000),last=publications.length?Math.max(...publications.map(p=>Number(p.published_at))):null;
- return {snapshot:{version:1,generatedAt:now,since,truncated,items:items.sort((a,b)=>b.at-a.at),publication:{total:today.length,manual:today.filter(p=>p.method==='manual').length,api:today.filter(p=>p.method==='api').length,last,note:cadence(last,now)},x:{day,used:Number(count?.n??0),limit:20}},media};
+ return {snapshot:{version:1,generatedAt:now,since,truncated,items:items.sort((a,b)=>b.at-a.at),publication:{total:today.length,manual:today.filter(p=>p.method==='manual').length,api:today.filter(p=>p.method==='api').length,last,note:publicationAdvice(last,today.length,now)},x:{day,used:Number(count?.n??0),limit:20}},media};
  }finally{news.close();kap.close();}
 }

@@ -1,3 +1,4 @@
+import {botQuery,BOT_QUERY_HELP} from './bot-query';
 import {ensureManualStatus} from './manual-status';
 import {isOwner,telegram} from './telegram';
 import {marketInput,marketSelection} from './market-input';
@@ -6,6 +7,16 @@ export interface InputMessage {message_id:number;date?:number;text?:string;capti
 export async function queueManual(env:Env,updateId:number,m:InputMessage):Promise<boolean> {
  if(!m.from||!m.chat||!isOwner(env,String(m.from.id),String(m.chat.id),m.chat.type)||!Number.isSafeInteger(m.message_id)||!Number.isSafeInteger(updateId))return false;
  let text=(m.text??m.caption??'').trim();const focus=marketSelection(text);
+ if(text==='/sorgular'||/^\/(?:kurum|akd|takas)(?:@[a-zA-Z0-9_]+)?(?:\s|$)/iu.test(text)){
+  // Forwarded commands are source material, never authority to query a bot.
+  if(m.forward_origin)return false;
+  let query;try{query=botQuery(text);}catch{}
+  if(!query){if(env.MODE==='telegram_review')await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:BOT_QUERY_HELP}));return true;}
+  const input=JSON.stringify({text,query_key:String(updateId),submitted_at:m.date??Math.floor(Date.now()/1000)});
+  const inserted=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,'bot_query',input,Math.floor(Date.now()/1000)).run();
+  if(inserted.meta.changes)await ensureManualStatus(env,updateId,m.message_id,'Sorgunu aldım. İlgili bottan verileri alıp tweet ve görselini hazırlıyorum. Sonuç bu mesajda görünecek.');
+  return true;
+ }
  const reply=focus?m.reply_to_message:undefined;
  const draft=reply?await env.DB.prepare('SELECT id,documents FROM drafts WHERE message_id=?').bind(reply.message_id).first<{id:string;documents:string}>():null;
  const reuse=draft&&JSON.parse(draft.documents).some((d:{market_data?:unknown;body?:string})=>d.market_data||marketInput(d.body??''))?draft:null;
@@ -21,7 +32,7 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
   const source=text.match(/^\/start source_(\d+)$/);
   if(source){const id=Number(source[1]),row=await env.DB.prepare('SELECT message_id,input FROM manual_requests WHERE message_id=?').bind(id).first<{message_id:number;input:string}>();
    if(row){const target=JSON.parse(row.input).source_message_id??id;if(!Number.isSafeInteger(target)||target<=0)throw Error('manual_source_invalid');await telegram(env,'copyMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,from_chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(target)}));}
-  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber veya KAP bağlantısını, PDF dosyasını, metni ya da görseli buraya gönder. Diğer botun /kurum, /akd ve /takas yanıtlarını da iletebilirsin. BoPT kurum analizini de iletebilirsin. Kaynak mesaja veya oluşan karta “Sadece alınanlar” / “Sadece satılanlar” diye yanıt vererek ayrı içerik isteyebilirsin. Kaynağı okuyup ENDEKS HABER tarzında tweet ve kart hazırlayacağım. Veri tarihini tahmin etmem; okunamayan sayıdan içerik üretmem.'}));
+  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber veya KAP bağlantısını, PDF dosyasını, metni ya da görseli buraya gönder. Otomatik bot sorgularını görmek için /sorgular yaz. Diğer botun /kurum, /akd ve /takas yanıtlarını da iletebilirsin. BoPT kurum analizini de iletebilirsin. Kaynak mesaja veya oluşan karta “Sadece alınanlar” / “Sadece satılanlar” diye yanıt vererek ayrı içerik isteyebilirsin. Kaynağı okuyup ENDEKS HABER tarzında tweet ve kart hazırlayacağım. Veri tarihini tahmin etmem; okunamayan sayıdan içerik üretmem.'}));
   return true;
  }
  if(focus&&!reply&&!m.photo?.length&&!m.document&&text.length<240){

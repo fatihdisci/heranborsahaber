@@ -9,3 +9,8 @@ reports/articles/
 reports/policy/
 outputs/*
 !outputs/.gitkeep
+
+# Personal Telegram credentials and sessions must stay outside Git.
+*.session
+*.session-journal
+telegram-account/

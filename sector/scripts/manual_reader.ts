@@ -1,3 +1,4 @@
+import {botDocuments} from './bot_query_reader';
 import {withMarketTiming} from '../src/market-timing';
 import {ensureManualStatus,manualStatusId} from '../src/manual-status';
 import registry from '../sources.json';
@@ -20,7 +21,8 @@ async function telegramFile(env:Env,file:{file_id:string;file_size?:number}):Pro
  return boundedBytes(r);
 }
 export async function manualDocuments(env:Env,kind:string,input:string,messageId:number,extractImage:(bytes:Uint8Array)=>Promise<ImageEvidence>=readImage):Promise<Document[]> {
- const value=JSON.parse(input) as {url?:string;text:string;submitted_at?:number;origin_bot?:string;focus?:'buy'|'sell'|'both';draft_id?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
+ const value=JSON.parse(input) as {url?:string;text:string;query_key?:string;submitted_at?:number;origin_bot?:string;focus?:'buy'|'sell'|'both';draft_id?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
+ if(kind==='bot_query')return botDocuments(value.text,value.query_key??'',value.submitted_at);
  if(kind==='url'){
   const u=new URL(value.url!);const kap=u.hostname==='www.kap.org.tr'&&u.pathname.match(/^\/tr\/Bildirim\/(\d+)$/);
   if(kap)return kapDocuments(Number(kap[1]),readPdf);
@@ -79,19 +81,19 @@ export async function runManual(env:Env):Promise<void> {
  if(failed&&env.MODE==='telegram_review'){
   // Claim before sending an error reply; never flood on a delivery timeout.
   await env.DB.prepare('UPDATE manual_requests SET notified=1 WHERE update_id=?').bind(failed.update_id).run();
-  const text=failed.error==='delivery_uncertain'?'Tweet ve görsel hazır; teslimatın sonucu belirsiz. Aynı içerik otomatik olarak tekrar gönderilmeyecek.':failed.error==='delivery_failed'?'Tweet ve görsel hazır ancak Telegram teslimatı başarısız oldu. Yeniden AI kullanılmadı.':failed.error==='delivery_suppressed'?'Bu içerik güncel gönderim tercihlerine göre kapatıldı.':failed.error==='model_retry_unavailable'?'Bu içerik için yeniden deneme sınırına ulaşıldı veya mevcut hata güvenli biçimde yeniden denenemiyor. Hazır içerik varsa tekrar oluşturulmaz.':/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error.startsWith('image_')?'Görseldeki tabloyu veya metni eksiksiz okuyamadım. Kurum ya da sayı tahmin etmedim. Daha net görseli veya botun metin çıktısını iletebilirsin.':failed.error==='manual_market_focus_unsupported'?'Takas/saklama dağılımından alım-satım sonucu çıkarılamaz. Alım-satım için kurum analizi veya AKD çıktısını iletebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
+  const text=failed.error==='bot_account_not_connected'?'Otomatik sorgu için Telegram hesap bağlantısı henüz tamamlanmadı. Mac mini üzerinde hesap bağlantısını tamamladıktan sonra komutu yeniden gönderebilirsin.':failed.error==='bot_query_delivery_uncertain'?'Sorgunun diğer bota ulaşıp ulaşmadığı belirsiz. Aynı komutu otomatik tekrar göndermedim. İlgili bot sohbetini kontrol edebilirsin.':failed.error==='bot_query_ambiguous'?'Bu sorgu sırasında aynı botta başka bir komut bulundu. Yanıtlar karışabileceği için içerik hazırlamadım.':failed.error.startsWith('bot_query_')?'Bot sorgusu tamamlanamadı veya dönen veri sorguyla eşleşmedi. Bot yanıtını editör botuna iletebilir ya da komutu yeniden gönderebilirsin.':failed.error==='delivery_uncertain'?'Tweet ve görsel hazır; teslimatın sonucu belirsiz. Aynı içerik otomatik olarak tekrar gönderilmeyecek.':failed.error==='delivery_failed'?'Tweet ve görsel hazır ancak Telegram teslimatı başarısız oldu. Yeniden AI kullanılmadı.':failed.error==='delivery_suppressed'?'Bu içerik güncel gönderim tercihlerine göre kapatıldı.':failed.error==='model_retry_unavailable'?'Bu içerik için yeniden deneme sınırına ulaşıldı veya mevcut hata güvenli biçimde yeniden denenemiyor. Hazır içerik varsa tekrar oluşturulmaz.':/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error.startsWith('image_')?'Görseldeki tabloyu veya metni eksiksiz okuyamadım. Kurum ya da sayı tahmin etmedim. Daha net görseli veya botun metin çıktısını iletebilirsin.':failed.error==='manual_market_focus_unsupported'?'Takas/saklama dağılımından alım-satım sonucu çıkarılamaz. Alım-satım için kurum analizi veya AKD çıktısını iletebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
   const statusId=await manualStatusId(env,failed.update_id);
   await telegram(env,statusId?'editMessageText':'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,...(statusId?{message_id:String(statusId)}:{reply_parameters:JSON.stringify({message_id:failed.message_id,allow_sending_without_reply:true})})}));
  }
  const busy=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state IN ('queued','leased')").first<{n:number}>();if((busy?.n??0)>=5)return;
  await env.DB.prepare("UPDATE manual_requests SET state='queued' WHERE state='reading' AND lease_until<?").bind(now).run();
  const row=await env.DB.prepare("SELECT * FROM manual_requests WHERE state='queued' AND lease_until<=? ORDER BY created_at LIMIT 1").bind(now).first<{update_id:number;message_id:number;kind:string;input:string;attempts:number}>();if(!row)return;
- const claimed=await env.DB.prepare("UPDATE manual_requests SET state='reading',lease_until=?,attempts=attempts+1 WHERE update_id=? AND state='queued'").bind(now+300,row.update_id).run();if(!claimed.meta.changes)return;
+ const claimed=await env.DB.prepare("UPDATE manual_requests SET state='reading',lease_until=?,attempts=attempts+1 WHERE update_id=? AND state='queued'").bind(now+(row.kind==='bot_query'?600:300),row.update_id).run();if(!claimed.meta.changes)return;
  try{
   const docs=await manualDocuments(env,row.kind,row.input,row.message_id),job=await enqueueEvidence(env,docs,'manual');
   await env.DB.prepare("UPDATE manual_requests SET state='model_queued',job_id=?,lease_until=0,error=NULL WHERE update_id=?").bind(job,row.update_id).run();
  }catch(e){const error=e instanceof Error&&/^[a-z_]{3,70}$/.test(e.message)?e.message:'manual_read_failed';
-  const permanent=/unsupported|limit|invalid|model_retry_unavailable|manual_market_row_incomplete|image_market_/.test(error)||row.attempts>=2;
+  const permanent=/bot_account_|bot_query_delivery_uncertain|bot_query_ambiguous|bot_query_expired|bot_query_.*mismatch|unsupported|limit|invalid|model_retry_unavailable|manual_market_row_incomplete|image_market_/.test(error)||row.attempts>=2;
   await env.DB.prepare('UPDATE manual_requests SET state=?,lease_until=?,error=? WHERE update_id=?').bind(permanent?'needs_review':'queued',now+60,error,row.update_id).run();
  }
 }

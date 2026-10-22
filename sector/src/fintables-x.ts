@@ -11,8 +11,15 @@ export function selectFintablesPost(post:SpkPost):boolean{
 }
 export const parseFintablesPosts=(xml:string)=>parseSpkPosts(xml,'fintables');
 export async function fetchFintablesPosts(fetcher:typeof fetch=fetch){
- for(const host of SPK_X_HOSTS)try{const r=await readPublic('https://'+host+'/fintables/rss',[host],{},fetcher);return {posts:parseFintablesPosts(r.text),host};}catch{/* Validate each independent mirror. */}
- throw Error('x_all_mirrors_unavailable');
+ const results=await Promise.allSettled(SPK_X_HOSTS.map(async host=>{
+  const r=await readPublic('https://'+host+'/fintables/rss',[host],{'Cache-Control':'no-cache'},fetcher);
+  return {posts:parseFintablesPosts(r.text),host};
+ }));
+ const feeds=results.flatMap(r=>r.status==='fulfilled'?[r.value]:[]);if(!feeds.length)throw Error('x_all_mirrors_unavailable');
+ // A valid response can still be stale. Merge independently verified feeds,
+ // retaining post IDs so the persistent poller remains idempotent.
+ const posts=[...new Map(feeds.flatMap(f=>f.posts).map(p=>[p.id,p])).values()].sort((a,b)=>Date.parse(b.at)-Date.parse(a.at));
+ return {posts,host:feeds.map(f=>f.host).join(',')};
 }
 export const pollFintablesX=(env:Env,now=Date.now(),load=fetchFintablesPosts)=>pollSpkX(env,now,load,'fintables-x',selectFintablesPost);
 // These links navigate to changing company dashboards / app install, not the

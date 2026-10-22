@@ -34,3 +34,14 @@ test('Fintables has an independent persistent ten-minute state; initial history 
  assert.equal(await DB.prepare("SELECT value FROM system_state WHERE key='spk_x_state'").first(),null);
  await pollFintablesX(env,now+1800000,async()=>{throw Error('offline');});const state=JSON.parse((await DB.prepare("SELECT value FROM system_state WHERE key='fintables_x_state'").first<{value:string}>())!.value);assert.equal(state.seen.length,3);assert.equal(state.failures,1);
 });
+
+test('proxied link-card thumbnail does not invalidate unrelated financial posts',()=>{
+ const raw=xml().replace('https://pbs.twimg.com/media/test.jpg','http://nitter.meowing.monster/pic/card_img%2F2113245328686112768%2FxWqG_xMJ%3Fformat%3Djpg%26name%3D800x419');
+ assert.equal(parseFintablesPosts(raw)[0].images[0],'https://pbs.twimg.com/card_img/2113245328686112768/xWqG_xMJ?format=jpg&name=800x419');
+ assert.throws(()=>parseFintablesPosts(raw.replace('card_img%2F','other%2F')),/image_host/);
+});
+test('stale first mirror cannot hide new posts available from another mirror',async()=>{
+ const {fetchFintablesPosts}=await import('../src/fintables-x');
+ const r=await fetchFintablesPosts((async(url:unknown)=>String(url).includes('netbub')?new Response(xml(item('123'))):String(url).includes('meowing')?new Response(xml(item('124')+item('123'))):new Response('rate limited',{status:429})) as typeof fetch);
+ assert.deepEqual(new Set(r.posts.map(p=>p.id)),new Set(['123','124']));assert.equal(r.posts.length,2);
+});

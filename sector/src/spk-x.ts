@@ -21,7 +21,7 @@ export function parseSpkPosts(xml:string,account='spkgovtr'):SpkPost[]{
   const images=unique([...document.querySelectorAll('img[src]')].map(a=>{
    const u=new URL(a.getAttribute('src')!,url);u.protocol='https:';
    if(u.hostname==='pbs.twimg.com')return safeUrl(u.href,['pbs.twimg.com']);
-   if(SPK_X_HOSTS.includes(u.hostname)){const path=decodeURIComponent(u.pathname.replace(/^\/pic\//,''));if(/^media\/[A-Za-z0-9_-]+\.(jpg|png|webp)$/.test(path))return 'https://pbs.twimg.com/'+path;}
+   if(SPK_X_HOSTS.includes(u.hostname)){const path=decodeURIComponent(u.pathname.replace(/^\/pic\//,''));if(/^media\/[A-Za-z0-9_-]+\.(jpg|png|webp)$/.test(path))return 'https://pbs.twimg.com/'+path;if(/^card_img\/\d+\/[A-Za-z0-9_-]+\?format=(?:jpg|png|webp)&name=[A-Za-z0-9_x]+$/.test(path))return safeUrl('https://pbs.twimg.com/'+path,['pbs.twimg.com']);}
    throw Error('x_image_host');
   }));
   const text=stripHtml(raw)||stripHtml(i.querySelector('title')?.textContent??'')||(images.length?account+' görsel paylaşımı':'');if(!text.trim())throw Error('x_post_empty');

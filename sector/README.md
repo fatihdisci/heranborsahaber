@@ -190,3 +190,5 @@ Mr/Mn ve ondalık nokta alan bağlamına göre normalleştirilir; lot/adet binli
 ## ChatGPT kart paketi
 
 `node node_modules/tsx/dist/cli.mjs scripts/export_chatgpt_kit.ts` komutu `exports/ENDEKS-HABER-ChatGPT/` altında çevrimdışı kart motorunu, fontları, marka dosyalarını, JSON/SVG/PNG örneklerini ve `docs/chatgpt-kit-prompt.txt` kullanım promptunu paketler. `node render.mjs content.json kart.png` ile npm kurulmadan PNG üretir. Gizli bilgi veya canlı veri içermez. Devre kesici, tema/yerleşim seçimine bakmadan sabit lacivert/editorial şablonda doğrulanmış kod sayısına uyarlanır.
+
+Elle iletilen kurum/AKD/takas içeriklerinde Telegram’ın ilk mesaj zamanı İstanbul saatine çevrilir: 10–11 Açılışın ilk dakikaları; 11–14 Gün ortası; 14–18 Kapanışa doğru; 18–22 Gün sonu. Başlık bağlamı kaynak ölçüm saati değildir. Yeniden deneme ve seçim yanıtları ilk zamanı korur; açıkça farklı günün verisine veya saat bilgisi olmayan eski işlere bu başlıklar eklenmez.

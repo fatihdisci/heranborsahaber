@@ -100,6 +100,12 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,Math.max(3,required.length)):valid;
  const circuit=documents.some(d=>d.official&&d.source_id==='kap'&&/devre kesici/i.test(d.title));
  const market=documents.find(d=>d.market_data)?.market_data;
+ const period=market?.editorial_period;
+ if(period){
+  const prefix=(s:string)=>fold(s).includes(fold(period))?s:period+' — '+s;
+  if(typeof value.headline==='string'){const m=/^((?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\uFE0F?)\s+/u.exec(value.headline);value={...value,headline:(m?m[0]:'')+prefix(m?value.headline.slice(m[0].length):value.headline)};}
+  if(typeof value.card_headline==='string')value={...value,card_headline:prefix(value.card_headline)};
+ }
  if(market?.kind==='institutional'&&market.broker){
   value={...value,card_data:{...value.card_data,broker:market.broker},...(typeof value.card_headline==='string'&&!fold(value.card_headline).includes(fold(market.broker))?{card_headline:market.broker+'\n'+value.card_headline}:{})};
  }

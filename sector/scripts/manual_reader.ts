@@ -1,3 +1,4 @@
+import {withMarketTiming} from '../src/market-timing';
 import {ensureManualStatus,manualStatusId} from '../src/manual-status';
 import registry from '../sources.json';
 import {readDocument} from '../src/article';
@@ -19,7 +20,7 @@ async function telegramFile(env:Env,file:{file_id:string;file_size?:number}):Pro
  return boundedBytes(r);
 }
 export async function manualDocuments(env:Env,kind:string,input:string,messageId:number,extractImage:(bytes:Uint8Array)=>Promise<ImageEvidence>=readImage):Promise<Document[]> {
- const value=JSON.parse(input) as {url?:string;text:string;origin_bot?:string;focus?:'buy'|'sell'|'both';draft_id?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
+ const value=JSON.parse(input) as {url?:string;text:string;submitted_at?:number;origin_bot?:string;focus?:'buy'|'sell'|'both';draft_id?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
  if(kind==='url'){
   const u=new URL(value.url!);const kap=u.hostname==='www.kap.org.tr'&&u.pathname.match(/^\/tr\/Bildirim\/(\d+)$/);
   if(kap)return kapDocuments(Number(kap[1]),readPdf);
@@ -41,7 +42,7 @@ export async function manualDocuments(env:Env,kind:string,input:string,messageId
   const captionDoc=caption?withMarketText({...base,title:caption.split('\n')[0],body:caption,passages:[{id:'provided_caption',text:caption}]}):undefined;
   const d:Document={...base,...evidence,title:evidence.market_data?.broker?evidence.market_data.broker+' kurum analizi':evidence.market_data?.ticker?evidence.market_data.ticker+' aracı kurum dağılımı':'İlettiğin görsel',source_name:value.origin_bot?'İlettiğin @'+value.origin_bot+' görseli':'İlettiğin görsel',
    ...(evidence.market_data?.ticker?{equity_codes:[evidence.market_data.ticker]}:evidence.market_data?.tickers?{equity_codes:evidence.market_data.tickers}:{}),body:[evidence.body,captionDoc?.market_data?'':caption].filter(Boolean).join('\n\n'),passages:[...evidence.passages,...(caption&&!captionDoc?.market_data?[{id:'provided_caption',text:caption}]:[])]};
-  return [selection(d),...(captionDoc?.market_data?[selection(captionDoc)]:[])];
+  const docs=[selection(d),...(captionDoc?.market_data?[selection(captionDoc)]:[])];const sourceText=docs.flatMap(d=>[d.body,...d.passages.map(p=>p.text)]).join('\n');return docs.map(d=>withMarketTiming(d,value.submitted_at,sourceText));
  }
  if(kind==='pdf'){
   if(!value.document?.file_id||(value.document.file_size??0)>20_000_000)throw Error('pdf_size_limit');
@@ -50,7 +51,7 @@ export async function manualDocuments(env:Env,kind:string,input:string,messageId
  }
  if(kind==='text'){
   const text=value.text.trim();if(text.length<100||text.length>100_000)throw Error('manual_text_length');
-  return [selection(withMarketText({...base,source_name:value.origin_bot?'İlettiğin @'+value.origin_bot+' metni':'Gönderdiğin metin',title:text.split('\n')[0].slice(0,180),body:text,passages:[{id:'provided_text',text}]}))];
+  return [withMarketTiming(selection(withMarketText({...base,source_name:value.origin_bot?'İlettiğin @'+value.origin_bot+' metni':'Gönderdiğin metin',title:text.split('\n')[0].slice(0,180),body:text,passages:[{id:'provided_text',text}]})),value.submitted_at)];
  }
  throw Error('manual_kind');
 }

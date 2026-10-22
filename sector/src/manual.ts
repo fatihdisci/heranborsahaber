@@ -2,7 +2,7 @@ import {ensureManualStatus} from './manual-status';
 import {isOwner,telegram} from './telegram';
 import {marketInput,marketSelection} from './market-input';
 import type {Env} from './types';
-export interface InputMessage {message_id:number;text?:string;caption?:string;photo?:{file_id:string;file_size?:number;width:number;height:number}[];document?:{file_id:string;file_size?:number;file_name?:string;mime_type?:string};forward_origin?:{type:string;sender_user?:{is_bot?:boolean;username?:string}};from?:{id:number};chat?:{id:number;type:string};reply_to_message?:InputMessage;}
+export interface InputMessage {message_id:number;date?:number;text?:string;caption?:string;photo?:{file_id:string;file_size?:number;width:number;height:number}[];document?:{file_id:string;file_size?:number;file_name?:string;mime_type?:string};forward_origin?:{type:string;sender_user?:{is_bot?:boolean;username?:string}};from?:{id:number};chat?:{id:number;type:string};reply_to_message?:InputMessage;}
 export async function queueManual(env:Env,updateId:number,m:InputMessage):Promise<boolean> {
  if(!m.from||!m.chat||!isOwner(env,String(m.from.id),String(m.chat.id),m.chat.type)||!Number.isSafeInteger(m.message_id)||!Number.isSafeInteger(updateId))return false;
  let text=(m.text??m.caption??'').trim();const focus=marketSelection(text);
@@ -35,7 +35,7 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
  const kind=reuse?'market_reuse':image?'image':source.document?'pdf':marketInput(text)?'text':url?'url':text.length>=100?'text':null;
  if(!kind)return false;
  const username=source.forward_origin?.type==='user'&&source.forward_origin.sender_user?.is_bot?source.forward_origin.sender_user.username:undefined;
- const input=JSON.stringify({url,text,document:source.document??null,image:image??null,...(focus?{focus}:{}),...(reuse?{draft_id:reuse.id}:{}),...(sourceMessageId?{source_message_id:sourceMessageId}:{}),...(username&&/^[a-zA-Z0-9_]{5,32}$/.test(username)?{origin_bot:username}:{})});if(input.length>150_000)throw Error('manual_input_limit');
+ const input=JSON.stringify({url,text,...(Number.isSafeInteger(source.date)&&source.date!>0?{submitted_at:source.date}:{}),document:source.document??null,image:image??null,...(focus?{focus}:{}),...(reuse?{draft_id:reuse.id}:{}),...(sourceMessageId?{source_message_id:sourceMessageId}:{}),...(username&&/^[a-zA-Z0-9_]{5,32}$/.test(username)?{origin_bot:username}:{})});if(input.length>150_000)throw Error('manual_input_limit');
  const inserted=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,kind,input,Math.floor(Date.now()/1000)).run();
  if(inserted.meta.changes)await ensureManualStatus(env,updateId,m.message_id);
  return true;

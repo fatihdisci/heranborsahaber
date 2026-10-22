@@ -6,6 +6,9 @@ import type {Env} from './types';
 export const X_LIMIT=20;
 export const xDay=(ms=Date.now())=>new Date(ms+10800000).toISOString().slice(0,10);
 export const xEnabled=(env:Env)=>env.MODE==='telegram_review'&&env.X_PUBLISH_ENABLED==='true';
+export function xDraftEligible(d:{revision:number;state:string;expires_at:number;media_key:string|null;delivery_state:string;verification:string},revision:number,media:string|null,now=Date.now()):boolean{
+ return d.revision===revision&&d.state==='pending'&&d.expires_at>Math.floor(now/1000)&&!!media&&d.media_key===media&&d.delivery_state==='sent'&&d.verification!=='needs_review';
+}
 export async function xCount(env:Env,day=xDay()){
  return (await env.DB.prepare("SELECT COUNT(*) n FROM x_posts WHERE day=? AND state IN ('queued','uploading','posting','sent','uncertain')").bind(day).first<{n:number}>())!.n;
 }
@@ -16,7 +19,7 @@ export async function requestX(env:Env,data:string,messageId:number,callbackId:s
  else {
   const match=data.match(/^xpost:([a-f\d-]{36}):(\d{1,6})$/);
   const row=match?await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(match[1]).first<DraftRow&{delivery_state:string}>():null;
-  if(!row||row.revision!==Number(match![2])||row.message_id!==messageId||!row.media_key||row.delivery_state!=='sent'||row.verification==='needs_review'||['rejected','needs_review'].includes(row.state))text='Kart güncellenmiş veya paylaşılabilir değil. Güncel kartı kullan.';
+  if(!row||row.message_id!==messageId||!xDraftEligible(row,Number(match![2]),row.media_key))text='Kart güncellenmiş, süresi dolmuş veya paylaşılabilir değil. Güncel kartı kullan.';
   else {
    const result=await env.DB.prepare(`INSERT OR IGNORE INTO x_posts(id,draft_id,revision,day,state,content,media_key,created_at,update_id)
     SELECT ?,?,?,?,'queued',?,?,?,? WHERE
@@ -45,15 +48,19 @@ export async function publishX(env:Env,api:XTransport,clock=Date.now){
  const claimed=await env.DB.prepare("UPDATE x_posts SET state='uploading',started_at=? WHERE id=? AND state='queued'").bind(clock(),row.id).run();if(!claimed.meta.changes)return;
  let posting=false;
  try{
-  const draft=await env.DB.prepare('SELECT revision,state,media_key FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;media_key:string}>();
-  if(!draft||draft.revision!==row.revision||draft.media_key!==row.media_key||['rejected','needs_review'].includes(draft.state))throw Error('x_stale_draft');
+  const draft=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string}>();
+  if(!draft||!xDraftEligible(draft,row.revision,row.media_key,clock()))throw Error('x_stale_draft');
   const identity=await api.identity();if(identity.username.toLowerCase()!=='endeks_haber')throw Error('x_wrong_account');
   const object=await env.MEDIA.get(row.media_key);if(!object)throw Error('x_image_missing');
   const bytes=new Uint8Array(await object.arrayBuffer());if(bytes.length>5000000||bytes[0]!==137||bytes[1]!==80)throw Error('x_image_invalid');
   const mediaId=await api.upload(bytes);
-  const latest=await env.DB.prepare('SELECT revision,media_key FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;media_key:string}>();
-  if(latest?.revision!==row.revision||latest.media_key!==row.media_key||xDay(clock())!==row.day)throw Error('x_stale_draft');
-  await env.DB.prepare("UPDATE x_posts SET state='posting',started_at=? WHERE id=?").bind(clock(),row.id).run();posting=true;
+  const latest=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string}>();
+  if(!latest||!xDraftEligible(latest,row.revision,row.media_key,clock())||xDay(clock())!==row.day)throw Error('x_stale_draft');
+  if(!await env.MEDIA.get(latest.media_key!))throw Error('x_image_missing');
+  const final=await env.DB.prepare(`UPDATE x_posts SET state='posting',started_at=? WHERE id=? AND state='uploading' AND day=? AND EXISTS(
+   SELECT 1 FROM drafts d WHERE d.id=x_posts.draft_id AND d.revision=x_posts.revision AND d.state='pending' AND d.expires_at>? AND d.media_key=x_posts.media_key AND d.delivery_state='sent' AND d.verification!='needs_review')`)
+   .bind(clock(),row.id,xDay(clock()),Math.floor(clock()/1000)).run();
+  if(!final.meta.changes)throw Error('x_stale_draft');posting=true;
   const remote=await api.post(row.content,mediaId);
   await env.DB.prepare("UPDATE x_posts SET state='sent',remote_id=?,finished_at=? WHERE id=?").bind(remote,clock(),row.id).run();
  }catch(e){

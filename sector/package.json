@@ -9,6 +9,7 @@
     "build": "wrangler deploy --dry-run --outdir dist",
     "dev": "wrangler dev --test-scheduled",
     "demo": "tsx scripts/demo.ts",
+    "kit:export": "tsx scripts/export_chatgpt_kit.ts",
     "sources:check": "python3 scripts/probe_sources.py",
     "db:local": "wrangler d1 migrations apply DB --local",
     "deploy": "wrangler deploy",

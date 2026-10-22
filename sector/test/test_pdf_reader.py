@@ -13,3 +13,9 @@ class PdfEvidenceTests(unittest.TestCase):
         self.assertEqual(lines[0].index('Alım'),lines[1].index('1.155.000'));self.assertEqual(lines[0].index('Satım'),lines[1].index('0',lines[0].index('Satım')))
     def test_confidence_and_coordinates_never_become_factual_source_numbers(self):
         text=reader.ocr_text([{'text':'85,7056 TL','confidence':.5,'x':.125,'y':.112,'height':.03}]);self.assertEqual(text.strip(),'85,7056 TL');self.assertNotIn('0.5',text)
+    def test_untrusted_page_boxes_are_bounded_before_render_allocation(self):
+        self.assertLessEqual(reader.render_scale(1_000_000,1_000_000),.01)
+        self.assertLessEqual(reader.render_scale(500,700),2)
+        for width,height in [(0,10),(-1,10),(float('inf'),10),(10,float('nan'))]:
+            with self.assertRaises(ValueError):reader.render_scale(width,height)
+        with self.assertRaises(ValueError):reader.render_scale(100,100,0)

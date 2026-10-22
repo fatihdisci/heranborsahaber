@@ -21,7 +21,7 @@ import {registerTelegramCommands} from '../src/telegram-commands';
 import {KapStore} from '../src/kap/store';
 import {KapDelivery} from '../src/kap-delivery';
 import {kapDocuments} from '../src/kap-evidence';
-import {readPdf} from './pdf_reader';
+import {readPdf,cleanupPdfArtifacts} from './pdf_reader';
 import {runManual} from './manual_reader';
 import {draftCard} from '../src/card';
 import {sha256} from '../src/utils/text';
@@ -37,6 +37,7 @@ try{const keys=JSON.parse(await readFile(directory+'/x-credentials.json','utf8')
 env.RENDER_REPORT=png;
 env.READ_SPK_X=async manifest=>{const post=JSON.parse(manifest);return post.cached_documents??(post.url?.startsWith('https://x.com/fintables/status/')?fintablesPostDocuments(post,readPdf,readImage):spkPostDocuments(post,readPdf,readImage));};
 await seed(env);
+await cleanupPdfArtifacts().catch(()=>0);
 const lockPath=directory+'/service.lock';let lock;
 try{lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}
 catch{try{const pid=Number(await readFile(lockPath,'utf8'));process.kill(pid,0);throw new Error('service_already_running');}catch(e){if((e as NodeJS.ErrnoException).code!=='ESRCH')throw e;await unlink(lockPath);lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}}

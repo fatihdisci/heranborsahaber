@@ -1,9 +1,26 @@
 """Full PDF evidence: every page, native text/tables and visual evidence for scans.
 No Java deserialization. Official KAP byte-array transport is unwrapped by TS.
 """
-import hashlib,json,pathlib,subprocess,sys
+import hashlib,json,pathlib,subprocess,sys,math
 import pdfplumber,pypdfium2
 from PIL import Image
+
+MAX_EDGE=12000
+MAX_PAGE_PIXELS=40_000_000
+MAX_TOTAL_PIXELS=80_000_000
+
+def render_scale(width,height,remaining=MAX_TOTAL_PIXELS):
+    if not all(isinstance(x,(int,float)) and 0<x<float('inf') for x in (width,height)):
+        raise ValueError('pdf_page_dimensions')
+    if remaining<=0:raise ValueError('pdf_pixel_budget')
+    budget=min(MAX_PAGE_PIXELS,remaining)
+    lo,hi=0.0,min(2.0,(MAX_EDGE-1)/width,(MAX_EDGE-1)/height)
+    for _ in range(64):
+        mid=(lo+hi)/2;pixels=math.ceil(width*mid)*math.ceil(height*mid)
+        if pixels<=budget:lo=mid
+        else:hi=mid
+    if not 0<lo<=2:raise ValueError('pdf_pixel_budget')
+    return lo
 
 def ocr_text(blocks):
     rows=[]
@@ -24,7 +41,7 @@ def read_pdf(path,root,ocr):
     data=path.read_bytes()
     if len(data)>20_000_000 or not data.startswith(b'%PDF-'):raise ValueError('invalid_pdf')
     folder=root/hashlib.sha256(data).hexdigest();folder.mkdir(parents=True,exist_ok=True,mode=0o700)
-    passages=[];images=[];pages=[]
+    passages=[];images=[];pages=[];rendered_pixels=0
     renderer=pypdfium2.PdfDocument(data)
     try:
       with pdfplumber.open(path) as pdf:
@@ -37,8 +54,10 @@ def read_pdf(path,root,ocr):
             mode='native'
             if visual:
                 if len(images)>=20:raise ValueError('pdf_visual_page_limit')
+                scale=render_scale(page.width,page.height,MAX_TOTAL_PIXELS-rendered_pixels)
+                rendered_pixels+=math.ceil(page.width*scale)*math.ceil(page.height*scale)
                 image=folder/f'page-{number}.png'
-                rp=renderer[number-1]; bitmap=rp.render(scale=2)
+                rp=renderer[number-1]; bitmap=rp.render(scale=scale)
                 try:bitmap.to_pil().save(image)
                 finally:bitmap.close();rp.close()
                 image.chmod(0o600);images.append(str(image))

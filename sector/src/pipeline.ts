@@ -85,7 +85,7 @@ export async function prepare(env:Env):Promise<void> {
    const jobId=crypto.randomUUID(),input=JSON.stringify(documents);
    await env.DB.batch([
     env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,related_ids,input_hash,created_at,kind) VALUES(?,?,?,?,?,?,'news') ON CONFLICT(article_id,expected_revision) DO UPDATE SET documents=excluded.documents,related_ids=excluded.related_ids,input_hash=excluded.input_hash,created_at=excluded.created_at,kind='news',state='queued',error=NULL,lease_until=0 WHERE model_jobs.state IN ('needs_review','expired','paused')").bind(jobId,article.id,input,JSON.stringify(relatedIds),await sha256(input),time),
-    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(['spk-x','fintables-x'].includes(source.id)?article.document:JSON.stringify(doc),time+7*24*3600,article.id),
+    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(['spk-x','fintables-x'].includes(source.id)?article.document:JSON.stringify(doc),time+24*3600,article.id),
     env.DB.prepare("UPDATE news_cards SET state='model_queued' WHERE article_id=? AND state='requested'").bind(article.id)
    ]);
   } catch(e) {
@@ -131,10 +131,16 @@ export async function tick(env:Env):Promise<void> {
  try {await seed(env);await poll(env);await announceNews(env);await refreshNewsRequests(env);await prepare(env);await deliver(env);}
  finally {await env.DB.prepare("UPDATE system_state SET value='0' WHERE key='tick_lease'").run();}
  await env.DB.batch([
-  env.DB.prepare('UPDATE articles SET document=NULL WHERE document_expires<? AND document IS NOT NULL').bind(now()),
   env.DB.prepare('DELETE FROM edits WHERE expires_at<?').bind(now()),
   env.DB.prepare("UPDATE drafts SET state='expired',delivery_state='expired' WHERE expires_at<? AND state IN ('pending','deferred','needs_review')").bind(now()),
-  env.DB.prepare("UPDATE model_jobs SET documents='[]',state='expired' WHERE created_at<? AND state IN ('queued','retry_pending','needs_review')").bind(now()-24*3600),
   env.DB.prepare("UPDATE drafts SET delivery_state='uncertain',lease_until=0 WHERE delivery_state='sending' AND lease_until<?").bind(now()),
   env.DB.prepare("INSERT INTO system_state(key,value) VALUES('last_tick',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(new Date().toISOString())]);
+ await cleanupRawDocuments(env);
+}
+export async function cleanupRawDocuments(env:Env,time=now()):Promise<void>{
+ await env.DB.batch([
+  env.DB.prepare('UPDATE articles SET document=NULL WHERE document_expires<? AND document IS NOT NULL').bind(time),
+  env.DB.prepare("UPDATE model_jobs SET documents='[]' WHERE state IN ('complete','failed','expired','cancelled') AND documents!='[]'"),
+  env.DB.prepare("UPDATE model_jobs SET state='expired',documents='[]' WHERE created_at<? AND state IN ('queued','retry_pending','needs_review')").bind(time-24*3600)
+ ]);
 }

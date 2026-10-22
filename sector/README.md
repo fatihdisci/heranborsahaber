@@ -90,12 +90,12 @@ Bot, özel sohbetlerde Türkçe komut menüsünü servis açılışında Telegra
 MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
 Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
 
-Güncel kararlar: Otomatik X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
+Güncel kararlar: X'e zamanlanmış/otomatik yayın yok; kullanıcı yalnız Telegram'daki açık Paylaş düğmesiyle gönderir. Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
 SQLite’ın uygulama kimliği `SECT` olarak sabittir; başka uygulama veritabanı açılmaz.
-Kaynakların tam metin geçici kaydı 24 saatle sınırlıdır; kanıt pasajları onay kaydıyla korunur.
+Normal haber/KAP kaynaklarının tam metin geçici kaydı 24 saatle sınırlıdır; model işlerinin ham belgeleri terminal duruma geldiğinde temizlenir. SPK/Fintables X gönderisi ve ekleri için tekrar okuma önbelleği en fazla 7 gün tutulur. PDF ve raster ara dosyaları 24 saati aşınca servis başlangıcında temizlenir; aktif işler bu süreden kısa bir kirayla çalışır. Kanıt pasajları taslak onay kaydında korunur.
 
 ```sh
 npm ci --ignore-scripts
@@ -205,7 +205,7 @@ Mr/Mn ve ondalık nokta alan bağlamına göre normalleştirilir; lot/adet binli
 
 ## ChatGPT kart paketi
 
-`node node_modules/tsx/dist/cli.mjs scripts/export_chatgpt_kit.ts` komutu `exports/ENDEKS-HABER-ChatGPT/` altında çevrimdışı kart motorunu, fontları, marka dosyalarını, JSON/SVG/PNG örneklerini ve `docs/chatgpt-kit-prompt.txt` kullanım promptunu paketler. `node render.mjs content.json kart.png` ile npm kurulmadan PNG üretir. Gizli bilgi veya canlı veri içermez. Devre kesici, tema/yerleşim seçimine bakmadan sabit lacivert/editorial şablonda doğrulanmış kod sayısına uyarlanır.
+`npm run kit:export` komutu temiz geçici staging alanında kaynak kodu, transitif importları, renderer/font/marka varlıklarını ve 19 örnek çıktıyı derleyip doğrulayarak `exports/ENDEKS-HABER-ChatGPT.zip` üretir. `node render.mjs content.json kart.png` ile npm kurulmadan PNG üretir. Gizli bilgi veya canlı veri içermez. Devre kesici, tema/yerleşim seçimine bakmadan sabit lacivert/editorial şablonda doğrulanmış kod sayısına uyarlanır.
 
 Elle iletilen kurum/AKD/takas içeriklerinde Telegram’ın ilk mesaj zamanı İstanbul saatine çevrilir: 10–11 Açılışın ilk dakikaları; 11–14 Gün ortası; 14–18 Kapanışa doğru; 18–22 Gün sonu. Başlık bağlamı kaynak ölçüm saati değildir. Yeniden deneme ve seçim yanıtları ilk zamanı korur; açıkça farklı günün verisine veya saat bilgisi olmayan eski işlere bu başlıklar eklenmez.
 

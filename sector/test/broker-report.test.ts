@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {brokerReport} from '../src/broker-report';import {draftCard} from '../src/card';import type {Document} from '../src/types';
+const text='En Çok Net Alış Yapanlar\n'+Array.from({length:5},(_,i)=>`${i+1}. Alıcı ${i} → +12,34 milyon TL`).join('\n')+'\nEn Çok Net Satış Yapanlar\n'+Array.from({length:5},(_,i)=>`${i+1}. Satıcı ${i} → -2,38 milyar TL`).join('\n');
+const doc={source_id:'manual-input',url:'https://t.me/ucretsizderinlikbot',market_data:{kind:'broker_flow'},passages:[{id:'market_units',text}]} as Document;
+test('broker command preserves signs, institutions and all five rows per side without model rewriting',()=>{const r=brokerReport([doc]);assert.equal(r.draft.card_data!.buy!.length,5);assert.equal(r.draft.card_data!.sell![0].value,'-2,38 milyar TL');assert.equal(r.draft.claims[0].evidence[0].quote,text);assert(draftCard(r.draft).includes('Satıcı 4'));});
+test('incomplete broker reply cannot create a partial table',()=>{assert.throws(()=>brokerReport([{...doc,passages:[{id:'market_units',text:text.replace('5. Satıcı 4','Diğer')}]}]),/incomplete/);});

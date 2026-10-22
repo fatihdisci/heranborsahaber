@@ -3,7 +3,7 @@ from unittest.mock import patch
 from PIL import Image,ImageDraw,ImageFont
 import sys
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
-from read_image import market_passages,decimal_value,lot_value,read_image,recover_labels
+from read_image import market_passages,institutional_passages,decimal_value,lot_value,read_image,recover_labels
 
 def block(text,x,y):return {'text':text,'x':x,'y':y,'width':.08,'height':.025,'confidence':1}
 def table():
@@ -14,6 +14,26 @@ def table():
     return out
 
 class ImageReaderTests(unittest.TestCase):
+    def institutional(self):
+        out=[block('BANK OF АMERICA',.02,.02),block('Tarih: 22-10-2026',.02,.07)]
+        for y,side,symbol,volume,lot,cost in [(.2,'Alış','CITAS','43.9Mn','468.161','93.81'),(.6,'Satış','THYAO','121.1Mn','455.219','266.09')]:
+            out.append(block('T. '+side+' Hacmi: 353.4Mn',.01,y-.06))
+            out += [block(t,x,y) for t,x in zip(['Hisse','N.Hacim','Net Adet','N.Maliyet','Adet','Maliyet'],[.09,.22,.385,.542,.738,.87])]
+            out += [block(t,x,y+.06) for t,x in zip([symbol,volume,lot,cost,lot,cost],[.09,.22,.41,.59,.74,.89])]
+        return out
+    def test_institutional_columns_preserve_ranks_dates_and_unknown_currency_without_becoming_akd(self):
+        meta,passages=institutional_passages(self.institutional())
+        self.assertEqual(meta['kind'],'institutional');self.assertEqual(meta['broker'],'BANK OF AMERICA')
+        self.assertEqual(meta['rows'],[{'side':'buy','symbol':'CITAS','volume':'43,9 milyon','rank':1},{'side':'sell','symbol':'THYAO','volume':'121,1 milyon','rank':1}])
+        text='\n'.join(p['text'] for p in passages)
+        self.assertIn('22.10.2026',text);self.assertIn('468.161 adet',text);self.assertIn('Net maliyet: 93,81',text)
+        self.assertIn('Para birimi görselde belirtilmemiş',text);self.assertNotIn('43,9 milyon TL',text)
+    def test_institutional_missing_header_cell_stock_or_side_cannot_mix_or_drop_rows(self):
+        for field in ['CITAS','121.1Mn','T. Satış Hacmi: 353.4Mn']:
+            with self.assertRaises(ValueError):institutional_passages([b for b in self.institutional() if b['text']!=field])
+        with self.assertRaises(ValueError):institutional_passages([b for b in self.institutional() if not (b['text']=='Hisse' and b['y']>.5)])
+        with self.assertRaises(ValueError):institutional_passages([b for b in self.institutional() if not (b['text']=='266.09' and b['x']>.8)])
+        with self.assertRaises(ValueError):institutional_passages([b for b in self.institutional() if b['text']!='N.Maliyet'])
     def test_column_locale_sign_and_no_invented_date_or_currency(self):
         meta,passages=market_passages(table());self.assertEqual(meta,{'kind':'akd','ticker':'ASELS'})
         text='\n'.join(p['text'] for p in passages)

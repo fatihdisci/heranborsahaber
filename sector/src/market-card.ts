@@ -14,7 +14,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
  const text=(s:string,x:number,y:number,size:number,color=fg,weight=400,anchor='start')=>`<text x="${x}" y="${y}" font-size="${size}" font-weight="${weight}" fill="${color}" text-anchor="${anchor}">${esc(s)}</text>`;
  const rule=(y:number)=>`<path d="M${left} ${y} H1004" stroke="${steel}" stroke-width="1"/>`;
  const block=(s:string,x:number,y:number,w:number,h:number,size:number=40,color=fg,min=26,weight=400,align?:'center')=>fit(s,{x,y,width:w,height:h,size,min,weight,color,align});
- const labels:{[key:string]:string}={circuit:'DEVRE KESİCİ',institutional:'KURUM ALIM / SATIM',akd:'HİSSE / AKD',volume:'İŞLEM HACMİ',broker_flow:'ARACI KURUM / NET İŞLEM',custody:'TAKAS / SAKLAMA'};
+ const labels:{[key:string]:string}={circuit:'DEVRE KESİCİ',institutional:data?.buy?.length&&!data?.sell?.length?'KURUM / ALIM':data?.sell?.length&&!data?.buy?.length?'KURUM / SATIM':'KURUM ALIM / SATIM',akd:'HİSSE / AKD',volume:'İŞLEM HACMİ',broker_flow:'ARACI KURUM / NET İŞLEM',custody:'TAKAS / SAKLAMA'};
  const inverse=layout==='brief'||layout==='masthead';
  let art=layout==='frame'?rect(34,34,1012,1282,'none',steel):layout==='rail'?rect(0,0,38,1350,fg)+rect(38,0,6,1350,steel):'';
  if(inverse)art+=rect(0,0,1080,180,fg);
@@ -52,6 +52,19 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
   };
   art+=table(d.template==='broker_flow'?'NET ALICI KURUMLAR':'ALICI KURUMLAR',data.buy,480,layout!=='masthead')+table(d.template==='broker_flow'?'NET SATICI KURUMLAR':'SATICI KURUMLAR',data.sell,836,layout==='masthead');
   art+=block(d.body,left,1190,width,105,30,fg,22);
+ }else if(d.template==='institutional'&&(data?.buy?.length||data?.sell?.length)){
+  art+=block(d.headline,left,268,width,192,61,fg,38,700,align);
+  const both=!!(data.buy?.length&&data.sell?.length),gap=26,col=both?(width-gap)/2:width;
+  const panel=(title:string,rows:CardRow[]|undefined,x:number,invert:boolean)=>{
+   if(!rows?.length)return '';const ink=invert?bg:fg;
+   let svg=rect(x,510,col,650,invert?fg:bg,invert?undefined:steel)+text(title,x+22,558,22,invert?bg:steel,700);
+   rows.forEach((r,i)=>{const y=590+i*54,labelWidth=both?(/^[A-Z][A-Z0-9]{3,4}$/.test(r.label)?105:col*.45):col*.35;
+    svg+=block(r.label,x+22,y,labelWidth,48,both?29:33,ink,22,700);
+    svg+=block(r.value,x+32+labelWidth,y,col-labelWidth-54,48,both?25:33,ink,both?18:23);
+   });return svg;
+  };
+  art+=panel('ALINAN HİSSELER',data.buy,left,layout!=='masthead')+panel('SATILAN HİSSELER',data.sell,both?left+col+gap:left,layout==='masthead');
+  art+=block(d.body,left,1200,width,100,29,fg,22);
  }else{
   art+=block(d.headline,left,268,width,192,61,fg,38,700,align);
   if(data?.ticker)art+=text(data.ticker,1004,486,34,fg,700,'end');

@@ -178,3 +178,11 @@ Yeni RSS eklenmedi. 14 mevcut beslemenin HTTP/XML/tarih sonuçları `reports/end
 Haber, devre kesici, kurumların alıp sattığı hisseler, tek hisse AKD ve hacim için ayrı [görsel aileleri](reports/content-templates/contact-sheet.png) vardır. İsteğe bağlı kaynak denetimli `card_data` alanı sayıları ve tabloları taşır; otomatik AKD/hacim veri kaynağı kurulmaz. Ayrıntılar: [ENDEKS.md](ENDEKS.md#konuya-özel-görsel-aileleri).
 
 Devre kesici akışı üç dakikada bir kapanan tek toplu bildirimdir. Aynı penceredeki kodlar tweetin en üst başlık satırında #KOD olarak bir kez yer alır, sonda tekrarlanmaz; kısa metin kaynakta doğrulanan durdurmayı geçmiş zamanla aktarır. Devre kesici görselinde büyük DEVRE KESİCİ başlığının altında doğrulanmış #KOD ızgarası bulunur. Kod sayısı arttıkça başlık ve ızgara yerleşimi uyarlanır; kodlar kesilmez veya gizlenmez. Sığmayan içerik açık kapasite hatası verir; farklı kaynak kodu uydurulmaz. Ayrı KAP taraması ve diğer önemli bildirimlerin hızları korunur.
+
+### İletilen kurum analizleri (BoPT dahil)
+
+BoPT `/kurum bank of america` yanıtının metni veya görseli editör botuna iletilebilir. Bu, botu kişisel Telegram hesabına bağlamaz ve başka bota otomatik komut göndermez. `institutional` tek aracı kurum üzerinden alınan/satılan hisselerdir; `broker_flow` borsa genelindeki kurum net işlemleri, `akd` tek hissenin kurum işlemleri, `custody` saklama/takas dağılımıdır. Bunlar birbirine çevrilmez.
+
+Kaynağa veya hazırlanmış karta **Sadece alınanlar**, **Sadece satılanlar**, **İkisini de göster** diye yanıt vermek yeni bir görünüm oluşturur. Tam asıl kanıt korunur, hazırlanmış kart tekrar OCR ile okunmaz. Düzenle düğmesi de aynı seçimleri anlar. Tek taraf için geniş on satırlık liste, iki taraf için iki ayrı on satırlık panel kullanılır. Alım/satım yönü ve satır-tutar eşleşmesi gönderimden önce doğrulanır; farklı görünümler veya değişen veri görüntüleri başlık benzerliği yüzünden birleştirilmez.
+
+Mr/Mn ve ondalık nokta alan bağlamına göre normalleştirilir; lot/adet binlik noktaları korunur. Yuvarlanmış toplamlar yeniden hesaplanarak değiştirilmez. Görsel para birimi belirtmiyorsa TL tahmin edilmez; aynı tutarı TL ile açıklayan metin kanıt olarak kullanılabilir. Kaynaksız tarihe/saat bilgisine dayanarak anlık veri iddiası üretilmez.

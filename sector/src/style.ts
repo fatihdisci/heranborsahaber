@@ -58,7 +58,7 @@ export function normalizeEquityDisplay(value:Draft,documents:Document[]):Draft {
  for(const key of ['headline','body','card_headline','card_body'] as const)if(typeof value[key]==='string')result[key]=clean(value[key]);
  if(value.card_data&&typeof value.card_data==='object'&&!Array.isArray(value.card_data)){
   const data={...value.card_data};
-  for(const key of ['ticker','as_of'] as const)if(typeof data[key]==='string')data[key]=clean(data[key]);
+  for(const key of ['ticker','broker','as_of'] as const)if(typeof data[key]==='string')data[key]=clean(data[key]);
   for(const key of ['buy','sell','holdings','metrics'] as const)if(Array.isArray(data[key]))data[key]=data[key].map(row=>!row||typeof row!=='object'?row:{...row,...(typeof row.label==='string'?{label:clean(row.label)}:{}),...(typeof row.value==='string'?{value:clean(row.value)}:{})});
   result.card_data=data;
  }
@@ -100,5 +100,8 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,Math.max(3,required.length)):valid;
  const circuit=documents.some(d=>d.official&&d.source_id==='kap'&&/devre kesici/i.test(d.title));
  const market=documents.find(d=>d.market_data)?.market_data;
- return repairKapShareWording({...value,...(circuit?{template:'circuit' as const,category:'bist' as const,card_data:policy.verified_equity_codes.length?{...value.card_data,tickers:policy.verified_equity_codes}:value.card_data}:market?{template:market.kind,category:'bist' as const}:{}),headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
+ if(market?.kind==='institutional'&&market.broker){
+  value={...value,card_data:{...value.card_data,broker:market.broker},...(typeof value.card_headline==='string'&&!fold(value.card_headline).includes(fold(market.broker))?{card_headline:market.broker+'\n'+value.card_headline}:{})};
+ }
+ return repairKapShareWording({...value,...(circuit?{template:'circuit' as const,category:'bist' as const,card_data:policy.verified_equity_codes.length?{...value.card_data,tickers:policy.verified_equity_codes}:value.card_data}:market?{template:market.kind,category:'bist' as const,...(market.ticker?{card_data:{...value.card_data,ticker:market.ticker}}:{})}:{}),headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
 }

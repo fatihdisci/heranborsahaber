@@ -3,6 +3,7 @@ import {previousModelIssues} from './model-recovery';
 import {withKapUnitEvidence} from './kap-unit-evidence';
 import {chooseTheme,savedTheme,legacyTheme} from './card-theme';
 import {editorialPolicy} from './style';
+import {marketSelection,selectMarketDocument} from './market-input';
 import {DRAFT_SCHEMA,EDITOR_PROMPT,documentScore,MIN_DRAFT_IMPORTANCE} from './editorial';
 import {AUDIT_PROMPT,acceptHermes} from './ai';
 import {eventIdentity,sameEvent} from './dedupe';
@@ -52,7 +53,7 @@ export async function enqueueEdit(env:Env,id:string,revision:number,request:stri
  const localEvidence=stored[0]?.source_id==='kap'||stored[0]?.source_id==='manual-input';
  const source=(registry as Source[]).find(s=>s.id===article.source_id);
  if(!localEvidence&&!source)throw new Error('edit_source_missing');
- const documents=localEvidence?stored:[await readDocument(article,source!)];
+ const documents=(localEvidence?stored:[await readDocument(article,source!)]).map(d=>selectMarketDocument(d,marketSelection(request)));
  if(documents.some(d=>!d.body||!d.passages.length))throw new Error('edit_source_incomplete');
  const input=JSON.stringify(documents);
  await env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,draft_id,expected_revision,edit_request) VALUES(?,?,?,?,?,'edit',?,?,?)").bind(crypto.randomUUID(),article.id,input,await sha256(input),now(),id,revision,request).run();

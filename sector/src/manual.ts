@@ -1,27 +1,41 @@
 import {ensureManualStatus} from './manual-status';
 import {isOwner,telegram} from './telegram';
-import {marketInput} from './market-input';
+import {marketInput,marketSelection} from './market-input';
 import type {Env} from './types';
-export interface InputMessage {message_id:number;text?:string;caption?:string;photo?:{file_id:string;file_size?:number;width:number;height:number}[];document?:{file_id:string;file_size?:number;file_name?:string;mime_type?:string};forward_origin?:{type:string;sender_user?:{is_bot?:boolean;username?:string}};from?:{id:number};chat?:{id:number;type:string};reply_to_message?:{message_id:number};}
+export interface InputMessage {message_id:number;text?:string;caption?:string;photo?:{file_id:string;file_size?:number;width:number;height:number}[];document?:{file_id:string;file_size?:number;file_name?:string;mime_type?:string};forward_origin?:{type:string;sender_user?:{is_bot?:boolean;username?:string}};from?:{id:number};chat?:{id:number;type:string};reply_to_message?:InputMessage;}
 export async function queueManual(env:Env,updateId:number,m:InputMessage):Promise<boolean> {
  if(!m.from||!m.chat||!isOwner(env,String(m.from.id),String(m.chat.id),m.chat.type)||!Number.isSafeInteger(m.message_id)||!Number.isSafeInteger(updateId))return false;
- const text=(m.text??m.caption??'').trim();
+ let text=(m.text??m.caption??'').trim();const focus=marketSelection(text);
+ const reply=focus?m.reply_to_message:undefined;
+ const draft=reply?await env.DB.prepare('SELECT id,documents FROM drafts WHERE message_id=?').bind(reply.message_id).first<{id:string;documents:string}>():null;
+ const reuse=draft&&JSON.parse(draft.documents).some((d:{market_data?:unknown;body?:string})=>d.market_data||marketInput(d.body??''))?draft:null;
+ let sourceMessageId=reply?.message_id;
+ if(reuse)try{
+  const original=JSON.parse(reuse.documents)[0],start=new URL(original.url).searchParams.get('start')?.match(/^source_(\d+)$/);
+  if(start){const id=Number(start[1]),row=await env.DB.prepare('SELECT input FROM manual_requests WHERE message_id=?').bind(id).first<{input:string}>();const target=row?JSON.parse(row.input).source_message_id??id:id;if(Number.isSafeInteger(target)&&target>0)sourceMessageId=target;}
+ }catch{}
+ const source=reply&&!reuse?reply:m;
+ if(reply&&!reuse)text=(reply.text??reply.caption??'').trim();
  if(text.startsWith('/start')||text==='/help'){
   if(env.MODE!=='telegram_review')return true;
   const source=text.match(/^\/start source_(\d+)$/);
-  if(source){const id=Number(source[1]),row=await env.DB.prepare('SELECT message_id FROM manual_requests WHERE message_id=?').bind(id).first();
-   if(row)await telegram(env,'copyMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,from_chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(id)}));
-  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber veya KAP bağlantısını, PDF dosyasını, metni ya da görseli buraya gönder. Diğer botun /kurum, /akd ve /takas yanıtlarını da iletebilirsin. Kaynağı okuyup ENDEKS HABER tarzında tweet ve kart hazırlayacağım. Veri tarihini tahmin etmem; okunamayan sayıdan içerik üretmem.'}));
+  if(source){const id=Number(source[1]),row=await env.DB.prepare('SELECT message_id,input FROM manual_requests WHERE message_id=?').bind(id).first<{message_id:number;input:string}>();
+   if(row){const target=JSON.parse(row.input).source_message_id??id;if(!Number.isSafeInteger(target)||target<=0)throw Error('manual_source_invalid');await telegram(env,'copyMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,from_chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(target)}));}
+  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber veya KAP bağlantısını, PDF dosyasını, metni ya da görseli buraya gönder. Diğer botun /kurum, /akd ve /takas yanıtlarını da iletebilirsin. BoPT kurum analizini de iletebilirsin. Kaynak mesaja veya oluşan karta “Sadece alınanlar” / “Sadece satılanlar” diye yanıt vererek ayrı içerik isteyebilirsin. Kaynağı okuyup ENDEKS HABER tarzında tweet ve kart hazırlayacağım. Veri tarihini tahmin etmem; okunamayan sayıdan içerik üretmem.'}));
+  return true;
+ }
+ if(focus&&!reply&&!m.photo?.length&&!m.document&&text.length<240){
+  if(env.MODE==='telegram_review')await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'İlgili kaynak mesaja veya hazırlanmış karta yanıt vererek “Sadece alınanlar”, “Sadece satılanlar” ya da “İkisini de göster” yaz. Böylece doğru analizi ayıracağım.'}));
   return true;
  }
  const url=text.match(/https:\/\/[^\s<>]+/)?.[0]?.replace(/[),.;]+$/,'');
- const photo=Array.isArray(m.photo)?m.photo.filter(p=>p&&typeof p.file_id==='string'&&Number.isSafeInteger(p.width)&&p.width>0&&Number.isSafeInteger(p.height)&&p.height>0).sort((a,b)=>b.width*b.height-a.width*a.height)[0]:undefined;
- const imageDocument=m.document&&(/^image\/(?:jpeg|png|webp)$/.test(m.document.mime_type??'')||/\.(?:jpe?g|png|webp)$/i.test(m.document.file_name??''))?m.document:undefined;
+ const photo=Array.isArray(source.photo)?source.photo.filter(p=>p&&typeof p.file_id==='string'&&Number.isSafeInteger(p.width)&&p.width>0&&Number.isSafeInteger(p.height)&&p.height>0).sort((a,b)=>b.width*b.height-a.width*a.height)[0]:undefined;
+ const imageDocument=source.document&&(/^image\/(?:jpeg|png|webp)$/.test(source.document.mime_type??'')||/\.(?:jpe?g|png|webp)$/i.test(source.document.file_name??''))?source.document:undefined;
  const image=photo??imageDocument;
- const kind=image?'image':m.document?'pdf':marketInput(text)?'text':url?'url':text.length>=100?'text':null;
+ const kind=reuse?'market_reuse':image?'image':source.document?'pdf':marketInput(text)?'text':url?'url':text.length>=100?'text':null;
  if(!kind)return false;
- const username=m.forward_origin?.type==='user'&&m.forward_origin.sender_user?.is_bot?m.forward_origin.sender_user.username:undefined;
- const input=JSON.stringify({url,text,document:m.document??null,image:image??null,...(username&&/^[a-zA-Z0-9_]{5,32}$/.test(username)?{origin_bot:username}:{})});if(input.length>150_000)throw Error('manual_input_limit');
+ const username=source.forward_origin?.type==='user'&&source.forward_origin.sender_user?.is_bot?source.forward_origin.sender_user.username:undefined;
+ const input=JSON.stringify({url,text,document:source.document??null,image:image??null,...(focus?{focus}:{}),...(reuse?{draft_id:reuse.id}:{}),...(sourceMessageId?{source_message_id:sourceMessageId}:{}),...(username&&/^[a-zA-Z0-9_]{5,32}$/.test(username)?{origin_bot:username}:{})});if(input.length>150_000)throw Error('manual_input_limit');
  const inserted=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,kind,input,Math.floor(Date.now()/1000)).run();
  if(inserted.meta.changes)await ensureManualStatus(env,updateId,m.message_id);
  return true;

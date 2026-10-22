@@ -100,6 +100,60 @@ def market_passages(blocks):
     metadata={'id':'image_metadata','text':f'Hisse kodu: {ticker}. Aracı kurum dağılımı. {period} Oran ve maliyet sütunundaki ondalık noktalar Türkçe virgüle dönüştürüldü; net lot sütunundaki binlik noktalar korundu. Maliyet için para birimi tahmin edilmez.'}
     return {'kind':'akd','ticker':ticker},[metadata,*passages]
 
+def institutional_passages(blocks):
+    grid=rows(blocks);tables=[]
+    norm=lambda s:re.sub(r'\s+','',s.upper().replace('İ','I').replace('Ş','S'))
+    keys=['HISSE','N.HACIM','NETADET','N.MALIYET','ADET','MALIYET']
+    for i,(_,cells) in enumerate(grid):
+        h={norm(c['text']):c['x'] for c in cells}
+        if all(k in h for k in keys):tables.append((i,h))
+    if not tables:
+        if any(norm(b['text'])=='HISSE' for b in blocks) and any(re.match(r'^T\.?\s*(?:Alış|Satış)',b['text'],re.I) for b in blocks):raise ValueError('image_market_table_incomplete')
+        return None
+    if len(tables)>2:raise ValueError('image_market_table_incomplete')
+    section_labels=[b for b in blocks if re.match(r'^T\.?\s*(?:Alış|Satış)',b['text'],re.I)]
+    if len(section_labels)!=len(tables):raise ValueError('image_market_table_incomplete')
+    first_y=grid[tables[0][0]][0]
+    titles=[b['text'].strip() for b in sorted(blocks,key=lambda b:b['y']) if b['y']<first_y and b['x']<.55 and not re.match(r'^(?:Tarih|T\.|T\s)',b['text'],re.I)]
+    if not titles:raise ValueError('image_market_broker_missing')
+    # OCR sometimes substitutes visually identical Cyrillic capitals. Preserve
+    # raw OCR and the image; normalize only those letter shapes in the heading.
+    broker=titles[0].translate(str.maketrans('АВЕКМНОРСТХ','ABEKMHOPCTX'))
+    if not 2<=len(broker)<=80:raise ValueError('image_market_broker_missing')
+    passages=[];facts=[];seen_sides=set()
+    for n,(start,h) in enumerate(tables):
+        labels=[b['text'] for b in blocks if b['y']<grid[start][0] and re.match(r'^T\.?\s*(?:Alış|Satış)',b['text'],re.I)]
+        if not labels:raise ValueError('image_market_side_ambiguous')
+        last=max((b for b in blocks if b['text'] in labels),key=lambda b:b['y'])['text']
+        side='buy' if re.match(r'^T\.?\s*Alış',last,re.I) else 'sell'
+        if side in seen_sides:raise ValueError('image_market_side_ambiguous')
+        seen_sides.add(side);word='alım' if side=='buy' else 'satım'
+        xs=[h[k] for k in keys]
+        if xs!=sorted(xs):raise ValueError('image_market_table_incomplete')
+        cuts=[(xs[j]+xs[j+1])/2 for j in range(5)];end=tables[n+1][0] if n+1<len(tables) else len(grid);count=0
+        for _,cells in grid[start+1:end]:
+            parts=[[] for _ in keys]
+            for c in cells:
+                if c['x']<xs[0]-.04:continue
+                parts[sum(c['x']>=cut for cut in cuts)].append(c['text'])
+            values=[' '.join(p).strip() for p in parts]
+            numeric=sum(bool(re.match(r'^[-+]?\d',v)) for v in values[1:])
+            if not re.fullmatch(r'[A-Z][A-Z0-9]{3,4}',values[0]):
+                if numeric>=2:raise ValueError('image_market_table_incomplete')
+                continue
+            if not all(values):raise ValueError('image_market_table_incomplete')
+            symbol,volume,net_lot,net_cost,total_lot,cost=values
+            amount=re.fullmatch(r'(\d+(?:[.,]\d{1,2})?)\s*(Mn|Mr)(?:\s*(TL|₺))?',volume,re.I)
+            if not amount:raise ValueError('image_market_number_ambiguous')
+            volume=decimal_value(amount[1])+(' milyon' if amount[2].lower()=='mn' else ' milyar')+(' TL' if amount[3] else '')
+            net_lot=lot_value(net_lot).replace(' lot',' adet');total_lot=lot_value(total_lot).replace(' lot',' adet');net_cost=decimal_value(net_cost);cost=decimal_value(cost);count+=1
+            fact=f'Kurum: {broker} | {word} listesi sıra: {count} | Hisse kodu: {symbol} | Listelenen net hacim: {volume} | Net adet: {net_lot} | Net maliyet: {net_cost} | Adet: {total_lot} | Maliyet: {cost}. Para birimi '+('hacim sütununda TL olarak belirtilmiş; maliyet sütununda belirtilmemiş.' if amount[3] else 'görselde belirtilmemiş; TL veya farklı para birimi tahmin edilmez.')
+            passages.append({'id':f'image_institutional_{side}_{count}','text':fact});facts.append({'side':side,'symbol':symbol,'volume':volume,'rank':count})
+        if not 1<=count<=20:raise ValueError('image_market_table_incomplete')
+    dates=re.findall(r'\b(\d{2})-(\d{2})-(20\d{2})\b',ocr_text(blocks));period='Görselde veri tarihi: '+', '.join('.'.join(d) for d in dates)+'.' if dates else 'Kaynakta veri tarihi belirtilmemiş; anlık veya bugün iddiası eklenemez.'
+    passages.insert(0,{'id':'image_institutional_metadata','text':f'Kurum: {broker}. Kurum üzerinden en çok alınan/satılan hisseler. {period} Görseldeki kurum başlığında aynı görünümlü OCR harfleri Latin alfabesine normalleştirildi. Kurumun kendi portföy işlemi olduğu çıkarılamaz.'})
+    return {'kind':'institutional','broker':broker,'tickers':list(dict.fromkeys(r['symbol'] for r in facts)),'rows':facts},passages
+
 def read_image(path,root,ocr):
     data=path.read_bytes()
     if len(data)>20_000_000:raise ValueError('image_size_limit')
@@ -118,12 +172,12 @@ def read_image(path,root,ocr):
     blocks=recover_labels(blocks,image,ocr)
     text=ocr_text(blocks)
     if len(text)<20 or len(text)>100_000:raise ValueError('image_text_limit')
-    parsed=market_passages(blocks)
+    parsed=institutional_passages(blocks) or market_passages(blocks)
     original={'id':'image_ocr_raw','text':'OCR metni; sayfa görüntüsüyle kontrol edilmelidir:\n'+text}
     market,passages=parsed if parsed else (None,[original])
     body='\n\n'.join(p['text'] for p in passages)
     return {'body':body,'passages':[original,*passages] if parsed else passages,'images':[str(image)],
-      **({'market_data':market} if market else {}),'coverage':{'complete':True,'page_count':1,'pages':[{'page':1,'mode':'image_ocr_visual','characters':len(text),'tables':2 if parsed else 0}]}}
+      **({'market_data':market} if market else {}),'coverage':{'complete':True,'page_count':1,'pages':[{'page':1,'mode':'image_ocr_visual','characters':len(text),'tables':len({r['side'] for r in market['rows']}) if market and market['kind']=='institutional' else 2 if parsed else 0}]}}
 
 if __name__=='__main__':
     try:print(json.dumps(read_image(pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2]),pathlib.Path(sys.argv[3])),ensure_ascii=False))

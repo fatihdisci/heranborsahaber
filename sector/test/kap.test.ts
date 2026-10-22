@@ -198,3 +198,13 @@ test('index priority does not elevate routine forms over selected material topic
  for(const title of ['Finansal Takvim','Sorumluluk Beyanı (Konsolide Olmayan)','Genel Kurul Bildirimi'])assert.equal(decide(item(101,{title}),p,indices).action,'off');
  for(const title of ['Yeni İş İlişkisi','Kar Payı Dağıtımı','Sermaye Artırımı','Finansal Rapor'])assert.equal(decide(item(101,{title}),p,indices).action,'instant');
 });
+
+ test('interest-bearing non-equity disclosures are muted even for explicit tracking and funds',()=>{
+ for(const title of ['Pay Dışında Sermaye Piyasası Aracı İşlemlerine İlişkin Bildirim (Faiz İçeren)','pay disi sermaye piyasasi araci islemleri (faiz iceren)']){
+  for(const p of [pref(),pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}]}),pref({otherCompanies:'topics',otherTopics:['other'],funds:'instant'})]){
+   assert.equal(decide(item(101,{title}),p,null).action,'off');
+   assert.equal(decide(item(101,{title,disclosureType:'FON'}),p,null).action,'off');
+  }
+ }
+ for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Pay Alım Satım Bildirimi','Yeni İş İlişkisi','Finansal Rapor'])assert.equal(decide(item(101,{title}),pref(),null).action,'instant');
+ });

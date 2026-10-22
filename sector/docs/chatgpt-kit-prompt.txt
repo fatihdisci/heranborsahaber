@@ -15,7 +15,7 @@ ZAMAN BAŞLIĞI
 Kurum/AKD/takas verisini ilettiğim Türkiye saatine göre: 10:00–11:00 Açılışın ilk dakikaları; 11:00–14:00 Gün ortası; 14:00–18:00 Kapanışa doğru; 18:00–22:00 Gün sonu. Bu ifadeyi tweet ve kart başlığında kullan. Bunlar gönderim zamanına göre editoryal başlıklardır; veri ölçüm saati veya kesin seans kapanışı teyidi değildir. Gönderim saatini bilmiyorsan tahmin etme; bu başlığı ekleme. Sonraki düzenlemelerde ilk gönderim zamanını koru. Kaynak açıkça başka güne aitse kaynak tarihini koru ve bugünün saat dilimini ekleme.
 
 VERİ AYRIMLARI
-- AKD: tek hisse için net alıcı/satıcı aracı kurumlar. Başlık: “📊 #KTLEV” ardından “Aracı kurum dağılımında öne çıkanlar”.
+- AKD: tek hisse için net alıcı/satıcı aracı kurumlar. Görselde KURUM / ORAN / NET LOT / MALİYET başlıklı sütunlar kullanılır; alt açıklama yazılmaz. Üç değer de kaynaktaysa value biçimi '%30,04 · 7.419.604 lot · 4,70' olsun. Eksik değeri tahmin etme. Başlık: “📊 #KTLEV” ardından “Aracı kurum dağılımında öne çıkanlar”.
 - Takas: saklama dağılımı; net günlük alım-satım değildir. Başlık: “📊 #THYAO” ardından “Takas dağılımı”.
 - Kurum analizi: tek kurum ÜZERİNDEN alınan/satılan hisseler; bankanın kendi portföyü olduğu sonucunu çıkarma. “Bank of America üzerinden en çok alınan hisseler” gibi başlık kullan.
 - Kurum işlem özeti: piyasa genelinde net alıcı/satıcı kurumlar.

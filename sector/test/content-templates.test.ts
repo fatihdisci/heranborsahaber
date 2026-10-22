@@ -32,7 +32,7 @@ test('five content types remain visibly distinct and all redesign layouts render
     const svg=cardSvg({headline:'ABCD payında doğrulanmış gelişme',body:'Kaynak verileriyle hazırlanan kısa açıklama.',template,card_data:template==='news'?undefined:data},[],'',false,theme,layout);
     const b=Buffer.from(await png(svg));assert.equal(b.readUInt32BE(16),1080);assert.equal(b.readUInt32BE(20),1350);
     assert.match(svg,/ENDEKS HABER/);assert(!/linearGradient|radialGradient|filter=/.test(svg));layouts.add(svg);designs.add(svg);
-    if(['institutional','akd'].includes(template))assert.match(svg,/1.250.000 adet/);
+    if(template==='institutional')assert.match(svg,/1.250.000 adet/);if(template==='akd'){assert(svg.includes('1.250.000'));assert(svg.includes('NET ADET'));}
    }
    assert.equal(layouts.size,template==='circuit'?1:6);
   }
@@ -73,7 +73,7 @@ test('crowded circuit cards retain all 120 codes, fit every layout and render fu
 });
 test('five long institution names fit every AKD redesign without truncating amounts',()=>{
  const rows=Array.from({length:5},(_,i)=>({label:'Uzun Unvanlı Yatırım Menkul Değerler '+String(i+1),value:'1.234.567.890 adet'}));
- for(const layout of CARD_LAYOUTS){const svg=cardSvg({template:'akd',headline:'ABCD aracı kurum dağılımı',body:'Alıcı ve satıcı kurumlar kaynak verilerine göre gösteriliyor.',card_data:{buy:rows,sell:rows}},[],'',false,'navy',layout);assert(svg.includes('1.234.567.890 adet'));}
+ for(const layout of CARD_LAYOUTS){const svg=cardSvg({template:'akd',headline:'ABCD aracı kurum dağılımı',body:'Alıcı ve satıcı kurumlar kaynak verilerine göre gösteriliyor.',card_data:{buy:rows,sell:rows}},[],'',false,'navy',layout);assert(svg.includes('1.234.567.890'));assert(svg.includes('NET ADET'));}
 });
 
 test('circuit cards use one fixed navy layout while adapting to the verified ticker count',()=>{

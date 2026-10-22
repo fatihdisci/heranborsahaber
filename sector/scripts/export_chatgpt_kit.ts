@@ -6,7 +6,7 @@ import {png} from './render_local';
 import {CARD_LAYOUTS} from '../src/card-layout';
 const out=process.argv[2]??'exports/ENDEKS-HABER-ChatGPT';
 for(const dir of ['assets','src','runtime','examples'])await mkdir(`${out}/${dir}`,{recursive:true});
-for(const file of ['card.ts','market-card.ts','brand.ts','card-layout.ts','card-theme.ts','types.ts'])await copyFile(`src/${file}`,`${out}/src/${file}`);
+for(const file of ['card.ts','market-card.ts','akd-columns.ts','brand.ts','card-layout.ts','card-theme.ts','types.ts'])await copyFile(`src/${file}`,`${out}/src/${file}`);
 for(const file of ['NotoSans-Regular.ttf','NotoSans-Bold.ttf','OFL.txt','profile.svg','profile.png','banner.svg','banner.png'])await copyFile(`assets/${file}`,`${out}/assets/${file}`);
 for(const file of ['index.mjs','index_bg.wasm','package.json'])await copyFile(`node_modules/@resvg/resvg-wasm/${file}`,`${out}/runtime/${file}`);
 execFileSync('node_modules/.bin/esbuild',['src/card.ts','--bundle','--platform=node','--format=esm',`--outfile=${out}/runtime/cards.mjs`]);

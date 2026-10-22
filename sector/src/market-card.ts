@@ -1,3 +1,4 @@
+import {akdColumns} from './akd-columns';
 import {COLORS,PROFILE_DATA,BRAND_NAME,MARK_PATH} from './brand';
 import {CARD_LAYOUTS,type CardLayout} from './card-layout';
 import type {CardTheme} from './card-theme';
@@ -41,7 +42,26 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
    data.holdings.forEach((r,i)=>{const y=778+i*70;art+=block(r.label,left+28,y,width*.40,60,29,bg,20,700)+block(r.value,left+width*.45,y,width*.55-28,60,28,bg,18);});
    art+=block(d.body,left,1190,width,110,29,fg,22);
   }else art+=block(d.body,left,735,width,430,45,fg,28);
- }else if(['akd','broker_flow'].includes(d.template)&&(data?.buy?.length||data?.sell?.length)){
+ }else if(d.template==='akd'&&(data?.buy?.length||data?.sell?.length)){
+  art+=block(d.headline,left,268,width,155,61,fg,38,700,align);
+  if(separateTicker)art+=text(data.ticker!,1004,446,32,steel,700,'end');
+  const table=(title:string,rows:CardRow[]|undefined,y:number,invert:boolean)=>{
+   if(!rows?.length)return '';
+   const ink=invert?bg:fg,muted=invert?bg:steel,parsed=rows.map(akdColumns),structured=parsed.every(Boolean);
+   const units=new Set(parsed.filter(Boolean).map(p=>p!.unit)),unit=units.size===1?[...units][0]:undefined;
+   const bounds=structured?[0,.29,.46,.79,1]:[0,.48,1];
+   const headers=structured?['KURUM','ORAN',unit==='lot'?'NET LOT':unit==='adet'?'NET ADET':unit==='pay'?'NET PAY':'NET MİKTAR']:['KURUM','VERİ'];
+   if(structured)headers.push('MALİYET');
+   const inner=width-48,x=left+24;
+   let svg=rect(left,y,width,365,invert?fg:bg,invert?undefined:steel)+text(title,x,y+43,25,muted,700);
+   headers.forEach((h,i)=>{svg+=text(h,x+bounds[i]*inner,y+83,20,muted,700);});
+   svg+=`<path d="M${x} ${y+96} H${left+width-24}" stroke="${muted}" stroke-width="1" opacity=".45"/>`;
+   rows.forEach((r,i)=>{const p=parsed[i],values=structured?[r.label,p!.ratio,p!.quantity+(unit?'':' '+p!.unit),p!.cost]:[r.label,r.value];
+    values.forEach((v,j)=>{svg+=block(v,x+bounds[j]*inner,y+110+i*49,(bounds[j+1]-bounds[j])*inner-12,48,j===0?27:25,ink,j===0?18:17,j===0?700:400);});
+   });return svg;
+  };
+  art+=table('ALICI KURUMLAR',data.buy,480,layout!=='masthead')+table('SATICI KURUMLAR',data.sell,860,layout==='masthead');
+ }else if(d.template==='broker_flow'&&(data?.buy?.length||data?.sell?.length)){
   art+=block(d.headline,left,268,width,155,61,fg,38,700,align);
   if(separateTicker)art+=text(data.ticker!,1004,446,32,steel,700,'end');
   const table=(title:string,rows:CardRow[]|undefined,y:number,invert:boolean)=>{

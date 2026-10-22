@@ -38,3 +38,17 @@ Her servisin `backups/update-<kimlik>/rollback.json` dosyası önceki app/plist 
 `Draft.card_data` isteğe bağlıdır. `ticker`, kaynak zamanı `as_of`, en çok beşer `{label,value}` satırlı `buy`/`sell` listeleri ve en çok üç satırlı `metrics` taşır. Bütün satırlarda miktar ve birim açık olmalıdır. Sayı/birim, hisse kodu ve kurum adı kontrol edilir; bağımsız kaynak denetçisi satır/yön/dönem eşleşmelerini değerlendirir. Eski taslaklar bu alan olmadan çalışır. Veri yoksa tablo veya grafik uydurulmaz; yalnız doğrulanabilen haber metni gösterilir.
 
 Bu değişiklik AKD veya hacim API'si bağlamaz. Kaynak belge/metin/PDF'de sağlanan doğrulanabilir verileri görselleştirir. `scripts/preview_content_templates.ts` içindeki veriler kurmaca çevrimdışı tasarım örnekleridir; Telegram'a veya canlı kuyruğa gönderilmez. Görseller `reports/content-templates/` altındadır. Mevcut kopyalama, kaynak düğmesi ve yeniden tasarım aynı mesaj üzerinde çalışır.
+
+## MacBook geliştirme → Mac mini canlı geçiş
+
+Tek kod kaynağı `https://github.com/fatihdisci/sector`, canlıya alınacak dal `main`dir. MacBook geliştirme ortamıdır; Telegram tüketicisi, KAP zamanlayıcısı veya canlı servis orada başlatılmaz. Canlı veritabanı, tokenlar ve Hermes oturumları Git'e veya MacBook'a kopyalanmaz.
+
+MacBook'ta çalışma başlamadan `git status` kontrol edilir; yerel değişiklikler korunarak `git pull --ff-only origin main` yapılır. Kod ve çevrimdışı testler tamamlandığında değişiklikler main'e gönderilir (ayrı dal kullanıldıysa önce birleştirilir). Teslimde commit kimliği ve etkilenen servisler belirtilir. MacBook'tan push yapmak Mac mini'yi kendiliğinden güncellemez.
+
+Mac mini'deki Codex sohbetine şu talimat verilebilir:
+
+> fatihdisci/sector main dalındaki son sürümü Mac mini'de canlıya al. Önce yerel değişiklikleri ve origin/main'i kontrol et; değişiklikleri ezmeden fast-forward pull yap. Hedef commit: <MacBook'taki commit kimliği>. Etkilenen servisleri belirle, mevcut güvenli staging/güncelleme ve geri dönüş yöntemini kullan. Veritabanlarını, kuyrukları, kimlik bilgilerini ve ana Hermes gateway'ini koru. Yalnız gerekli servisleri güncelle. Çalışan süreç, hazır sinyali ve aktif dosyaları hedef commit ile doğrula. Gerçek test tweeti gönderme. Sonunda aktif commit'i ve sonucu bildir.
+
+Haber/editör servisi için `sector/scripts/install_local.py --update`, KAP toplayıcısı için `sector/scripts/install_kap.py --update` ilgili `sector/` çalışma dizininde kullanılır. Ortak KAP kuralları gibi iki kurulumun da okuduğu dosyalar değişirse ikisi de güncellenir. Mini App/Cloudflare değişikliği varsa onun ayrı yayın adımı ayrıca değerlendirilir. Teknik servis adları ve çalışma dizinleri marka için değiştirilmez.
+
+Pull çatışırsa veya doğrulamalar başarısızsa canlı geçiş yapılmaz; reset/clean ile kullanıcı değişiklikleri silinmez. Başlangıç hatalarında kurucunun sakladığı önceki release/rollback kaydı kullanılır; veritabanı geri sarılmaz. Canlıya alındı bildirimi yalnız çalışan servis ve aktif release kontrolünden sonra verilir.

@@ -1,0 +1,536 @@
+{
+  "observed_on": "2026-10-22",
+  "account": "endeks_haber",
+  "source": "Public Nitter profile and RSS, account-matching post URLs; deduplicated by post ID",
+  "scope": "Partial snapshot; not full daily history or private analytics. Times decoded from X snowflake IDs. Pinned post counted once; historical/reposted items excluded.",
+  "posts": [
+    {
+      "id": "2113185250322813104",
+      "published_at_istanbul": "2026-10-22T11:26:39.417000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113185250322813104",
+      "headline": "📢 DCT Trading, Pima pamuk için 76.175 USD’lik satış anlaşması imzaladı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#DCTTR"
+      ]
+    },
+    {
+      "id": "2113185621896466792",
+      "published_at_istanbul": "2026-10-22T11:28:08.007000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113185621896466792",
+      "headline": "🚨 #SVGYO #KTLEV",
+      "hashtags": [
+        "#SVGYO",
+        "#KTLEV",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113187172920549742",
+      "published_at_istanbul": "2026-10-22T11:34:17.800000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113187172920549742",
+      "headline": "🚨 #TKNKA",
+      "hashtags": [
+        "#TKNKA",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113192825722400805",
+      "published_at_istanbul": "2026-10-22T11:56:45.533000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113192825722400805",
+      "headline": "📉 Norveç’in devlet varlık fonu üçüncü çeyrekte yüzde 0,5 geriledi",
+      "hashtags": [
+        "#Fon"
+      ]
+    },
+    {
+      "id": "2113196931476337084",
+      "published_at_istanbul": "2026-10-22T12:13:04.421000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113196931476337084",
+      "headline": "📢 Golda Gıda yönetim kurulu, temettü dağıtmamayı önerdi",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#GOLDA"
+      ]
+    },
+    {
+      "id": "2113207319186092377",
+      "published_at_istanbul": "2026-10-22T12:54:21.044000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113207319186092377",
+      "headline": "📊 #KTLEV’de gün ortası aracı kurum dağılımı: ",
+      "hashtags": [
+        "#KTLEV",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113209839174258838",
+      "published_at_istanbul": "2026-10-22T13:04:21.856000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113209839174258838",
+      "headline": "📊 BofA üzerinden gerçekleşen gün ortası işlemlerinde net satış 677,7 milyon TL oldu. ",
+      "hashtags": [
+        "#CITAS",
+        "#TRALT",
+        "#Borsa",
+        "#BIST",
+        "#BankOfAmerica"
+      ]
+    },
+    {
+      "id": "2113216003907682409",
+      "published_at_istanbul": "2026-10-22T13:28:51.643000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113216003907682409",
+      "headline": "📊 S&P: Fon piyasasındaki gelişmelerin etkisi sınırlı kaldı",
+      "hashtags": [
+        "#Fon"
+      ]
+    },
+    {
+      "id": "2113219618877641118",
+      "published_at_istanbul": "2026-10-22T13:43:13.519000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113219618877641118",
+      "headline": "📢 Vestel iş modelini değiştirirken Eurobond için onay arıyor",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#Eurobond",
+        "#VESTL"
+      ]
+    },
+    {
+      "id": "2113224532307673513",
+      "published_at_istanbul": "2026-10-22T14:02:44.972000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113224532307673513",
+      "headline": "📢 CW Enerji’nin bağlı ortaklığı kapasite yatırımı için finansman işlemlerine karar verdi",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#CWENE"
+      ]
+    },
+    {
+      "id": "2113225370942197896",
+      "published_at_istanbul": "2026-10-22T14:06:04.918000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113225370942197896",
+      "headline": "🏦 Merkez Bankası faizi yüzde 36’ya indirdi",
+      "hashtags": [
+        "#Faiz",
+        "#TCMB"
+      ]
+    },
+    {
+      "id": "2113235149806596196",
+      "published_at_istanbul": "2026-10-22T14:44:56.381000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113235149806596196",
+      "headline": "📢 Hedef Portföy fonlarının tasfiyesinde 8,9 milyar TL ödeme yapıldı",
+      "hashtags": [
+        "#Fon",
+        "#Tasfiye",
+        "#PBLK"
+      ]
+    },
+    {
+      "id": "2113237860996567533",
+      "published_at_istanbul": "2026-10-22T14:55:42.779000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113237860996567533",
+      "headline": "🚨 #TRALT",
+      "hashtags": [
+        "#TRALT",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113239488868606193",
+      "published_at_istanbul": "2026-10-22T15:02:10.894000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113239488868606193",
+      "headline": "🚨 #FRIGO #GIPTA #TUCLK",
+      "hashtags": [
+        "#FRIGO",
+        "#GIPTA",
+        "#TUCLK",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113242503910404264",
+      "published_at_istanbul": "2026-10-22T15:14:09.736000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113242503910404264",
+      "headline": "📊 #ASELS",
+      "hashtags": [
+        "#ASELS",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113246881492987973",
+      "published_at_istanbul": "2026-10-22T15:31:33.433000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113246881492987973",
+      "headline": "🚨 #MAALT",
+      "hashtags": [
+        "#MAALT",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113252283945255103",
+      "published_at_istanbul": "2026-10-22T15:53:01.478000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113252283945255103",
+      "headline": "📢 SPK: Takası tamamlanmamış fon satışları tasfiye kapsamında değerlendirilecek",
+      "hashtags": [
+        "#PBLK",
+        "#Fon",
+        "#Tasfiye"
+      ]
+    },
+    {
+      "id": "2113252354073956714",
+      "published_at_istanbul": "2026-10-22T15:53:18.198000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113252354073956714",
+      "headline": "📊 #TRALT",
+      "hashtags": [
+        "#TRALT",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113256837067727064",
+      "published_at_istanbul": "2026-10-22T16:11:07.027000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113256837067727064",
+      "headline": "İÇERİDE KALANLARA GEÇMİŞ OLSUN. #PBLK",
+      "hashtags": [
+        "#PBLK"
+      ]
+    },
+    {
+      "id": "2113259545246179752",
+      "published_at_istanbul": "2026-10-22T16:21:52.707000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113259545246179752",
+      "headline": "🚨 #NETGL",
+      "hashtags": [
+        "#NETGL",
+        "#Borsa",
+        "#BIST",
+        "#Halkaarz"
+      ]
+    },
+    {
+      "id": "2113261733041021432",
+      "published_at_istanbul": "2026-10-22T16:30:34.318000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113261733041021432",
+      "headline": "📊 Gram altında gün içi görünüm",
+      "hashtags": [
+        "#Altın",
+        "#GramAltın"
+      ]
+    },
+    {
+      "id": "2113266678729720270",
+      "published_at_istanbul": "2026-10-22T16:50:13.462000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113266678729720270",
+      "headline": "📢 Meditera’nın kemoterapi ihalesindeki teklifi lehine sonuçlandı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#MEDTR"
+      ]
+    },
+    {
+      "id": "2113267981845504051",
+      "published_at_istanbul": "2026-10-22T16:55:24.149000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113267981845504051",
+      "headline": "SPK’nın bu açıklamayı piyasalar açıkken yapmasındaki amaç nedir? ",
+      "hashtags": [
+        "#fon",
+        "#pblk",
+        "#tasfiye",
+        "#takas"
+      ]
+    },
+    {
+      "id": "2113269194103923189",
+      "published_at_istanbul": "2026-10-22T17:00:13.174000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113269194103923189",
+      "headline": "🚨 #TKNKA #ISKPL",
+      "hashtags": [
+        "#TKNKA",
+        "#ISKPL",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113269267336442135",
+      "published_at_istanbul": "2026-10-22T17:00:30.634000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113269267336442135",
+      "headline": "📢 #FONET, Hatay sağlık bilişim ihalesinde en uygun teklifi verdi",
+      "hashtags": [
+        "#FONET",
+        "#FONET",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113269374412800236",
+      "published_at_istanbul": "2026-10-22T17:00:56.163000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113269374412800236",
+      "headline": "📢 Girişim Elektrik, TEİAŞ ihalesinde ilk sırada yer aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#GESAN"
+      ]
+    },
+    {
+      "id": "2113271411619893561",
+      "published_at_istanbul": "2026-10-22T17:09:01.871000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113271411619893561",
+      "headline": "Faiz 100 puan indi, endeks durur mu hiç? ",
+      "hashtags": [
+        "#bist",
+        "#faiz"
+      ]
+    },
+    {
+      "id": "2113276457195823552",
+      "published_at_istanbul": "2026-10-22T17:29:04.830000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113276457195823552",
+      "headline": "📊 Kapanışa doğru BIST 100’ü aşağı çekenler",
+      "hashtags": [
+        "#BIMAS",
+        "#ASELS",
+        "#AKBNK",
+        "#TUPRS",
+        "#EREGL",
+        "#TRALT",
+        "#KCHOL",
+        "#TAVHL",
+        "#THYAO",
+        "#ISCTR",
+        "#YKBNK",
+        "#ASTOR",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113276583817756859",
+      "published_at_istanbul": "2026-10-22T17:29:35.019000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113276583817756859",
+      "headline": "🚨 #VESTL #KOPOL #TAVHL",
+      "hashtags": [
+        "#VESTL",
+        "#KOPOL",
+        "#TAVHL",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113277119572988176",
+      "published_at_istanbul": "2026-10-22T17:31:42.753000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113277119572988176",
+      "headline": "🚨 #HALKB",
+      "hashtags": [
+        "#HALKB",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113282251559739561",
+      "published_at_istanbul": "2026-10-22T17:52:06.314000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113282251559739561",
+      "headline": "🚨 #INTET",
+      "hashtags": [
+        "#INTET",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113285802281378286",
+      "published_at_istanbul": "2026-10-22T18:06:12.872000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113285802281378286",
+      "headline": "📢 Oylum 350.000 adet payı geri aldı",
+      "hashtags": [
+        "#OYLUM",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113286436216598829",
+      "published_at_istanbul": "2026-10-22T18:08:44.014000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113286436216598829",
+      "headline": "📢 Kıraç Galvaniz 85.000 adet payı geri aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#TCKRC"
+      ]
+    },
+    {
+      "id": "2113286713380364784",
+      "published_at_istanbul": "2026-10-22T18:09:50.095000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113286713380364784",
+      "headline": "📢 Masfen Enerji 70.000 adet payı geri aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#MASFN"
+      ]
+    },
+    {
+      "id": "2113288017997627513",
+      "published_at_istanbul": "2026-10-22T18:15:01.140000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113288017997627513",
+      "headline": "📢 Bantaş geri alım programında 100.000 adet pay aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#BNTAS"
+      ]
+    },
+    {
+      "id": "2113288359955313022",
+      "published_at_istanbul": "2026-10-22T18:16:22.669000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113288359955313022",
+      "headline": "📢 Net Holding 250.000 adet payı geri aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#NTHOL"
+      ]
+    },
+    {
+      "id": "2113288971241537780",
+      "published_at_istanbul": "2026-10-22T18:18:48.411000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113288971241537780",
+      "headline": "📢 Birikim Varlık’ın kazandığı alacak portföyü ihalesi iptal edildi",
+      "hashtags": [
+        "#BRKVY",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113289085930324263",
+      "published_at_istanbul": "2026-10-22T18:19:15.755000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113289085930324263",
+      "headline": "📢 Limak Doğu Anadolu Çimento 100.000 adet payı geri aldı",
+      "hashtags": [
+        "#LMKDC",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113290820577288493",
+      "published_at_istanbul": "2026-10-22T18:26:09.327000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113290820577288493",
+      "headline": "📢 #GIPTA 40.000 adet payı geri aldı",
+      "hashtags": [
+        "#GIPTA",
+        "#GIPTA",
+        "#Borsa",
+        "#BIST"
+      ]
+    },
+    {
+      "id": "2113291576227111336",
+      "published_at_istanbul": "2026-10-22T18:29:09.488000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113291576227111336",
+      "headline": "📢 Türk Altın İşletmeleri 80 milyon paylık ek geri alım kararı aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#TRALT"
+      ]
+    },
+    {
+      "id": "2113292137785676202",
+      "published_at_istanbul": "2026-10-22T18:31:23.374000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113292137785676202",
+      "headline": "📢 #TKNKA 100.000 adet payı geri aldı",
+      "hashtags": [
+        "#TKNKA",
+        "#Borsa",
+        "#BIST",
+        "#halkaarz"
+      ]
+    },
+    {
+      "id": "2113292235626181087",
+      "published_at_istanbul": "2026-10-22T18:31:46.701000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113292235626181087",
+      "headline": "📢 KAPEKS 50.000 adet payı geri aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#KPEKS",
+        "#halkaarz"
+      ]
+    },
+    {
+      "id": "2113292571040514559",
+      "published_at_istanbul": "2026-10-22T18:33:06.670000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113292571040514559",
+      "headline": "📢 Enerya 550.000 adet payı geri aldı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#ENERY"
+      ]
+    },
+    {
+      "id": "2113294252314706422",
+      "published_at_istanbul": "2026-10-22T18:39:47.517000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113294252314706422",
+      "headline": "📊 Ebebek’in üçüncü çeyrek net kârı %146,9 artarak 314,8 milyon TL’ye çıktı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST",
+        "#EBEBK"
+      ]
+    },
+    {
+      "id": "2113296640912011735",
+      "published_at_istanbul": "2026-10-22T18:49:17.003000+03:00",
+      "url": "https://x.com/endeks_haber/status/2113296640912011735",
+      "headline": "📢 Aracı kurumların net işlem dağılımı",
+      "hashtags": [
+        "#Borsa",
+        "#BIST"
+      ]
+    }
+  ],
+  "metrics": {
+    "posts": 45,
+    "median_interval_seconds": 407.2095,
+    "min_interval_seconds": 16.72,
+    "intervals_under_60_seconds": 6,
+    "intervals_under_180_seconds": 14,
+    "hour_counts": {
+      "11": 4,
+      "12": 2,
+      "13": 3,
+      "14": 4,
+      "15": 5,
+      "16": 5,
+      "17": 8,
+      "18": 14
+    }
+  }
+}

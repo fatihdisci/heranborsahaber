@@ -369,5 +369,28 @@
     "method": "reference",
     "editorial_priority": 100,
     "minimum_score": 0
+  },
+  {
+    "id": "fintables-x",
+    "name": "Fintables · X",
+    "url": "https://x.com/fintables",
+    "family": "fintables",
+    "language": "tr",
+    "official": false,
+    "allowed_hosts": [
+      "fintables.com",
+      "www.fintables.com",
+      "pbs.twimg.com"
+    ],
+    "poll_seconds": 600,
+    "fresh_hours": 168,
+    "enabled": true,
+    "checked_at": "2026-10-22",
+    "terms_url": "https://fintables.com",
+    "rights_note": "Public financial and sector posts only; images are evidence, not republished artwork. Company navigation and app promotion links excluded. Unknown attachments block generation.",
+    "review_mode": "owner_requested",
+    "method": "reference",
+    "editorial_priority": 90,
+    "minimum_score": 0
   }
 ]

@@ -22,3 +22,12 @@ class VisualEvidenceTests(unittest.TestCase):
    n+=1
    return {'complete':True,'facts':['Fiyat: 100'],'issues':[]} if n==1 else {'supported':False,'issues':['Etiket yanlış']}
   with self.assertRaisesRegex(RuntimeError,'image_vision_unverified'):extract({},invoke)
+
+ def test_one_correction_is_independently_audited_before_acceptance(self):
+  answers=iter([{'complete':True,'facts':['Net kâr: 100 milyon TL'],'issues':[]},{'supported':False,'issues':['Tabloda eksi işareti var']},{'complete':True,'facts':['Net kâr: -100 milyon TL'],'issues':[]},{'supported':True,'issues':[]}])
+  calls=[]
+  def invoke(job,prompt,payload):
+   calls.append(payload);return next(answers)
+  out=extract({'images':['original.png']},invoke)
+  self.assertEqual(len(calls),4);self.assertEqual(out['body'],'Net kâr: -100 milyon TL')
+  self.assertEqual(calls[2]['audit_issues'],['Tabloda eksi işareti var'])

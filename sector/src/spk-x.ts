@@ -6,13 +6,14 @@ import type {Env,Document} from './types';
 export const SPK_X_HOSTS=['nitter.netbub.com','nitter.meowing.monster','nitter.pp.ua'];
 export interface SpkPost {id:string;url:string;text:string;at:string;links:string[];images:string[];unsupported:boolean;}
 const unique=(a:string[])=>[...new Set(a)];
-export function parseSpkPosts(xml:string):SpkPost[]{
+export function parseSpkPosts(xml:string,account='spkgovtr'):SpkPost[]{
+ if(!['spkgovtr','fintables'].includes(account))throw Error('x_account_mismatch');
  if(/<!DOCTYPE|<!ENTITY/i.test(xml))throw Error('x_unsafe_xml');new SaxesParser({xmlns:true}).write(xml).close();
  const root=new DOMParser().parseFromString(xml,'text/xml');
- if(root.documentElement.tagName!=='rss'||!root.querySelector('channel > title')?.textContent?.toLowerCase().includes('@spkgovtr'))throw Error('x_account_mismatch');
+ if(root.documentElement.tagName!=='rss'||!new RegExp('@'+account+'(?:$|[^a-z0-9_])','i').test(root.querySelector('channel > title')?.textContent??''))throw Error('x_account_mismatch');
  const items=[...root.querySelectorAll('item')];if(!items.length)throw Error('x_empty_feed');
- return items.map(i=>{
-  const url=new URL(i.querySelector('link')?.textContent??''),m=url.pathname.match(/^\/spkgovtr\/status\/(\d+)$/i);
+ return items.filter(i=>account==='spkgovtr'||new URL(i.querySelector('link')?.textContent??'').pathname.toLowerCase().startsWith('/'+account+'/status/')).map(i=>{
+  const url=new URL(i.querySelector('link')?.textContent??''),m=url.pathname.match(new RegExp('^/'+account+'/status/(\\d+)$','i'));
   if(!SPK_X_HOSTS.includes(url.hostname)||!m)throw Error('x_post_identity');
   const raw=i.querySelector('description')?.textContent??'',{document}=parseHTML(raw);
   const at=Date.parse(i.querySelector('pubDate')?.textContent??'');if(!Number.isFinite(at)||at>Date.now()+300000)throw Error('x_post_date');
@@ -23,26 +24,26 @@ export function parseSpkPosts(xml:string):SpkPost[]{
    if(SPK_X_HOSTS.includes(u.hostname)){const path=decodeURIComponent(u.pathname.replace(/^\/pic\//,''));if(/^media\/[A-Za-z0-9_-]+\.(jpg|png|webp)$/.test(path))return 'https://pbs.twimg.com/'+path;}
    throw Error('x_image_host');
   }));
-  const text=stripHtml(raw)||stripHtml(i.querySelector('title')?.textContent??'')||(images.length?'SPK görsel paylaşımı':'');if(!text.trim())throw Error('x_post_empty');
-  return {id:m[1],url:'https://x.com/spkgovtr/status/'+m[1],text,at:new Date(at).toISOString(),links,images,unsupported:!!document.querySelector('video,audio,iframe')||/video\.twimg|\/video\//i.test(raw)};
+  const text=stripHtml(raw)||stripHtml(i.querySelector('title')?.textContent??'')||(images.length?account+' görsel paylaşımı':'');if(!text.trim())throw Error('x_post_empty');
+  return {id:m[1],url:'https://x.com/'+account+'/status/'+m[1],text,at:new Date(at).toISOString(),links,images,unsupported:!!document.querySelector('video,audio,iframe')||/video\.twimg|\/video\//i.test(raw)};
  });
 }
 export async function fetchSpkPosts(fetcher:typeof fetch=fetch){
  for(const host of SPK_X_HOSTS)try{const r=await readPublic('https://'+host+'/spkgovtr/rss',[host],{},fetcher);return {posts:parseSpkPosts(r.text),host};}catch{/* Each mirror must independently pass identity/XML checks. */}
  throw Error('x_all_mirrors_unavailable');
 }
-export async function pollSpkX(env:Env,now=Date.now(),load=fetchSpkPosts){
- const source=await env.DB.prepare("SELECT enabled FROM sources WHERE id='spk-x'").first<{enabled:number}>();if(!source?.enabled)return;
- const row=await env.DB.prepare("SELECT value FROM system_state WHERE key='spk_x_state'").first<{value:string}>();
+export async function pollSpkX(env:Env,now=Date.now(),load=fetchSpkPosts,sourceId='spk-x',select:(p:SpkPost)=>boolean=()=>true){
+ const source=await env.DB.prepare("SELECT enabled FROM sources WHERE id=?").bind(sourceId).first<{enabled:number}>();if(!source?.enabled)return;
+ const row=await env.DB.prepare("SELECT value FROM system_state WHERE key=?").bind(sourceId.replace(/-/g,'_')+'_state').first<{value:string}>();
  const state=row?JSON.parse(row.value):null;if(state?.next>now)return;
  try{
   const {posts,host}=await load();const seen=new Set<string>(state?.seen??[]),since=state?.since??now;
   const coverageGap=!!state?.seen?.length&&!posts.some(p=>seen.has(p.id));
-  const fresh=state?posts.filter(p=>!seen.has(p.id)&&Date.parse(p.at)>=since):[];
-  const inserts=await Promise.all(fresh.map(async p=>env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,document,document_expires) VALUES(?,?,?,?,?,?,?,?,?)').bind(await sha256(p.url),'spk-x',p.url,p.text.split('\n')[0].slice(0,220),p.text,p.at,Math.floor(now/1000),JSON.stringify(p),Math.floor(now/1000)+7*86400)));
-  await env.DB.batch([...inserts,env.DB.prepare("INSERT INTO system_state(key,value) VALUES('spk_x_state',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify({since,next:now+600000,seen:unique([...seen,...posts.map(p=>p.id)]).slice(-2000),host,last_ok:now,failures:0,count:posts.length,new_count:fresh.length,coverage_gap:coverageGap}))]);
+  const fresh=state?posts.filter(p=>!seen.has(p.id)&&Date.parse(p.at)>=since&&select(p)):[];
+  const inserts=await Promise.all(fresh.map(async p=>env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,document,document_expires) VALUES(?,?,?,?,?,?,?,?,?)').bind(await sha256(p.url),sourceId,p.url,p.text.split('\n')[0].slice(0,220),p.text,p.at,Math.floor(now/1000),JSON.stringify(p),Math.floor(now/1000)+7*86400)));
+  await env.DB.batch([...inserts,env.DB.prepare("INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(sourceId.replace(/-/g,'_')+'_state',JSON.stringify({since,next:now+600000,seen:unique([...seen,...posts.map(p=>p.id)]).slice(-2000),host,last_ok:now,failures:0,count:posts.length,new_count:fresh.length,coverage_gap:coverageGap}))]);
  }catch{
-  await env.DB.prepare("INSERT INTO system_state(key,value) VALUES('spk_x_state',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify({...state,next:now+600000,failures:(state?.failures??0)+1,error:'x_all_mirrors_unavailable'})).run();
+  await env.DB.prepare("INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(sourceId.replace(/-/g,'_')+'_state',JSON.stringify({...state,next:now+600000,failures:(state?.failures??0)+1,error:'x_all_mirrors_unavailable'})).run();
  }
 }
 export type EvidenceReader=(b:Uint8Array)=>Promise<Pick<Document,'body'|'passages'|'images'|'coverage'>>;

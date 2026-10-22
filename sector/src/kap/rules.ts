@@ -37,7 +37,14 @@ export function muted(title:string):boolean {
  ||/YONETIM BILGI FORMU|KREDI DERECELENDIR/.test(t)
  ||(/YONETIM KURULU/.test(t)&&!/GERI ALIM|GERI ALIN|PAY ALIM|PAY SATIM|FINANSAL RAPOR|FAALIYET RAPOR|SOZLESME|IHALE|YENI IS|SIPARIS|ANLASMA|TEMETTU|KAR PAYI|SERMAYE ART|SERMAYE AZAL/.test(t));
 }
+// MKK settlement notices are excluded by issuer AND title, not by related shares.
+export function mkkSettlement(d:Disclosure):boolean {
+ const company=normalize(d.company??'').replace(/[^A-Z0-9 ]/g,'');
+ const title=normalize(d.title).replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ');
+ return /^MERKEZI KAYIT KURULUSU(?: |$)/.test(company)&&/^BORCLANMA ARACLARI YATIRIM FONLARI VE VARANT ITFA KUPON GETIRI NAKDI UZLASI ODEME ISLEMLERI(?: |$)/.test(title);
+}
 export function important(d:Disclosure):boolean {
+ if(mkkSettlement(d))return false;
  const t=subject(d);
  if(/FINANSAL TAKVIM|SORUMLULUK BEYANI|GENEL KURUL BILDIRIMI/.test(t)&&classify(d).every(topic=>topic==='other'))return false;
  return !(/PORTFOY DAGILIM RAPORU|BORSA DISI VAAD SOZLESMESI|BORSA DISI REPO|BORSA DISI TERS REPO|FON SUREKLI BILGILENDIRME|KREDI DERECELENDIR|YATIRIMCI BILGI FORMU|RISK OLCUM|DEGERLEME ESASLARI|SIRKET GENEL BILGI FORMU|HAK KULLANIM SUREC DURUM/.test(t)||(/FAIZ/.test(t)&&/PAY DISI SERMAYE PIYASASI ARACI/.test(t))||muted(d.title)||muted(t));
@@ -59,6 +66,7 @@ export function decide(d:Disclosure,p:Preferences,indices:Indices|null):Decision
  if(topics.includes('circuit')&&!p.circuitNotifications)return result('off','circuit_disabled');
  if(d.isFund&&p.funds==='off')return result('off','funds_off');
  if(/ESAS\s+SOZLESME/.test(normalize(d.title)))return result('off','mandatory_mute');
+ if(mkkSettlement(d))return result('off','mkk_settlement_excluded');
  if(shares)return result('instant','share_transaction_override');
  if(muted(d.title)||muted(subject(d)))return result('off','mandatory_mute');
  if(p.excludedTitles.some(t=>normalize(d.title).includes(normalize(t))))return result('off','excluded_title');

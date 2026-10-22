@@ -181,3 +181,18 @@ test('circuit preference off during reading prevents the group from entering AI'
   assert.equal((await c.run()).state,'suppressed');assert.equal((await env.DB.prepare('SELECT COUNT(*) n FROM model_jobs').first<{n:number}>())!.n,0);
  }finally{s.close();}
 });
+
+test('MKK settlement is suppressed before reading and at final delivery without deleting history',async()=>{
+ for(const final of [false,true]){
+  const {s,env,docs}=await setup();try{
+   const d=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);
+   d.company='MERKEZİ KAYIT KURULUŞU A.Ş.';
+   d.title='Borçlanma Araçları, Yatırım Fonları ve Varant İtfa/Kupon/Getiri/Nakdi Uzlaşı Ödeme İşlemleri / AKMEN';
+   s.run('UPDATE disclosures SET metadata=?',JSON.stringify(d));let reads=0;
+   const c=new KapDelivery(s,env,async()=>{reads++;return docs;},()=>NOW);
+   if(final)assert.equal(c.deliveryDecision(docs),'suppress');else await c.run();
+   assert.equal(reads,0);assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'suppressed');
+   assert.equal(s.row<{n:number}>('SELECT count(*) n FROM disclosures')!.n,1);
+  }finally{s.close();}
+ }
+});

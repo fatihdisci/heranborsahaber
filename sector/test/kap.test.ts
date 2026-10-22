@@ -214,3 +214,14 @@ test('articles of association are muted even with share override; ordinary contr
  for(const title of ['Esas Sözleşme Değişikliği','ESAS SOZLESME Tadil Metni','Pay Alım Bildirimi - Esas Sözleşme'])assert.equal(decide(item(101,{title}),tracked,null).action,'off');
  assert.equal(decide(item(101,{title:'Yeni İş İlişkisi',summary:'Esas sözleşme hükümlerine uygun yeni sözleşme imzalandı.'}),tracked,null).action,'instant');
 });
+
+test('MKK settlement issuer/title pair is muted across suffixes and tracking overrides',()=>{
+ const title='Borçlanma Araçları, Yatırım Fonları ve Varant İtfa/Kupon/Getiri/Nakdi Uzlaşı Ödeme İşlemleri / AKMEN, ATAVK';
+ const p=pref({funds:'instant',watchlist:[{ticker:'TEST',mode:'all',topics:[]}]});
+ for(const t of [title,title.toLocaleUpperCase('tr'),title+' / Pay Alım Bildirimi']){
+  const d=item(101,{title:t,companyTitle:'MERKEZİ KAYIT KURULUŞU A.Ş.'});assert.equal(decide(d,p,null).action,'off');
+ }
+ assert.equal(decide(item(101,{title:'Yeni İş İlişkisi',companyTitle:'MERKEZİ KAYIT KURULUŞU A.Ş.'}),p,null).action,'instant');
+ assert.equal(decide(item(101,{title,companyTitle:'TEST SANAYİ A.Ş.'}),p,null).action,'instant');
+ assert.equal(decide(item(101,{title:'Payların Geri Alınmasına İlişkin Bildirim'}),p,null).action,'instant');
+});

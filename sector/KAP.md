@@ -83,3 +83,5 @@ Kaynak içi ikincil çelişki aktarılacak olguları etkilemiyorsa `source_notes
 Günlük komut raporları: `/devrekesici`, `/gerialım`. Üyelik okuyucu artık resmî Endeksler sayfasında 30/50/100 sayıları ve 30 ⊂ 50 ⊂ 100 ilişkisini doğrular. Güncelleme başarısız olursa önceki doğrulanmış kayıt korunur. Rapor miktar önbelleği ve kapsam sınırları README'de açıklanmıştır; canlı toplama cursor'u veya bildirim tercihleri değiştirilmez.
 
 Başlığında “Esas Sözleşme” geçen bildirimler zorunlu olarak susturulur; pay işlemi önceliği ve takip listesi bu yasağı aşamaz. Haber metnindeki sıradan esas sözleşme atıfları yeni iş/geri alım bildirimini engellemez.
+
+MKK kaynaklı `Borçlanma Araçları, Yatırım Fonları ve Varant İtfa/Kupon/Getiri/Nakdi Uzlaşı Ödeme İşlemleri` başlığı, sonuna eklenen şirket kodlarından bağımsız olarak zorunlu susturulur. Kural yayımlayıcı unvanı ile başlık birlikte eşleştiğinde uygulanır; MKK'nın diğer duyurularını veya ilgili hisselerin şirket bildirimlerini engellemez. Kuyruğa giriş ve son teslim kontrolü aynı kuralı kullanır; kaynak geçmişi silinmez.

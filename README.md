@@ -5,10 +5,10 @@ Borsa İstanbul, önemli KAP açıklamaları, hisseler, finans piyasaları ve ya
 ## Güncel sistem
 
 - Haberler önce başlık ve özet olarak gelir. **Tweet ve görsel oluştur** düğmesi tam kaynak metninden Türkçe içerik hazırlar.
-- Bağımsız [KAP toplayıcısı](sector/KAP.md), seçilen bildirimleri toplar; ana metin, tablolar ve PDF ekleri içerik üretiminde incelenir.
+- Bağımsız [KAP toplayıcısı](sector/KAP.md), seçilen bildirimleri toplar; ana metin, tablolar ve PDF ekleri içerik üretiminde incelenir. Devre kesici, pay alım-satım ve geri alım bildirimleri kullanıcı tarafından seçilen halka arz/fon krizi hisseleri veya KAP'ın güncel BIST 30/100 üyeleriyle sınırlandırılır.
 - Bota doğrudan haber metni, desteklenen bağlantı veya PDF gönderilebilir. Hazırlanıyor mesajı tamamlandığında aynı mesajda tweet ve görselle değiştirilir.
 - Altı kart yerleşimi ve iki renk teması kullanılır. **Kartı yeniden tasarla** aynı mesajın görselini değiştirir; yeniden AI çağrısı yapmaz.
-- İçerik üretimi ayrı Hermes profili üzerinden `gpt-5.6-terra` / `medium` ile çalışır. Telegram işlemleri yalnız kayıtlı sahibine açıktır. **X yayını yoktur.**
+- İçerik üretimi ayrı Hermes profili üzerinden `gpt-6-luna` / `medium` ile çalışır. Telegram işlemleri yalnız kayıtlı sahibine açıktır. **X yayını otomatik değildir; yalnız açık Paylaş düğmesiyle çalışır.**
 
 ## Geliştirme ve doğrulama
 
@@ -34,6 +34,7 @@ Build yalnız deneme derlemesidir; bu kontroller gerçek Telegram veya X gönder
 
 - [Kurulum, haber akışı ve Telegram davranışı](sector/README.md)
 - [KAP toplama ve filtreleme kuralları](sector/KAP.md)
+- [KAP özel işlem hisse kapsamı](sector/src/kap/ticker-scope.ts)
 - [Merkezi haber kaynakları](sector/sources.json)
 - [Editör promptu ve doğrulama](sector/src/editorial.ts)
 - [Kart çizimi](sector/src/card.ts), [yerleşim seçimi](sector/src/card-layout.ts) ve [marka dosyaları](sector/assets/)

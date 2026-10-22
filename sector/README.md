@@ -50,7 +50,7 @@ Kurulumda eski RSS arşivi canlı kuyruğa boşaltılmaz; başlangıç anı ve k
 Günlük en fazla 240 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X yayını kalıcı olarak kapsam dışıdır.
 NTV’nin denenen RSS’i ve TCMB’nin özel PPK beslemesi eski kaldığı için etkinleştirilmedi. PPK basın duyuruları genel TCMB basın akışından takip edilir.
 TÜİK RSS adayı 404, güncel veri portalı ise otomatik istemciye koruma sayfası verdi; bültenler okunmuş gibi sisteme eklenmedi.
-Haber okuyucusu KAP bağlantılarını birincil kaynak olarak okuyabilir. Ayrıca bağımsız KAP toplayıcısı çalışır; kalıcı cursor, saklama ve kuyruk kuralları [KAP.md](KAP.md) içindedir. Devre kesici gönderimi kapalıdır; KAP kuyruğu haber servisindeki bağımsız Telegram tüketicisine bağlıdır.
+Haber okuyucusu KAP bağlantılarını birincil kaynak olarak okuyabilir. Ayrıca bağımsız KAP toplayıcısı çalışır; kalıcı cursor, saklama ve kuyruk kuralları [KAP.md](KAP.md) içindedir. Devre kesici gönderimi `circuitNotifications` tercihine bağlıdır; KAP kuyruğu haber servisindeki bağımsız Telegram tüketicisine bağlıdır.
 SPK’nın güncel bülten listesi ve PDF’leri ayrı okuyucuyla takip edilir; sayfa ve tablo sınırları korunur.
 
 Kamuya açık RSS veya okunabilir sayfa, yeniden yayın/görsel lisansı sayılmaz.
@@ -177,4 +177,4 @@ Yeni RSS eklenmedi. 14 mevcut beslemenin HTTP/XML/tarih sonuçları `reports/end
 
 Haber, devre kesici, kurumların alıp sattığı hisseler, tek hisse AKD ve hacim için ayrı [görsel aileleri](reports/content-templates/contact-sheet.png) vardır. İsteğe bağlı kaynak denetimli `card_data` alanı sayıları ve tabloları taşır; otomatik AKD/hacim veri kaynağı kurulmaz. Ayrıntılar: [ENDEKS.md](ENDEKS.md#konuya-özel-görsel-aileleri).
 
-Devre kesici akışı üç dakikada bir kapanan tek toplu bildirimdir. Aynı penceredeki kodlar tek tweetin etiketlerinde bir kez yer alır; kısa metin kaynakta doğrulanan durdurmayı geçmiş zamanla aktarır. Devre kesici görselinde marka dışında yalnız büyük DEVRE KESİCİ bulunur. Ayrı KAP taraması ve diğer önemli bildirimlerin hızları korunur.
+Devre kesici akışı üç dakikada bir kapanan tek toplu bildirimdir. Aynı penceredeki kodlar tweetin en üst başlık satırında #KOD olarak bir kez yer alır, sonda tekrarlanmaz; kısa metin kaynakta doğrulanan durdurmayı geçmiş zamanla aktarır. Devre kesici görselinde büyük DEVRE KESİCİ başlığının altında doğrulanmış #KOD ızgarası bulunur. Kod sayısı arttıkça başlık ve ızgara yerleşimi uyarlanır; kodlar kesilmez veya gizlenmez. Sığmayan içerik açık kapasite hatası verir; farklı kaynak kodu uydurulmaz. Ayrı KAP taraması ve diğer önemli bildirimlerin hızları korunur.

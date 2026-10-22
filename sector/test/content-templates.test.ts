@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cardSvg} from '../src/card';
+import {cardSvg,draftCard} from '../src/card';
 import {CARD_LAYOUTS} from '../src/card-layout';
 import {png} from '../scripts/render_local';
 import {validateDraft,numericIssues,documentScore} from '../src/editorial';
@@ -52,6 +52,24 @@ test('circuit artwork shows only the brand and DEVRE KESICI, never tickers, date
   const texts=[...svg.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)].map(m=>m[1]);assert.deepEqual(texts,['ENDEKS','HABER','DEVRE','KESİCİ']);
   const b=Buffer.from(await png(svg));assert.equal(b.readUInt32BE(16),1080);assert.equal(b.readUInt32BE(20),1350);
  }
+});
+test('source validation rejects invented or duplicate multi-ticker card codes',()=>{
+ assert.doesNotThrow(()=>validateDraft({...base,card_data:{tickers:['ABCD']}},[doc]));
+ for(const tickers of [['FAKE'],['ABCD','ABCD'],['ABCD.E']])assert.throws(()=>validateDraft({...base,card_data:{tickers}},[doc]),/unsupported_card_tickers/);
+});
+test('crowded circuit cards retain all 120 codes, fit every layout and render full-size PNGs',async()=>{
+ const codes=Array.from({length:120},(_,i)=>'A'+String(i).padStart(4,'0'));
+ for(const theme of ['navy','paper'] as const)for(const layout of CARD_LAYOUTS){
+  const svg=draftCard({...base,template:'circuit',card_data:{tickers:codes}},[],'',false,theme,layout);
+  assert.equal((svg.match(/data-circuit-ticker=/g)??[]).length,codes.length);
+  for(const code of codes)assert.equal(svg.split('>#'+code+'</text>').length-1,1);
+  for(const m of svg.matchAll(/data-circuit-ticker="[^"]+"><rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g)){
+   const [x,y,w,h]=m.slice(1).map(Number);assert(x>=80&&x+w<=1001);assert(y>=480&&y+h<=1250);
+  }
+  const b=Buffer.from(await png(svg));assert.equal(b.readUInt32BE(16),1080);assert.equal(b.readUInt32BE(20),1350);
+ }
+ const tooMany=Array.from({length:1000},(_,i)=>'A'+String(i).padStart(4,'0'));
+ assert.throws(()=>draftCard({...base,template:'circuit',card_data:{tickers:tooMany}}),/circuit_card_capacity/);
 });
 test('five long institution names fit every AKD redesign without truncating amounts',()=>{
  const rows=Array.from({length:5},(_,i)=>({label:'Uzun Unvanlı Yatırım Menkul Değerler '+String(i+1),value:'1.234.567.890 adet'}));

@@ -14,7 +14,7 @@ export interface Document {source_id:string;source_name:string;family:string;off
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface CardRow {label:string;value:string;}
-export interface CardData {ticker?:string;as_of?:string;buy?:CardRow[];sell?:CardRow[];holdings?:CardRow[];metrics?:CardRow[];}
+export interface CardData {ticker?:string;tickers?:string[];as_of?:string;buy?:CardRow[];sell?:CardRow[];holdings?:CardRow[];metrics?:CardRow[];}
 export interface Draft {
   card_data?:CardData;
   headline:string;body:string;hashtags:string[];category:Category;importance:number;

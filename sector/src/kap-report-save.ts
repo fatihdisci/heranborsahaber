@@ -12,7 +12,7 @@ export async function saveReport(env:Env,row:{update_id:number;message_id:number
   await env.MEDIA.put(media,await env.RENDER_REPORT(draftCard(result.draft)),{httpMetadata:{contentType:'image/png'}});
   await env.DB.batch([
    env.DB.prepare('INSERT OR IGNORE INTO sources(id,config,enabled) VALUES(?,?,0)').bind(doc.source_id,JSON.stringify({id:doc.source_id,name:doc.source_name,method:'reference'})),
-   env.DB.prepare("INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,status) VALUES(?,?,?,?,?,?,?,'prepared')").bind(id,doc.source_id,doc.url+'-'+row.update_id,doc.title,'',doc.published_at,time),
+   env.DB.prepare("INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,status) VALUES(?,?,?,?,?,?,?,'prepared')").bind(id,doc.source_id,doc.url+'-'+row.update_id,doc.title,'',doc.published_at??new Date(time*1000).toISOString(),time),
    env.DB.prepare("INSERT OR IGNORE INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,media_key) VALUES(?,?,?,?,?,?,'pending',?,?,?)").bind(id,id,id,JSON.stringify(result.draft),JSON.stringify(result.documents),'verified',time,time+86400,media),
    env.DB.prepare("INSERT OR IGNORE INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,state,result_draft) VALUES(?,?,?,?,?,'manual','complete',?)").bind(id,id,JSON.stringify(result.documents),id,time,id),
    env.DB.prepare("UPDATE manual_requests SET state='model_queued',job_id=?,lease_until=0,error=NULL WHERE update_id=?").bind(id,row.update_id)

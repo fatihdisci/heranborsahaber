@@ -31,7 +31,7 @@ kanıt pasajlarına dönüştürülür. Tarihsiz görsele güncel tarih eklenmez
 kurum/sayı satırı sessizce atlanmaz. Yeni veri sağlayıcısı veya hesap oturumu
 gerekmez; mevcut model ve otomatik X yayın yasağı korunur.
 
-Yazım ve kart metinleri `gpt-6-luna`, `high` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
+Yazım ve kart metinleri `gpt-6-luna`, `medium` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
 
 Hashtagler yalnız taslağın `hashtags` alanında tutulur; modelin gövdeye eklediği etiket satırları teslimattan ve kopyalamadan önce tek satırda birleştirilir. Tek hisse için `#Borsa #BIST #KOD` kullanılır. Çok hisseli devre kesici grubunda bütün doğrulanmış asıl kodlar korunur; bu gruplar için genel 2–3 etiket sınırı uygulanmaz. Doğrulanmış kod yoksa `#DevreKesici` kullanılır. Kaynak metin ve kanıt alıntıları değiştirilmez.
 Araç, MCP, bellek enjeksiyonu, alternatif model ve ücretli API sağlayıcısı kapalıdır.
@@ -74,7 +74,7 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
 Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
 
-Güncel kararlar: Otomatik X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `high`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
+Güncel kararlar: Otomatik X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
@@ -168,7 +168,7 @@ Geri dönüş kopyaları `backups/update-<kimlik>/rollback.json` içinde listele
 
 ## ENDEKS marka ve kapsam geçişi
 
-Görünür marka ENDEKS HABER, hesap referansı `@endeks_haber` oldu. Teknik `sector-haber` dizinleri, `com.sectorhaber.*` servisleri, SQLite uygulama kimlikleri, Hermes profili ve Cloudflare bağları korunur. Model/oturum `gpt-6-luna / high`; Otomatik X yayını kapalıdır.
+Görünür marka ENDEKS HABER, hesap referansı `@endeks_haber` oldu. Teknik `sector-haber` dizinleri, `com.sectorhaber.*` servisleri, SQLite uygulama kimlikleri, Hermes profili ve Cloudflare bağları korunur. Model/oturum `gpt-6-luna / medium`; Otomatik X yayını kapalıdır.
 
 `src/brand.ts` ortak kimliği, `scripts/generate_brand.ts` profil/banner SVG ve PNG'lerini üretir. `scripts/preview_endeks.ts` altı yerleşim ve iki tema için çevrimdışı örnekleri `reports/endeks-previews/` altına yazar. `circuit`, `kap`, `market`, `finance` şablonları ve `bist`, `kap` kategorileri eski değerleri kaldırmadan eklendi. Özet/etiket/kanıt/birim denetimleri ve mevcut kart yeniden tasarlama korunur.
 
@@ -218,7 +218,7 @@ Raporlar model çağrısı yapmaz; normal taslak/Telegram teslimat ve manuel X p
 
 Raporlar tüm piyasanın eksiksiz sayımı iddiasında bulunmaz; toplayıcı kapsamı, gecikme ve başarısız okumalar belirtilir. Yoğun devre kesici günlerinde kart en çok 30 hisse gösterir ve kalan sayıyı belirtir; toplam sayım tüm kayıtları içerir. Geri dönüşte önceki uygulama sürümü etkinleştirilebilir; eklenen önbellek tablosu silinmek zorunda değildir.
 
-Genel manuel görsellerde OCR yardımcıdır: görüntü, mevcut Hermes gpt-6-luna/high üzerinden etiket–değer ilişkileriyle okunur ve ayrı görsel kontrolünden geçer. Doğrulanan görsel olgular tweetin sayı/kanıt kontrollerine aktarılır; asıl görüntü üretim ve denetim adımlarında korunur. Yapılandırılmış AKD tabloları mevcut deterministik okuyucuyu ve görsel denetimi kullanır. Görselde bulunmayan tarih/birim veya grafikten hassas fiyat türetilmez.
+Genel manuel görsellerde OCR yardımcıdır: görüntü, mevcut Hermes gpt-6-luna/medium üzerinden etiket–değer ilişkileriyle okunur ve ayrı görsel kontrolünden geçer. Doğrulanan görsel olgular tweetin sayı/kanıt kontrollerine aktarılır; asıl görüntü üretim ve denetim adımlarında korunur. Yapılandırılmış AKD tabloları mevcut deterministik okuyucuyu ve görsel denetimi kullanır. Görselde bulunmayan tarih/birim veya grafikten hassas fiyat türetilmez.
 
 ### SPK X takibi
 `spk-x` kaynağı @spkgovtr hesabını 600 saniyede bir ücretsiz Nitter RSS üzerinden kontrol eder. Netbub, Meowing ve pp.ua sırayla denenir; X API anahtarları kullanılmaz. İlk başarılı sorgu sessiz başlangıçtır. Kimlikler ve tarama zamanı `system_state.spk_x_state` içinde kalıcıdır; haber ve takip durumu aynı transaction ile kaydedilir. Erişim/kimlik/XML hatasında takip geçmişi korunur. Son 20 gönderilik pencere ile önceki sorgu örtüşmüyorsa `coverage_gap` işaretlenir; kesintiler sırasında eksiksiz geçmiş garantisi verilmez.
@@ -228,3 +228,6 @@ Yeni paylaşım mevcut haber önizlemesine gider; kullanıcı isteyince tweet, S
 `fintables-x`, @fintables hesabını SPK ile aynı ücretsiz Nitter okuyucusuyla 10 dakikada bir kontrol eder; durumu `fintables_x_state` anahtarında bağımsız tutulur. İlk tarama eski gönderimleri sessiz kaydeder. Finansal tablo/bilanço, bilanço takvimi, sektör ve uçuş trafik verileri seçilir. Reklam, yayın/konuk duyurusu, eğitim ve bültene yönlendiren salt tanıtım devam mesajları, retweet ve konusu metinden anlaşılamayan görsel paylaşımları seçilmez. Son 20 gönderilik gerçek RSS örneğinde 10 özgün finansal/veri paylaşımı seçildi (22 Ekim 2026).
 
 Üretim yalnız kullanıcı isteğiyle başlar. Paylaşımdaki bütün görseller mevcut pixel-first vision ve bağımsız denetimden geçer; OCR yardımcıdır. Görseller son üretim/denetim paketinde de korunur. Görsel denetimi bir hata bulursa en fazla bir düzeltme ve bağımsız yeniden denetim yapılır; başarısız sonuç kanıt sayılmaz. Finansallarda her tablonun karşılaştırma dönemleri, kümülatif/çeyreklik ayrımı, negatif değer, N/A, para birimi ve ölçek kontrol edilir. Şirket genel sayfası ve bilinen mobil uygulama indirme bağlantısı rapor eki sayılmaz; değişen canlı değerler eski bilanço görseline karıştırılmaz. Diğer Fintables bağlantılarında içerik alanı/PDF/ek görseller okunur; erişilemeyen, desteklenmeyen veya kayıtlı alan adı dışındaki bir ek sessizce atlanmaz, üretim durdurulur. Üyelik duvarı aşılmaz. Fintables üçüncü taraf kaynağıdır, resmî KAP doğrulaması olarak gösterilmez. Başka kaynaklardan gelen aynı olayın anlamsal tekilleştirmesi mutlak garanti değildir; mevcut önizleme/onay akışı korunur.
+
+
+ChatGPT için indirilebilir çevrimdışı kart ve prompt paketi: [`exports/ENDEKS-HABER-ChatGPT.zip`](exports/ENDEKS-HABER-ChatGPT.zip). Kaynak paketi aynı dizindeki `exports/ENDEKS-HABER-ChatGPT/` klasöründe ve `scripts/export_chatgpt_kit.ts` ile yeniden üretilebilir.

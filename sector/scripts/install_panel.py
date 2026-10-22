@@ -1,7 +1,7 @@
 """Isolated read-only Mini App sync. Never restarts news/KAP/Hermes.
 Requires an already deployed panel and private config.json in the panel runtime.
 """
-import json,os,pathlib,plistlib,shutil,subprocess,sys,time,uuid,urllib.request
+import json,os,pathlib,plistlib,shutil,subprocess,sys,time,uuid,urllib.request,re
 ROOT=pathlib.Path.home()/'Library/Application Support/sector-haber'
 PANEL=ROOT/'miniapp'
 LABEL='com.endekshaber.panel'
@@ -20,7 +20,24 @@ def cloud(enable):
     with urllib.request.urlopen(request,timeout=15) as response:
         if response.status!=200:raise RuntimeError('panel_switch_failed')
 
-def bootout():subprocess.run(['launchctl','bootout',f'gui/{os.getuid()}/{LABEL}'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+def bootout():
+    service=f'gui/{os.getuid()}/{LABEL}'
+    status=subprocess.run(['launchctl','print',service],capture_output=True,text=True)
+    match=re.search(r'^\s*pid = (\d+)\s*$',status.stdout or '',re.MULTILINE)
+    pid=int(match[1]) if match else None
+    subprocess.run(['launchctl','bootout',service],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    # launchd may return before the old sync process has drained its HTTP call.
+    # Re-registering immediately can fail with EIO, including during rollback.
+    for _ in range(90):
+        loaded=subprocess.run(['launchctl','print',service],capture_output=True).returncode==0
+        alive=False
+        if pid:
+            try:os.kill(pid,0);alive=True
+            except ProcessLookupError:pass
+        if not loaded and not alive:return
+        time.sleep(.5)
+    raise RuntimeError('panel_stop_timeout')
+
 
 def menu(enable):
     secrets=json.loads((ROOT/'secrets.json').read_text());chat=secrets['TELEGRAM_CHAT_ID']

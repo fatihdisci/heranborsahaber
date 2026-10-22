@@ -158,7 +158,7 @@ import type {Draft} from '../src/types';
 test('frozen circuit group reads all official members and delivers one branded photo with source button',async()=>{
  const {s,env}=await setup();const images=new Map<string,Uint8Array>();Object.assign(env,{AI_MODEL:'gpt-6-luna',AI_EFFORT:'high',TELEGRAM_BOT_TOKEN:'123:test',TELEGRAM_VERIFIED_BOT_ID:'123',MEDIA:{put:async(k:string,b:Uint8Array)=>images.set(k,b),get:async(k:string)=>images.has(k)?{arrayBuffer:async()=>images.get(k)!.buffer}:null}});
  const previous=globalThis.fetch;let photos=0;const reads:number[]=[];
- globalThis.fetch=async(url,options)=>{assert.match(String(url),/^https:\/\/api\.telegram\.org\//);if(String(url).endsWith('/sendPhoto')){photos++;const form=options!.body as FormData;assert.match(String(form.get('caption')),/ABCD.*EFGH/);const buttons=JSON.parse(String(form.get('reply_markup')));assert(buttons.inline_keyboard.flat().some((b:any)=>b.text==='Kaynağı aç'));}return Response.json({ok:true,result:{message_id:99}});};
+ globalThis.fetch=async(url,options)=>{assert.match(String(url),/^https:\/\/api\.telegram\.org\//);if(String(url).endsWith('/sendPhoto')){photos++;const form=options!.body as FormData;assert.match(String(form.get('caption')),/ABCD.*EFGH/);const buttons=JSON.parse(String(form.get('reply_markup')));assert(buttons.inline_keyboard.flat().some((b:any)=>b.text==='🔗'));}return Response.json({ok:true,result:{message_id:99}});};
  try{
   s.run("UPDATE queue SET state='suppressed'");s.configure({...s.prefs(),circuitNotifications:true},NOW);
   const l=s.claim('reconcile',NOW)!;const base=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);

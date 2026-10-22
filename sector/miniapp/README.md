@@ -24,3 +24,11 @@ Secrets are `BOT_TOKEN`, `OWNER_ID`, `SYNC_TOKEN`; populate through Wrangler sec
 Cloud-only emergency disable: deploy this separate Worker with `--var ENABLED:false`. Never deploy the production `wrangler.toml` to undo this panel.
 
 Tests: `npm run check`, `npm test`, `python3 -m unittest discover -s test -p 'test_panel_install.py'`; dry-run: `npx wrangler deploy --config miniapp/wrangler.toml --dry-run`. Local visual fixtures live only under `/tmp`, not in the deployed bundle.
+
+## Publication assistant
+
+The panel now displays the shared publication ledger: manual declarations plus successful API receipts, Istanbul daily totals, last publication time, and ready/published/deferred filters. Manual declarations do not consume the 20 API reservations. Snapshot fields remain backwards compatible. Panel buttons open owner-authenticated Telegram deep links for mark/undo/defer/time correction; the cloud Worker still has no database mutation or publishing endpoint. A panel action requires opening/starting the editor bot; allow roughly 30 seconds for the next sync. Manual declarations are not independently verified X publications.
+
+Telegram card controls: 🔗 source, 📋 copy, ✏️ edit, 🎨 redesign, 🚀 API publish, ✅ manual declaration, ⏸ defer, 📊 history/cadence. Published manual items offer 🕒 time correction and ↩️ undo. `/yayinlar` shows overall counts and the separate API budget. Deferring never schedules an automatic publication. Native Telegram copy buttons cannot also trigger a callback; use 📊 for guidance before copying. Historical manual X posts are not silently backfilled.
+
+Rollback: restore the prior news and panel releases plus the previous Worker version. Keep the additive publication tables; no destructive down migration is required. API receipts stay in their original ledger.

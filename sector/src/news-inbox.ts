@@ -14,7 +14,7 @@ export function previewDuplicate(a:string,b:string):boolean {
  const subject=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('tr-TR').replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(' ').slice(0,2).join(' ');
  return subject(a)===subject(b)&&numbers(a)===numbers(b)&&titleSimilarity(a,b)>=.9;
 }
-function markup(id:string,url:string){return {inline_keyboard:[[{text:'Kaynağı aç',url}],[{text:'✨ Tweet ve görsel oluştur',callback_data:'news:'+id}]]};}
+function markup(id:string,url:string){return {inline_keyboard:[[{text:'🔗',url}],[{text:'✨',callback_data:'news:'+id}]]};}
 type ProgressCard={id:string;message_id:number;title:string;summary:string;url:string;config:string;status:string;job_state:string|null;delivery_state:string|null};
 export function newsProgressNote(row:Pick<ProgressCard,'status'|'job_state'|'delivery_state'>,paused=false):string {
  if(row.delivery_state==='sent')return 'Tweet ve görsel hazırlandı.';
@@ -50,7 +50,7 @@ export async function requestNews(env:Env,id:string,messageId:number,confirmedRe
   if(result==='sent'){await env.DB.prepare("UPDATE news_cards SET state='complete' WHERE id=?").bind(id).run();return 'Bu haberin tweet ve görseli zaten hazırlandı.';}
   if(result==='queued'){await env.DB.prepare("UPDATE news_cards SET state='model_queued' WHERE id=?").bind(id).run();return 'Hazır tweet ve görselin teslimatı sıraya alındı. Yeniden AI kullanılmayacak.';}
   if(result==='confirm'){
-   if(env.MODE==='telegram_review')await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(messageId),reply_markup:JSON.stringify({inline_keyboard:[[{text:'Kaynağı aç',url:existing.url}],[{text:'Mesaj gelmediyse yeniden gönder (çift olabilir)',callback_data:`newsretry:${id}:${existing.revision}`}]]})}));
+   if(env.MODE==='telegram_review')await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(messageId),reply_markup:JSON.stringify({inline_keyboard:[[{text:'🔗',url:existing.url}],[{text:'Mesaj gelmediyse yeniden gönder (çift olabilir)',callback_data:`newsretry:${id}:${existing.revision}`}]]})}));
    return 'Teslimat belirsiz; mesaj gelmiş olabilir. Yeniden gönderim için karttaki onay düğmesini kullan.';
   }
   return 'Hazır taslak için güvenli yeniden deneme sınırı veya süre doldu; yeniden içerik üretilmedi.';

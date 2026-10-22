@@ -68,3 +68,6 @@ dialog h2{font-size:25px;line-height:1.45;overflow-wrap:anywhere}
  .actions{padding-bottom:max(12px,env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:no-preference){button,a{transition:background-color .15s,color .15s}dialog[open]{animation:appear .16s ease-out}@keyframes appear{from{opacity:.5;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}}
+#publicationSummary{font-size:15px;line-height:1.65;margin-top:18px;max-width:65ch;color:#E4E9EC}.actions button,.actions a{min-width:48px;min-height:48px;font-size:23px}.tabs{overflow-x:auto;white-space:nowrap}#publicationActions{margin-top:10px}
+
+.actions{position:static;display:flex;flex-wrap:wrap}.actions button,.actions a{width:52px;height:52px;flex:0 0 52px}.actions #copy{grid-column:auto}

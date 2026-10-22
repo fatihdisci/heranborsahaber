@@ -1,3 +1,4 @@
+import {publicationAction,publicationMessage} from './publication-assistant';
 import {requestX,xEnabled} from './x-publish';
 import {requestRedesign} from './card-redesign';
 import {requestNews} from './news-inbox';
@@ -28,6 +29,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  env={...env,TELEGRAM_UPDATE_ID:Number(id)};
  const message=update.message as InputMessage|undefined;
  if(message?.chat&&message.from&&isOwner(env,String(message.from.id),String(message.chat.id),message.chat.type)) {
+  if(await publicationMessage(env,message,Number(id)))return json({ok:true});
   const edit=await env.DB.prepare('SELECT * FROM edits WHERE user_id=? AND expires_at>?').bind(env.TELEGRAM_USER_ID!,Math.floor(Date.now()/1000)).first<{draft_id:string;revision:number;prompt_message_id:number}>();
   if(edit&&message.text&&message.reply_to_message?.message_id===edit.prompt_message_id) {
    try {await enqueueEdit(env,edit.draft_id,edit.revision,message.text);await env.DB.prepare('DELETE FROM edits WHERE user_id=?').bind(env.TELEGRAM_USER_ID!).run();}
@@ -37,6 +39,8 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;
  if(!cb||!cb.message||!isOwner(env,String(cb.from?.id),String(cb.message.chat?.id),cb.message.chat?.type))return json({ok:true});
+ const pub=cb.data?.match(/^pub:(mark|undo|defer|time|stats):([a-f0-9-]{36})$/);
+ if(pub){const text=await publicationAction(env,pub[1],pub[2],Number(id),cb.message.message_id);await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:text.slice(0,200),show_alert:'true'}));return json({ok:true});}
  if(cb.data==='xcount'||cb.data?.startsWith('xpost:')){await requestX(env,cb.data,cb.message.message_id,cb.id);return json({ok:true});}
  if(cb.data?.startsWith('design:')){
   const answer=await requestRedesign(env,cb.data,cb.message.message_id,Number(id));

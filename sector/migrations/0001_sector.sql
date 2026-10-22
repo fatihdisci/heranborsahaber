@@ -86,3 +86,10 @@ CREATE TABLE IF NOT EXISTS x_posts (
 );
 CREATE INDEX IF NOT EXISTS x_posts_day ON x_posts(day,state);
 CREATE UNIQUE INDEX IF NOT EXISTS x_posts_once ON x_posts(draft_id) WHERE state IN ('queued','uploading','posting','sent','uncertain');
+-- Manual publication declarations; API receipts remain in x_posts.
+CREATE TABLE IF NOT EXISTS publication_marks (
+ draft_id TEXT PRIMARY KEY REFERENCES drafts(id), state TEXT NOT NULL,
+ published_at INTEGER, updated_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS publication_actions (update_id INTEGER PRIMARY KEY, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS publication_time_edits (user_id TEXT PRIMARY KEY,draft_id TEXT NOT NULL,prompt_message_id INTEGER NOT NULL,expires_at INTEGER NOT NULL);

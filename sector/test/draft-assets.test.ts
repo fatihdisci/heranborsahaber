@@ -18,8 +18,8 @@ async function press(env:Env,kind='text',update=1,user=1,revision=1,message=100)
  return worker.fetch(new Request('https://local/telegram/webhook',{method:'POST',headers:{'x-telegram-bot-api-secret-token':'test'},body:JSON.stringify({update_id:update,callback_query:{id:'callback'+update,data:`asset:${kind}:${id}:${revision}`,from:{id:user},message:{message_id:message,chat:{id:1,type:'private'}}}})}),env,{waitUntil:()=>{}} as unknown as ExecutionContext);
 }
 test('native copy preserves 256 characters; longer captions never truncate',()=>{
- assert.deepEqual(keyboard(id,1,docs,'a'.repeat(256)).inline_keyboard[1][0],{text:'Tweet’i kopyala',copy_text:{text:'a'.repeat(256)}});
- const long=keyboard(id,2,docs,'a'.repeat(257)).inline_keyboard[1];
+ assert.deepEqual(keyboard(id,1,docs,'a'.repeat(256)).inline_keyboard.flat().find(b=>b.text==='📋'),{text:'📋',copy_text:{text:'a'.repeat(256)}});
+ const long=keyboard(id,2,docs,'a'.repeat(257)).inline_keyboard.flat().filter(b=>b.text==='📋');
  assert.equal('copy_text' in long[0],false);
  assert.equal(long.length,1);
  assert(!JSON.stringify(keyboard(id,2,docs,'a'.repeat(257))).includes('Görseli al'));

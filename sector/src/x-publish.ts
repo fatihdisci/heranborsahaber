@@ -1,5 +1,6 @@
+import {refreshPublicationCard} from './publication-assistant';
 import {postText} from './editorial';
-import {telegram,keyboard} from './telegram';
+import {telegram} from './telegram';
 import type {DraftRow} from './pipeline';
 import type {Env} from './types';
 export const X_LIMIT=20;
@@ -20,12 +21,13 @@ export async function requestX(env:Env,data:string,messageId:number,callbackId:s
    const result=await env.DB.prepare(`INSERT OR IGNORE INTO x_posts(id,draft_id,revision,day,state,content,media_key,created_at,update_id)
     SELECT ?,?,?,?,'queued',?,?,?,? WHERE
     (SELECT COUNT(*) FROM x_posts WHERE day=? AND state IN ('queued','uploading','posting','sent','uncertain'))<?
-    AND NOT EXISTS(SELECT 1 FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain'))`)
-    .bind(crypto.randomUUID(),row.id,row.revision,xDay(),postText(JSON.parse(row.content)),row.media_key,Date.now(),env.TELEGRAM_UPDATE_ID??null,xDay(),X_LIMIT,row.id).run();
+    AND NOT EXISTS(SELECT 1 FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain')) AND NOT EXISTS(SELECT 1 FROM publication_marks WHERE draft_id=? AND state='published')`)
+    .bind(crypto.randomUUID(),row.id,row.revision,xDay(),postText(JSON.parse(row.content)),row.media_key,Date.now(),env.TELEGRAM_UPDATE_ID??null,xDay(),X_LIMIT,row.id,row.id).run();
    if(result.meta.changes)text=`Paylaşım sıraya alındı. Bugün ${await xCount(env)}/${X_LIMIT}.`;
    else {
+    const manual=await env.DB.prepare("SELECT 1 FROM publication_marks WHERE draft_id=? AND state='published'").bind(row.id).first();
     const old=await env.DB.prepare("SELECT state FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain')").bind(row.id).first<{state:string}>();
-    text=old?old.state==='sent'?'Bu içerik X’te zaten paylaşıldı.':old.state==='uncertain'?'Önceki gönderimin sonucu belirsiz. Çift paylaşımı önlemek için tekrar gönderilmiyor; X hesabını kontrol et.':'Bu içerik zaten paylaşım sırasında.':`Günlük paylaşım bütçesi doldu (${X_LIMIT}/${X_LIMIT}). Yarın 00:00’a kadar paylaşım durduruldu.`;
+    text=manual?'Bu içerik elle paylaşıldı olarak işaretli. Tekrar gönderilmedi.':old?old.state==='sent'?'Bu içerik X’te zaten paylaşıldı.':old.state==='uncertain'?'Önceki gönderimin sonucu belirsiz. Çift paylaşımı önlemek için tekrar gönderilmiyor; X hesabını kontrol et.':'Bu içerik zaten paylaşım sırasında.':`Günlük paylaşım bütçesi doldu (${X_LIMIT}/${X_LIMIT}). Yarın 00:00’a kadar paylaşım durduruldu.`;
    }
   }
  }
@@ -60,6 +62,7 @@ export async function publishX(env:Env,api:XTransport,clock=Date.now){
   await env.DB.prepare('UPDATE x_posts SET state=?,error=?,finished_at=? WHERE id=?').bind(uncertain?'uncertain':'failed',error,clock(),row.id).run();
  }
  const result=await env.DB.prepare('SELECT state,remote_id,error FROM x_posts WHERE id=?').bind(row.id).first<{state:string;remote_id:string;error:string}>();
+ if(result?.state==='sent')await refreshPublicationCard(env,row.draft_id).catch(()=>{});
  const count=await xCount(env);
  const text=result?.state==='sent'?`X’te paylaşıldı. Bugün ${count}/${X_LIMIT}.\nhttps://x.com/endeks_haber/status/${result.remote_id}${count>=X_LIMIT?'\nGünlük paylaşım bütçesi doldu. Yeni paylaşım yarın 00:00’da açılır.':''}`:result?.state==='uncertain'?'X gönderiminin sonucu belirsiz. Çift paylaşımı önlemek için tekrar gönderilmeyecek; hesabını kontrol et.':result?.error==='x_http_402'?'X kredi bakiyesi yetersiz. Kredi yükledikten sonra Paylaş düğmesine yeniden basabilirsin.':`X paylaşımı yapılamadı (${result?.error}). Kota kullanılmadı; sorunu giderdikten sonra yeniden Paylaş’a basabilirsin.`;
  await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text})).catch(()=>{});
@@ -70,10 +73,10 @@ export async function refreshXButton(env:Env){
  if(!xEnabled(env))return;
  const row=await env.DB.prepare(`SELECT * FROM drafts d WHERE delivery_state='sent' AND state='pending' AND message_id IS NOT NULL
  AND id IN (SELECT id FROM drafts WHERE delivery_state='sent' ORDER BY created_at DESC LIMIT 50)
- AND NOT EXISTS(SELECT 1 FROM system_state s WHERE s.key='x_button:'||d.id AND s.value=CAST(d.revision AS TEXT)) ORDER BY created_at DESC LIMIT 1`).first<DraftRow>();
+ AND NOT EXISTS(SELECT 1 FROM system_state s WHERE s.key='x_button_v2:'||d.id AND s.value=CAST(d.revision AS TEXT)) ORDER BY created_at DESC LIMIT 1`).first<DraftRow>();
  if(!row)return;
- const markup=keyboard(row.id,row.revision,JSON.parse(row.documents),postText(JSON.parse(row.content)),true);
- try{await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(row.message_id),reply_markup:JSON.stringify(markup)}));}
+
+ try{await refreshPublicationCard(env,row.id);}
  catch(e){if(!(e instanceof Error&&e.message==='telegram_http_400'))throw e;}
- await env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('x_button:'+row.id,String(row.revision)).run();
+ await env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('x_button_v2:'+row.id,String(row.revision)).run();
 }

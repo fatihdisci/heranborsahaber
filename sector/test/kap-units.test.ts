@@ -158,6 +158,10 @@ test('PDF normalization never concatenates separate numbers or alters punctuatio
  const row=withKapTableEvidence([d])[0].passages.find(p=>p.id==='page1_table9row1')!;
  assert.match(row.text,/Kurum A\. 101/);assert.match(row.text,/40.000 24,12$/);assert.doesNotMatch(row.text,/40.00024,12/);
 });
+test('nominal-share PDF support does not expand unrelated financial-report tables',()=>{
+ const d={...pdf,passages:[{id:'page1_table1',text:JSON.stringify([['Dönem','Hasılat (TL)','Faaliyet Kârı (TL)'],['2026','100.000','10.000']])}]};
+ assert.deepEqual(withKapTableEvidence([d]),[d]);
+});
 test('the real job lease persists PDF conversion evidence before the model receives the payload',async()=>{
  const DB=await localDatabase(':memory:',await readFile('migrations/0001_sector.sql','utf8'));
  const env={DB,AI_MODEL:'gpt-5.6-terra',AI_EFFORT:'medium'} as Env;

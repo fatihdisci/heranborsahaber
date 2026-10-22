@@ -17,6 +17,9 @@ export function withKapTableEvidence(documents:Document[]):Document[] {
     return c.replace(/\s+/g,' ');
    }));
    const header=cells[0];if(header.length<2||header.length>30||!header.some(c=>/\((?:TL|USD|EUR|%)(?:\/Adet)?\)/i.test(c)))continue;
+   // Only share-quantity PDFs need this new annotation. Expanding every
+   // financial-report table would inflate unrelated model evidence payloads.
+   if(p.id.startsWith('page')&&(!header.some(c=>/pay/iu.test(c))||!header.some(c=>/nominal/iu.test(c))))continue;
    for(let i=1;i<cells.length;i++){
     if(cells[i].length!==header.length)continue;
     const id=p.id+'row'+i;if(doc.passages.some(p=>p.id===id))continue;

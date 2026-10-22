@@ -1,3 +1,4 @@
+import {generalCsv} from './general-buyback';
 import {postText} from './editorial';
 import {telegram} from './telegram';
 import type {DraftRow} from './pipeline';
@@ -8,7 +9,7 @@ import type {Env} from './types';
 export async function sendDraftAsset(env:Env,data:string,messageId:number,updateId:number,callbackId:string):Promise<void> {
  const answer=(text:string)=>telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:callbackId,text})).catch(()=>{});
  if(env.MODE!=='telegram_review'){await answer('Bu işlem deneme modunda kapalı.');return;}
- const match=data.match(/^asset:(text|image):([a-f\d-]{36}):(\d{1,6})$/);
+ const match=data.match(/^asset:(text|image|csv):([a-f\d-]{36}):(\d{1,6})$/);
  if(!match){await answer('Geçersiz düğme.');return;}
  const row=await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(match[2]).first<DraftRow>();
  if(!row||row.revision!==Number(match[3])||row.message_id!==messageId){await answer('Kart güncellenmiş. Güncel karttaki düğmeyi kullan.');return;}
@@ -22,6 +23,9 @@ export async function sendDraftAsset(env:Env,data:string,messageId:number,update
    // Entity offsets use UTF-16, as does JavaScript length. No Markdown/HTML
    // parsing: punctuation, tags and emojis remain byte-for-byte intact.
    await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,entities:JSON.stringify([{type:'pre',offset:0,length:text.length}]),link_preview_options:JSON.stringify({is_disabled:true})}));
+  }else if(match[1]==='csv'){
+   const g=JSON.parse(row.content).card_data?.report?.general;if(!g)throw Error('report_missing');
+   const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('document',new Blob([generalCsv(g)],{type:'text/csv;charset=utf-8'}),'endeks-genel-gerialim-'+g.day+'.csv');await telegram(env,'sendDocument',form);
   }else{
    const object=row.media_key?await env.MEDIA.get(row.media_key):null;
    if(!object)throw new Error('draft_media_missing');

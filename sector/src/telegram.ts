@@ -63,6 +63,7 @@ export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,do
  // Fail before uploading anything; never produce an orphan photo or split post.
  if(caption.length>1024)throw new Error('telegram_caption_too_long');
  const markup=keyboard(id,revision,docs,caption,env.X_PUBLISH_ENABLED==='true');
+ if(draft.card_data?.report?.general)markup.inline_keyboard.push([{text:'CSV indir',callback_data:`asset:csv:${id}:${revision}`},{text:'Orijinal PNG indir',callback_data:`asset:image:${id}:${revision}`}]);
  const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'endeks-haber.png');
  form.set('reply_markup',JSON.stringify(markup));
  if(existingMessageId){

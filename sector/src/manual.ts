@@ -8,8 +8,8 @@ export interface InputMessage {message_id:number;date?:number;text?:string;capti
 export async function queueManual(env:Env,updateId:number,m:InputMessage):Promise<boolean> {
  if(!m.from||!m.chat||!isOwner(env,String(m.from.id),String(m.chat.id),m.chat.type)||!Number.isSafeInteger(m.message_id)||!Number.isSafeInteger(updateId))return false;
  let text=(m.text??m.caption??'').trim();const focus=marketSelection(text);
- if(/^\/(devrekesici|gerial[ıi]m)(?:@[a-zA-Z0-9_]+)?$/iu.test(text)&&!m.forward_origin){
-  const input=JSON.stringify({report:text.toLocaleLowerCase('tr-TR').startsWith('/devre')?'circuit':'buyback',at:(m.date??Math.floor(Date.now()/1000))*1000,text:''});
+ if(/^\/(devrekesici|genelgerial[ıi]m|gerial[ıi]m)(?:@[a-zA-Z0-9_]+)?$/iu.test(text)&&!m.forward_origin){
+  const input=JSON.stringify({report:text.toLocaleLowerCase('tr-TR').startsWith('/devre')?'circuit':text.toLocaleLowerCase('tr-TR').startsWith('/genel')?'general_buyback':'buyback',at:(m.date??Math.floor(Date.now()/1000))*1000,text:''});
   const r=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,'kap_report',input,Math.floor(Date.now()/1000)).run();
   if(r.meta.changes)await ensureManualStatus(env,updateId,m.message_id,'Komut saatine kadar kaydedilmiş KAP bildirimlerini sayıp raporunu hazırlıyorum.');
   return true;

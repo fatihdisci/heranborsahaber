@@ -2,7 +2,7 @@ import {normalize,type Disclosure,type Indices,type fullText} from './parser';
 import type {Document,Draft} from '../types';
 export const istanbulDay=(at:number)=>new Date(at+10800000).toISOString().slice(0,10);
 const clean=(s:string)=>s.replace(/[|\s]+$/g,'').trim();
-export interface Purchase {ticker:string;day:string;units:string;program:string;}
+export interface Purchase {ticker:string;day:string;units:string;program:string;priceMicros?:string;}
 // Thousandths of a trading unit, avoiding floating point sums and rounding.
 export function quantity(s:string):bigint {
  s=clean(s);if(!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,3})?$/.test(s))throw Error('kap_report_quantity');
@@ -22,7 +22,10 @@ export function purchases(page:ReturnType<typeof fullText>):Purchase[]{
    const m=row[stock].match(/\b([A-Z][A-Z0-9]{3,4}),\s*TR[A-Z0-9]{10}\b/);const dt=row[date].match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
    if(!m||m[1]==='ISKUR'||!dt)throw Error('kap_report_row_invalid');
    const day=`${dt[3]}-${dt[2]}-${dt[1]}`;if(new Date(day+'T00:00:00Z').toISOString().slice(0,10)!==day)throw Error('kap_report_date');
-   out.push({ticker:m[1],day,units:quantity(row[amount]).toString(),program});
+   const priceCol=header.findIndex(c=>/^(ISLEM FIYATI|ORTALAMA ALIM FIYATI) \(TL(?:\/ADET)?\)$/.test(normalize(c)));
+   let priceMicros:string|undefined;
+   if(priceCol>=0&&row[priceCol]){const v=row[priceCol].replace(/\./g,'');if(!/^\d+(?:,\d{1,6})?$/.test(v))throw Error('kap_report_price');const [a,b='']=v.split(',');const n=BigInt(a)*1000000n+BigInt(b.padEnd(6,'0'));if(n<=0n)throw Error('kap_report_price');priceMicros=n.toString();}
+   out.push({ticker:m[1],day,units:quantity(row[amount]).toString(),program,priceMicros});
   }
  }
  if(!found)throw Error('kap_report_table_missing');return out;

@@ -122,7 +122,16 @@ export function extractArticleSource(html: string, target?: Target): ArticleSour
     const root = matching.length===1 ? matching[0] : roots.length===1 ? roots[0] : null;
     if (!root || !hasBody(root)) continue;
     const source=readable(root);
-    if (source.text.length >= 20) return {...source,html:root.outerHTML};
+    // Prefer a provably extended plain-text version of this same article,
+    // never a related story or a replacement for structured HTML tables.
+    if(target&&!source.document.tables.length){
+      const bodyRoot=root.cloneNode(true) as Element;bodyRoot.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(el=>el.remove());
+      const visible=normalized(bodyRoot.textContent??'');
+      const fuller=records.filter(r=>matchesTarget(r,target)&&typeof r.articleBody==='string'&&!/[<>]/.test(r.articleBody)&&r.articleBody.length>source.text.length&&visible.length>=20&&normalized(r.articleBody).includes(visible));
+      if(fuller.length===1){const {document:fragment}=parseHTML('<article></article>');fragment.firstElementChild!.textContent=String(fuller[0].articleBody);return {...readable(fragment.firstElementChild!),html:fragment.firstElementChild!.outerHTML};}
+    }
+    // A short teaser must not hide a matched full articleBody below.
+    if (source.text.length >= 20 && !(source.text.length<80 && target && records.some(r=>matchesTarget(r,target)&&String(r.articleBody).length>=80))) return {...source,html:root.outerHTML};
   }
   {
     const matched=target ? records.filter(record=>matchesTarget(record,target)) : records;

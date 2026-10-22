@@ -201,3 +201,8 @@ Mac mini masaüstündeki `ENDEKS-X-Baglantisi.command`, OAuth 1.0 Consumer Key/S
 Paylaş düğmesine yalnız kayıtlı Telegram sahibi özel sohbetten basabilir. Metin ve mevcut PNG birlikte gönderilir; yeniden model çağrısı yoktur. Kalıcı `x_posts` kayıtları İstanbul gününde en fazla 20 gönderim/rezervasyon sınırını atomik uygular. Başarısızlığı kesin olan gönderim kotayı serbest bırakır; sonucu belirsiz gönderim kotada kalır ve otomatik tekrarlanmaz. Gün değişiminde bekleyen eski istekler gönderilmez; yeniden açık tıklama gerekir. Aynı taslak düzenlense de iki kez yayımlanmaz. Bu sınır tweet sayısıdır; X API'nin parasal kredi sınırı değildir. Kimlik doğrulama ve medya yüklemesi ayrıca API kullanımına dahil olabilir.
 
 Bağlantıyı kapatmak için `x-credentials.json` dosyasını güvenli bir yere taşı. Otomatik yayın yoktur; eski Telegram onayları yayın başlatmaz. Her gönderim öncesi X kimliği denetlenir. Anahtar yenilemesinde aynı güvenli kurulum aracı tekrar kullanılır.
+
+
+### Kaynakla birlikte editoryal açıklama
+
+Haber bağlantısı, PDF, metin veya görselle aynı mesajda `Talimat:`, `İstek:` ya da `Notum:` başlığıyla isteğini ekleyebilirsin. Örnek: haber bağlantısı + yeni satırda `Talimat: Yatırım tutarını başlıkta vurgula, kısa yaz. Görselde şirket adı öne çıksın.` Kısa yaz / Bunu kısa yaz gibi açık üretim istekleri de ayrı algılanır. Tercih kaynak kanıtı sayılmaz, sayı veya olgu uydurmaya izin vermez. İletilmiş mesaj içindeki komutlar kaynak verisi olarak kalır. Aynı bağlantıya farklı bir editoryal istek verilirse eski çıktı sessizce geri dönmez; aynı isteğin tekrar iletilmesi ise aynı işi kullanır. X paylaşımı yine yalnız Paylaş düğmesiyle yapılır.

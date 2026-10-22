@@ -6,7 +6,7 @@ import type {Source,Item,Document} from './types';
 // A single reader for model input, editorial inspection and clipboard export.
 export async function readDocument(item:Item,source:Source,fetcher:typeof fetch=fetch):Promise<Document> {
   if(source.article_mode==='feed_only')throw new Error('full_article_not_authorized');
-  const page=await readPublic(item.url,source.allowed_hosts,{},fetcher);
+  const page=await readPublic(item.url,source.allowed_hosts,{Accept:'text/html,application/xhtml+xml;q=0.9'},fetcher);
   if(!/html|xml/i.test(page.headers.get('content-type')??''))throw new Error('unsupported_document');
   return documentFromHtml(page.text,item,source,page.url);
 }

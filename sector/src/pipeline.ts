@@ -72,7 +72,11 @@ export async function prepare(env:Env):Promise<void> {
    const related=await env.DB.prepare("SELECT a.*,s.config FROM articles a JOIN sources s ON s.id=a.source_id WHERE a.id<>? AND a.status='queued' AND s.enabled=1 AND ABS(julianday(a.published_at)-julianday(?))<0.5 LIMIT 80").bind(article.id,article.published_at).all<{id:string;url:string;title:string;summary:string;published_at:string;config:string}>();
    const matched=(related.results??[]).filter(r=>titleSimilarity(article.title,r.title)>.68).slice(0,2);
    const relatedIds:string[]=[];
-   for(const r of matched)try {const extra=await readDocument(r,JSON.parse(r.config));extra.family=evidenceFamily(extra);documents.push(extra);relatedIds.push(r.id);}catch{/* A failed corroborating page never replaces the primary evidence. */}
+   const corroboration=await Promise.allSettled(matched.map(async r=>{
+    const extra=await readDocument(r,JSON.parse(r.config));extra.family=evidenceFamily(extra);return {extra,id:r.id};
+   }));
+   for(const result of corroboration)if(result.status==='fulfilled'){documents.push(result.value.extra);relatedIds.push(result.value.id);}
+
    const jobs=await env.DB.prepare("SELECT COUNT(*) AS count FROM model_jobs WHERE state IN ('queued','leased')").first<{count:number}>();
    if((jobs?.count??0)>=4||!await quota(env,'news-request-budget')){await env.DB.prepare('UPDATE articles SET lease_until=0,next_try=? WHERE id=?').bind(time+30,article.id).run();break;}
    const jobId=crypto.randomUUID(),input=JSON.stringify(documents);

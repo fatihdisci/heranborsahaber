@@ -21,7 +21,7 @@ async function telegramFile(env:Env,file:{file_id:string;file_size?:number}):Pro
  return boundedBytes(r);
 }
 export async function manualDocuments(env:Env,kind:string,input:string,messageId:number,extractImage:(bytes:Uint8Array)=>Promise<ImageEvidence>=readImage):Promise<Document[]> {
- const value=JSON.parse(input) as {url?:string;text:string;query_key?:string;submitted_at?:number;origin_bot?:string;focus?:'buy'|'sell'|'both';draft_id?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
+ const value=JSON.parse(input) as {url?:string;text:string;editor_request?:string;query_key?:string;submitted_at?:number;origin_bot?:string;focus?:'buy'|'sell'|'both';draft_id?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
  if(kind==='bot_query')return botDocuments(value.text,value.query_key??'',value.submitted_at);
  if(kind==='url'){
   const u=new URL(value.url!);const kap=u.hostname==='www.kap.org.tr'&&u.pathname.match(/^\/tr\/Bildirim\/(\d+)$/);
@@ -90,7 +90,9 @@ export async function runManual(env:Env):Promise<void> {
  const row=await env.DB.prepare("SELECT * FROM manual_requests WHERE state='queued' AND lease_until<=? ORDER BY created_at LIMIT 1").bind(now).first<{update_id:number;message_id:number;kind:string;input:string;attempts:number}>();if(!row)return;
  const claimed=await env.DB.prepare("UPDATE manual_requests SET state='reading',lease_until=?,attempts=attempts+1 WHERE update_id=? AND state='queued'").bind(now+(row.kind==='bot_query'?600:300),row.update_id).run();if(!claimed.meta.changes)return;
  try{
-  const docs=await manualDocuments(env,row.kind,row.input,row.message_id),job=await enqueueEvidence(env,docs,'manual');
+  const docs=await manualDocuments(env,row.kind,row.input,row.message_id);
+  const request=JSON.parse(row.input).editor_request??'';
+  const job=await enqueueEvidence(env,docs,'manual',request);
   await env.DB.prepare("UPDATE manual_requests SET state='model_queued',job_id=?,lease_until=0,error=NULL WHERE update_id=?").bind(job,row.update_id).run();
  }catch(e){const error=e instanceof Error&&/^[a-z_]{3,70}$/.test(e.message)?e.message:'manual_read_failed';
   const permanent=/bot_account_|bot_query_delivery_uncertain|bot_query_ambiguous|bot_query_expired|bot_query_.*mismatch|unsupported|limit|invalid|model_retry_unavailable|manual_market_row_incomplete|image_market_/.test(error)||row.attempts>=2;

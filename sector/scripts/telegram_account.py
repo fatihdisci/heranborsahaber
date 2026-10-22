@@ -150,6 +150,12 @@ def setup_error(error):
         return 'Telegram bağlantısı tamamlanamadı. İnternet bağlantısını kontrol edip tekrar dene.'
     return messages.get(type(error).__name__,'Giriş tamamlanamadı. Güvenli hata türü: '+type(error).__name__)
 
+def client_options(mode):
+    # Login may need another RPC after Telegram migrates the phone's data center.
+    # Queries retain one attempt: an uncertain outgoing command must not repeat.
+    return dict(request_retries=3 if mode=='setup' else 0,
+                raise_last_call_error=True,connection_retries=1,timeout=15,flood_sleep_threshold=0)
+
 async def main(mode,root=ROOT):
     os.umask(0o077);root.mkdir(parents=True,exist_ok=True,mode=0o700)
     with (root/'account.lock').open('a') as lock:
@@ -162,7 +168,7 @@ async def main(mode,root=ROOT):
         cfg=load_credentials(config,setup=mode=='setup')
         from telethon import TelegramClient
         from telethon.errors import FloodWaitError
-        client=TelegramClient(str(root/'account'),cfg['api_id'],cfg['api_hash'],request_retries=0,connection_retries=1,timeout=15,flood_sleep_threshold=0)
+        client=TelegramClient(str(root/'account'),cfg['api_id'],cfg['api_hash'],**client_options(mode))
         db=open_journal(root)
         try:
             await client.connect()

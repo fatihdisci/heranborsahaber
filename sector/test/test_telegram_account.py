@@ -95,3 +95,10 @@ class SetupErrors(unittest.TestCase):
                 cfg=m.load_credentials(path,setup=True)
             self.assertEqual(cfg['api_id'],456)
             self.assertNotIn('credentials_rejected',cfg)
+
+class LoginRetries(unittest.TestCase):
+    def test_login_can_follow_migration_but_queries_never_retry_commands(self):
+        self.assertEqual(m.client_options('setup')['request_retries'],3)
+        for mode in ('query','status'):
+            self.assertEqual(m.client_options(mode)['request_retries'],0)
+        self.assertTrue(m.client_options('setup')['raise_last_call_error'])

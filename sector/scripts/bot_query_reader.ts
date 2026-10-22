@@ -33,7 +33,7 @@ async function imageBytes(path:string):Promise<Uint8Array>{
 }
 const normalize=(s:string)=>s.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]/g,'');
 // BoPT sends the same ranked volumes as text and as an image. Complete text
-// is sufficient evidence for that table; OCR of extra image columns is optional.
+// is the evidence for named institution queries. They never invoke image OCR.
 export function completeInstitutionalText(doc:Document):boolean {
  const data=doc.market_data;if(data?.kind!=='institutional'||!data.broker)return false;
  const rows=data.rows??[];if(rows.length!==20)return false;
@@ -56,9 +56,11 @@ export async function botDocuments(text:string,key:string,submittedAt?:number,fe
  const result=await fetchReply(query,key),docs:Document[]=[];
  const base={source_id:'manual-input',source_name:'@'+query.bot,family:'telegram-'+query.bot,official:false,url:'https://t.me/'+query.bot+'#endeks-query-'+key,published_at:null,language:'tr'};
  if(result.text.trim())docs.push(withMarketText({...base,title:result.text.split('\n')[0].slice(0,180),body:result.text,passages:[{id:'bot_reply',text:result.text}]}));
- const completeText=query.kind==='institutional'&&docs.length===1&&completeInstitutionalText(docs[0]);
- if(completeText)validateMarket(query,docs);
- for(const path of completeText?[]:result.images){
+ if(query.kind==='institutional'){
+  if(docs.length!==1||!completeInstitutionalText(docs[0]))throw Error('bot_query_text_incomplete');
+  validateMarket(query,docs);
+ }
+ for(const path of query.kind==='institutional'?[]:result.images){
   const bytes=await loadImage(path);let evidence:ImageEvidence;
   try{evidence=await extract(bytes);}catch(e){if(e instanceof Error&&e.message.startsWith('image_'))throw Error('bot_query_image_unreadable');throw e;}
   docs.push({...base,...evidence,title:evidence.market_data?.broker?evidence.market_data.broker+' kurum analizi':evidence.market_data?.ticker?evidence.market_data.ticker+' '+query.kind:'Kurum verileri',equity_codes:evidence.market_data?.tickers??(evidence.market_data?.ticker?[evidence.market_data.ticker]:[])});

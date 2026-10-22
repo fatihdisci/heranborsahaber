@@ -42,8 +42,12 @@ test('complete institutional text does not fail or spend vision work on a redund
  assert.equal(reads,0);assert.equal(docs.length,1);assert.equal(docs[0].market_data?.rows?.length,20);
  await assert.rejects(()=>botDocuments('/kurum QNB','102',undefined,reply(text,['responses/redundant.image']),extract,async()=>new Uint8Array([1])),/broker_mismatch/);
 });
-test('truncated institutional text cannot bypass image validation',async()=>{
+test('truncated institutional text is rejected without falling back to images',async()=>{
  const partial=text.replace(/^10\..*$/gm,'');let reads=0;
- await assert.rejects(()=>botDocuments('/kurum bank of america','103',undefined,reply(partial,['responses/table.image']),async()=>{reads++;throw Error('image_market_number_ambiguous');},async()=>new Uint8Array([1])),/bot_query_image_unreadable/);
- assert.equal(reads,1);
+ await assert.rejects(()=>botDocuments('/kurum bank of america','103',undefined,reply(partial,['responses/table.image']),async()=>{reads++;throw Error('image_market_number_ambiguous');},async()=>new Uint8Array([1])),/bot_query_text_incomplete/);
+ assert.equal(reads,0);
+});
+
+test('image-only named institution replies never invoke OCR',async()=>{
+ let reads=0;await assert.rejects(()=>botDocuments('/kurum bank of america','104',undefined,reply('', ['responses/table.image']),async()=>{reads++;throw Error('unexpected_ocr');},async()=>new Uint8Array([1])),/bot_query_text_incomplete/);assert.equal(reads,0);
 });

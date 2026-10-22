@@ -58,6 +58,15 @@ class ImageReaderTests(unittest.TestCase):
             self.assertEqual(len(result['images']),1)
             with Image.open(result['images'][0]) as stored:self.assertEqual(stored.size,(900,1080))
             self.assertTrue(any(p['id']=='image_ocr_raw' for p in result['passages']))
+    def test_empty_ocr_keeps_pixels_for_visual_analysis(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=pathlib.Path(temp);p=root/'source.png';Image.new('RGB',(900,1080),'white').save(p)
+            response=type('Result',(),{'stdout':'[]'})
+            with patch('read_image.subprocess.run',return_value=response):result=read_image(p,root/'evidence',root/'ocr')
+            self.assertEqual(len(result['images']),1)
+            self.assertNotIn('market_data',result)
+            self.assertTrue(result['body'])
+
     def test_short_label_recovery_uses_source_pixels_and_never_guesses_when_the_retry_is_unreadable(self):
         with tempfile.TemporaryDirectory() as temp:
             p=pathlib.Path(temp)/'source.png';im=Image.new('RGB',(900,1080),(10,10,10));draw=ImageDraw.Draw(im)

@@ -32,7 +32,7 @@ export function classify(d:Disclosure):Topic[] {
 }
 export function muted(title:string):boolean {
  const t=normalize(title);
- return /IC\s*TUZUK|FON GIDER BILGILERI|ARACI KURUMA ODENEN KOMISYON VE VARLIK ALIM SATIM BILGILERI|FON TOPLAM GIDER ORANI|FON TOPLAM GIDERININ DAGILIMI/.test(t)
+ return /ESAS\s+SOZLESME|IC\s*TUZUK|FON GIDER BILGILERI|ARACI KURUMA ODENEN KOMISYON VE VARLIK ALIM SATIM BILGILERI|FON TOPLAM GIDER ORANI|FON TOPLAM GIDERININ DAGILIMI/.test(t)
  ||(/FAIZSIZ|FAIZ ICEREN/.test(t)&&/PAY DIS(?:I|INDA) SERMAYE PIYASASI ARACI/.test(t))
  ||/YONETIM BILGI FORMU|KREDI DERECELENDIR/.test(t)
  ||(/YONETIM KURULU/.test(t)&&!/GERI ALIM|GERI ALIN|PAY ALIM|PAY SATIM|FINANSAL RAPOR|FAALIYET RAPOR|SOZLESME|IHALE|YENI IS|SIPARIS|ANLASMA|TEMETTU|KAR PAYI|SERMAYE ART|SERMAYE AZAL/.test(t));
@@ -58,6 +58,7 @@ export function decide(d:Disclosure,p:Preferences,indices:Indices|null):Decision
  // Explicit user opt-out wins over share overrides, watchlists and index priority.
  if(topics.includes('circuit')&&!p.circuitNotifications)return result('off','circuit_disabled');
  if(d.isFund&&p.funds==='off')return result('off','funds_off');
+ if(/ESAS\s+SOZLESME/.test(normalize(d.title)))return result('off','mandatory_mute');
  if(shares)return result('instant','share_transaction_override');
  if(muted(d.title)||muted(subject(d)))return result('off','mandatory_mute');
  if(p.excludedTitles.some(t=>normalize(d.title).includes(normalize(t))))return result('off','excluded_title');

@@ -204,16 +204,18 @@ def read_image(path,root,ocr):
     with Image.open(path) as original:original.convert('RGB').save(image)
     image.chmod(0o600)
     if image.stat().st_size>8_000_000:raise ValueError('image_size_limit')
-    raw=subprocess.run([str(ocr),str(image)],capture_output=True,text=True,timeout=45,check=True)
-    blocks=json.loads(raw.stdout)
-    if not blocks:raise ValueError('image_unreadable')
+    try:
+        raw=subprocess.run([str(ocr),str(image)],capture_output=True,text=True,timeout=45,check=True)
+        blocks=json.loads(raw.stdout)
+    except (subprocess.SubprocessError, OSError, ValueError):
+        blocks=[] # Pixel analysis can still read an image when OCR is unavailable.
     raw_text=ocr_text(blocks)
     blocks=recover_labels(blocks,image,ocr)
     blocks=recover_numeric_cells(blocks,image,ocr)
     text=ocr_text(blocks)
-    if len(text)<20 or len(text)>100_000:raise ValueError('image_text_limit')
+    if len(text)>100_000:raise ValueError('image_text_limit')
     parsed=institutional_passages(blocks) or market_passages(blocks)
-    original={'id':'image_ocr_raw','text':'İlk OCR metni; hücre tekrar okumasından önceki ham çıktı, doğrulanmış tablo yerine kullanılmaz:\n'+raw_text}
+    original={'id':'image_ocr_raw','text':'Yardımcı OCR metni; görseldeki konum ve etiket ilişkileri doğrudan görüntüden doğrulanmalıdır:\n'+raw_text}
     market,passages=parsed if parsed else (None,[original])
     body='\n\n'.join(p['text'] for p in passages)
     return {'body':body,'passages':[original,*passages] if parsed else passages,'images':[str(image)],

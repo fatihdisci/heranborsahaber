@@ -208,3 +208,9 @@ test('index priority does not elevate routine forms over selected material topic
  }
  for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Pay Alım Satım Bildirimi','Yeni İş İlişkisi','Finansal Rapor'])assert.equal(decide(item(101,{title}),pref(),null).action,'instant');
  });
+
+test('articles of association are muted even with share override; ordinary contracts stay enabled',()=>{
+ const tracked=pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}]});
+ for(const title of ['Esas Sözleşme Değişikliği','ESAS SOZLESME Tadil Metni','Pay Alım Bildirimi - Esas Sözleşme'])assert.equal(decide(item(101,{title}),tracked,null).action,'off');
+ assert.equal(decide(item(101,{title:'Yeni İş İlişkisi',summary:'Esas sözleşme hükümlerine uygun yeni sözleşme imzalandı.'}),tracked,null).action,'instant');
+});

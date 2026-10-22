@@ -75,6 +75,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
  }else if(d.template==='institutional'&&(data?.buy?.length||data?.sell?.length)){
   art+=block(d.headline,left,268,width,192,61,fg,38,700,align);
   const both=!!(data.buy?.length&&data.sell?.length),gap=26,col=both?(width-gap)/2:width;
+  const brokerLabel=data.broker?.trim().toLocaleUpperCase('tr-TR')==='BANK OF AMERICA'?'BofA':'KURUM';
   const panel=(title:string,rows:CardRow[]|undefined,x:number,invert:boolean)=>{
    if(!rows?.length)return '';const ink=invert?bg:fg;
    let svg=rect(x,510,col,650,invert?fg:bg,invert?undefined:steel)+text(title,x+22,558,22,invert?bg:steel,700);
@@ -83,7 +84,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
     svg+=block(r.value,x+32+labelWidth,y,col-labelWidth-54,48,both?25:33,ink,both?18:23);
    });return svg;
   };
-  art+=panel('ALINAN HİSSELER',data.buy,left,layout!=='masthead')+panel('SATILAN HİSSELER',data.sell,both?left+col+gap:left,layout==='masthead');
+  art+=panel(`${brokerLabel} ÜZERİNDEN ALIM`,data.buy,left,layout!=='masthead')+panel(`${brokerLabel} ÜZERİNDEN SATIM`,data.sell,both?left+col+gap:left,layout==='masthead');
   art+=block(d.body,left,1200,width,100,29,fg,22);
  }else{
   art+=block(d.headline,left,268,width,192,61,fg,38,700,align);

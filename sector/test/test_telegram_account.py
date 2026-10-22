@@ -77,3 +77,21 @@ class AccountCredentials(unittest.TestCase):
             with patch('builtins.input') as prompt:
                 with self.assertRaisesRegex(m.QueryError,'bot_account_invalid'):m.load_credentials(path)
             prompt.assert_not_called()
+
+class SetupErrors(unittest.TestCase):
+    def test_phone_format_retries_and_normalizes(self):
+        with patch('builtins.input',side_effect=['','05551234567','+90 (555) 123-45-67']),patch('builtins.print'):
+            self.assertEqual(m.prompt_phone(),'+905551234567')
+    def test_error_messages_never_include_exception_details(self):
+        error=type('ApiIdInvalidError',(Exception,),{})('secret-api-hash')
+        self.assertIn('reddedildi',m.setup_error(error))
+        self.assertNotIn('secret-api-hash',m.setup_error(error))
+        self.assertNotIn('secret',m.setup_error(ValueError('secret')))
+    def test_rejected_credentials_prompt_for_replacement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=pathlib.Path(directory)/'account.json'
+            path.write_text(json.dumps({'api_id':123,'api_hash':'a'*32,'credentials_rejected':True}))
+            with patch('builtins.input',return_value='456'),patch.object(m.getpass,'getpass',return_value='b'*32),patch('builtins.print'):
+                cfg=m.load_credentials(path,setup=True)
+            self.assertEqual(cfg['api_id'],456)
+            self.assertNotIn('credentials_rejected',cfg)

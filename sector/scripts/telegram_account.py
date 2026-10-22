@@ -108,7 +108,7 @@ def load_credentials(config,setup=False):
     if config.exists():
         try:cfg=json.loads(config.read_text())
         except (ValueError,UnicodeError):pass
-    if valid_credentials(cfg):return cfg
+    if valid_credentials(cfg) and not cfg.get('credentials_rejected'):return cfg
     if not setup:
         raise QueryError('bot_account_invalid' if config.exists() else 'bot_account_not_connected')
     if config.exists():print('Kaydedilmiş API bilgileri geçersiz. Lütfen yeniden gir.')
@@ -123,9 +123,32 @@ def load_credentials(config,setup=False):
         if re.fullmatch(r'[0-9a-fA-F]{32}',api_hash):break
         print('API hash 32 onaltılık karakter olmalı. Değeri yalnızca bir kez yapıştır.')
     updated=dict(cfg) if isinstance(cfg,dict) else {}
+    updated.pop('credentials_rejected',None)
     updated.update(api_id=int(api_id),api_hash=api_hash)
     private_json(config,updated)
     return updated
+
+def prompt_phone():
+    while True:
+        value=re.sub(r'[\s()\-]','',input('Telefon (+90 ile, görünür): ').strip())
+        if re.fullmatch(r'\+[1-9][0-9]{7,14}',value):return value
+        print('Telefonu ülke koduyla gir: +90 ardından 10 haneli numara. Başına ayrıca 0 ekleme.')
+
+def setup_error(error):
+    # Never interpolate exception text: Telegram requests can contain credentials.
+    messages={
+        'ApiIdInvalidError':'API ID / API hash eşleşmesi Telegram tarafından reddedildi. Dosyayı yeniden açıp iki değeri aynı uygulama sayfasından gir.',
+        'PhoneNumberInvalidError':'Telefon numarası geçersiz. Dosyayı yeniden açıp ülke koduyla (+90...) gir.',
+        'PhoneNumberBannedError':'Telegram bu telefon numarasıyla girişe izin vermiyor.',
+        'PhoneNumberFloodError':'Bu telefon için çok fazla giriş denemesi var. Bir süre bekleyip yeniden dene.',
+        'PhoneCodeInvalidError':'Giriş kodu yanlış. Telegram uygulamasındaki en son kodu kullan.',
+        'PhoneCodeExpiredError':'Giriş kodunun süresi doldu. Kurulumu yeniden aç.',
+        'PasswordHashInvalidError':'İki aşamalı doğrulama şifresi yanlış.',
+        'AuthRestartError':'Telegram giriş işleminin yeniden başlatılmasını istedi. Dosyayı yeniden aç.',
+    }
+    if isinstance(error,(TimeoutError,ConnectionError,OSError)):
+        return 'Telegram bağlantısı tamamlanamadı. İnternet bağlantısını kontrol edip tekrar dene.'
+    return messages.get(type(error).__name__,'Giriş tamamlanamadı. Güvenli hata türü: '+type(error).__name__)
 
 async def main(mode,root=ROOT):
     os.umask(0o077);root.mkdir(parents=True,exist_ok=True,mode=0o700)
@@ -144,7 +167,7 @@ async def main(mode,root=ROOT):
         try:
             await client.connect()
             if mode=='setup':
-                await client.start(phone=lambda:getpass.getpass('Telefon (+90...): '),code_callback=lambda:getpass.getpass('Telegram giriş kodu: '),password=lambda:getpass.getpass('İki aşamalı doğrulama şifresi: '))
+                await client.start(phone=prompt_phone,code_callback=lambda:getpass.getpass('Telegram giriş kodu: '),password=lambda:getpass.getpass('İki aşamalı doğrulama şifresi: '))
             if not await client.is_user_authorized():raise QueryError('bot_account_not_connected')
             me=await client.get_me()
             if me.bot:raise QueryError('bot_account_user_required')
@@ -156,6 +179,12 @@ async def main(mode,root=ROOT):
             value=json.loads(sys.stdin.read(4096));print(json.dumps(await query(client,db,root,value),ensure_ascii=False))
         except FloodWaitError as error:
             db.execute("INSERT OR REPLACE INTO limits VALUES('flood',?)",(time.time()+error.seconds,));db.commit();raise QueryError('bot_query_rate_limited')
+        except Exception as error:
+            if mode=='setup':
+                if type(error).__name__=='ApiIdInvalidError':
+                    cfg['credentials_rejected']=True;private_json(config,cfg)
+                print(setup_error(error),file=sys.stderr)
+            raise
         finally:
             await client.disconnect();db.close()
 

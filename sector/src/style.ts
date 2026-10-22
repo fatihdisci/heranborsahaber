@@ -16,9 +16,9 @@ export function editorialPolicy(documents:Document[]){
   ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
   :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
- return {required_hashtags:circuit?['#Borsa','#BIST',...(codes.length?codes.map(c=>'#'+c):['#DevreKesici'])]:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(codes.length===1?['#'+codes[0]]:[])]:[],verified_equity_codes:codes,
+ return {required_hashtags:circuit?['#Borsa','#BIST',...(codes.length?codes.map(c=>'#'+c):['#DevreKesici'])]:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(documents.some(d=>d.market_data?.kind==='institutional')?[]:codes.map(c=>'#'+c))]:[],verified_equity_codes:codes,
   publisher_names:[...new Set(documents.filter(d=>!d.official).map(d=>d.source_name))],
-  instruction:'Etiketleri yalnız hashtags dizisinde ver; başlık, gövde ve kart alanlarına hashtag satırı ekleme. Devre kesici gruplarında #Borsa #BIST ve gruptaki bütün doğrulanmış asıl hisse kodlarını kullan; yalnız kod yoksa #DevreKesici kullan. Bu gruplarda zorunlu kodlar 3 etiket sınırından önceliklidir; ek konu etiketi ekleme. Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Diğer içeriklerde etiketler 2–3 adet; required_hashtags zorunludur. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
+  instruction:'Etiketleri yalnız hashtags dizisinde ver; başlık, gövde ve kart alanlarına hashtag satırı ekleme. Devre kesici gruplarında #Borsa #BIST ve gruptaki bütün doğrulanmış asıl hisse kodlarını kullan; yalnız kod yoksa #DevreKesici kullan. Bu gruplarda zorunlu kodlar 3 etiket sınırından önceliklidir; ek konu etiketi ekleme. Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Çok hisseli haberlerde kodları gruplandırıp her grubun ilk beşini tweet gövdesinde göster; doğrulanmış kod etiketleri 3 etiket sınırından önceliklidir. Görselde tam listeyi koru. Diğer içeriklerde konu etiketleri 2–3 adet; required_hashtags zorunludur. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
 }
 export function hasPublisherAttribution(text:string,names:string[]):boolean {
  const t=fold(text);
@@ -107,7 +107,13 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
   if(typeof value.card_headline==='string')value={...value,card_headline:prefix(value.card_headline)};
  }
  if(market?.kind==='institutional'&&market.broker){
-  value={...value,card_data:{...value.card_data,broker:market.broker},...(typeof value.card_headline==='string'&&!fold(value.card_headline).includes(fold(market.broker))?{card_headline:market.broker+'\n'+value.card_headline}:{})};
+  const ranked={...value.card_data,broker:market.broker};
+  for(const side of ['buy','sell'] as const){
+   const sourceRows=market.rows?.filter(r=>r.side===side)??[];
+   const order=new Map(sourceRows.map((r,i)=>[r.symbol,r.rank??i+1]));
+   if(ranked[side])ranked[side]=[...ranked[side]!].sort((a,b)=>(order.get(a.label)??Infinity)-(order.get(b.label)??Infinity));
+  }
+  value={...value,card_data:ranked,...(typeof value.card_headline==='string'&&!fold(value.card_headline).includes(fold(market.broker))?{card_headline:market.broker+'\n'+value.card_headline}:{})};
  }
  return repairKapShareWording({...value,...(circuit?{template:'circuit' as const,category:'bist' as const,card_data:policy.verified_equity_codes.length?{...value.card_data,tickers:policy.verified_equity_codes}:value.card_data}:market?{template:market.kind,category:'bist' as const,...(market.ticker?{card_data:{...value.card_data,ticker:market.ticker}}:{})}:{}),headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
 }

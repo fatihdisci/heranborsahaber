@@ -6,7 +6,7 @@ const doc=(v:Partial<Document>):Document=>({source_id:'test',source_name:'CNBC-e
 test('verified KAP equity uses Borsa, BIST and exact main code',()=>{
  assert.deepEqual(editorialPolicy([doc({official:true,source_id:'kap',equity_codes:['THYAO'],body:'Şirket yeni sözleşmesini duyurdu.'})]).required_hashtags,['#Borsa','#BIST','#THYAO']);
  assert.deepEqual(editorialPolicy([doc({body:'BIST: TUREX pay geri alımı yaptı.'})]).required_hashtags,['#Borsa','#BIST','#TUREX']);
- assert.deepEqual(editorialPolicy([doc({equity_codes:['THYAO','TAVHL']})]).required_hashtags,['#Borsa','#BIST']);
+ assert.deepEqual(editorialPolicy([doc({equity_codes:['THYAO','TAVHL']})]).required_hashtags,['#Borsa','#BIST','#THYAO','#TAVHL']);
 });
 test('foreign equities and acronyms do not invent BIST tickers',()=>{
  assert.deepEqual(editorialPolicy([doc({title:'Tesla ve SpaceX birleşme ihtimali',body:'NASDAQ, NASA ve CNBC gelişmeyi takip ediyor.'})]).required_hashtags,[]);

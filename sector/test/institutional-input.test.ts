@@ -71,3 +71,31 @@ test('a currency-free screenshot uses source ranks instead of ambiguous monetary
  const d={...draft('buy'),claims:[{text:'CITAS alım listesinde yer aldı.',evidence:[{document:0,passage:'market_units',quote:body}]}],card_data:{buy:rows('buy').map((r,i)=>({label:r.label,value:(i+1)+'. sıra'}))}};
  assert.doesNotThrow(()=>validateDraft(d,[image]));
 });
+
+test('institutional captions list five hashtagged stocks on each selected side while keeping all card rows',()=>{
+ for(const focus of ['buy','sell','both'] as const){
+  const d=draft(focus),text=postText(d);
+  for(const side of ['buy','sell'] as const){
+   const selected=focus!==(side==='buy'?'sell':'buy');
+   const line=text.split('\n').find(l=>l.startsWith(side==='buy'?'Alınanlar:':'Satılanlar:'));
+   assert.equal(!!line,selected);
+   if(selected){assert.equal((line!.match(/#[A-Z][A-Z0-9]{3,4}/g)??[]).length,5);assert.equal(d.card_data![side]!.length,10);}
+  }
+  assert(!text.includes('#ALARK'));assert(!text.includes('#TOASO'));
+ }
+});
+test('general multi-stock captions hashtag mentioned codes once and circuit captions limit only the visible list',()=>{
+ const d={...draft(),template:'news' as const,headline:'📢 CITAS için açıklama',body:'BIMAS ve SELEC gelişmeleri.',hashtags:['#Borsa','#BIST','#CITAS','#BIMAS','#SELEC']};
+ const text=postText(d);for(const code of ['CITAS','BIMAS','SELEC'])assert.equal(text.split('#'+code).length-1,1);
+ const codes=['CITAS','BIMAS','SELEC','GARAN','AKBNK','ENKAI'];
+ const circuit={...draft(),template:'circuit' as const,card_data:{tickers:codes},hashtags:['#Borsa','#BIST',...codes.map(c=>'#'+c)]};
+ assert(!postText(circuit).includes('#ENKAI'));assert.equal(circuit.card_data.tickers.length,6);
+});
+
+test('source rank determines the five displayed stocks even if model card rows arrive reversed',()=>{
+ const input=draft();input.card_data!.buy!.reverse();input.card_data!.sell!.reverse();
+ const fixed=repairDraftStyle(input,[doc]),text=postText(fixed);
+ assert.equal(fixed.card_data!.buy![0].label,'CITAS');assert.equal(fixed.card_data!.sell![0].label,'THYAO');
+ assert(text.includes('Alınanlar: #CITAS #SELEC #KTLEV #SASA #ENKAI'));
+ assert.equal(input.card_data!.buy![0].label,'ALARK');
+});

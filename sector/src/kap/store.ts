@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import type {Disclosure,Indices,Listing} from './parser';
 import {decide,digestAt,preferences,DEFAULTS,type Preferences} from './rules';
 export type Job='live'|'backfill'|'reconcile'|'discovery'|'indices'|'groups';
+export const CIRCUIT_WINDOW_MS=180_000;
 export interface Lease {job:Job;token:string;cursor:number;ceiling:number|null;failures:number;}
 const SCHEMA=`
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
@@ -107,14 +108,16 @@ export class KapStore {
  freeze(lease:Lease,now:number){this.transaction(()=>{
   this.guard(lease,now);
   const circuitsEnabled=this.prefs().circuitNotifications;if(!circuitsEnabled)this.suppressCircuits();
-  // Close by the first member's wall clock window, independent of live cursor/edge.
+  // One closed three-minute bucket, independent of the live cursor/edge.
+  // Freeze all its members together; a busy window must not become many posts.
   for(let group=0;group<10;group++){
-   const first=this.row<{first_seen:number;published_at:string}>('SELECT c.first_seen,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id ORDER BY c.first_seen,c.disclosure_id LIMIT 1');if(!first||now<first.first_seen+12_000)break;
+   const first=this.row<{first_seen:number;published_at:string}>('SELECT c.first_seen,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id ORDER BY c.first_seen,c.disclosure_id LIMIT 1');if(!first)break;
+   const windowStart=Math.floor(first.first_seen/CIRCUIT_WINDOW_MS)*CIRCUIT_WINDOW_MS,windowEnd=windowStart+CIRCUIT_WINDOW_MS;if(now<windowEnd)break;
    const since=this.get<number>('circuit_since')??0,eligible=(r:{first_seen:number;published_at:string})=>r.first_seen>=since&&Date.parse(r.published_at)>=since;
    const groupEligible=eligible(first);
-   const members=this.rows<{disclosure_id:number;codes:string;first_seen:number;published_at:string}>('SELECT c.*,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id WHERE c.first_seen<? ORDER BY c.first_seen,c.disclosure_id',first.first_seen+12_000).filter(m=>eligible(m)===groupEligible).slice(0,100);
+   const members=this.rows<{disclosure_id:number;codes:string;first_seen:number;published_at:string}>('SELECT c.*,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id WHERE c.first_seen<? ORDER BY c.first_seen,c.disclosure_id',windowEnd).filter(m=>eligible(m)===groupEligible);
    const ids=members.map(m=>m.disclosure_id),codes=[...new Set(members.flatMap(m=>JSON.parse(m.codes) as string[]))].sort(),key=`kap:circuit:${ids[0]}`;
-   this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart:first.first_seen,windowEnd:first.first_seen+12_000}));
+   this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart,windowEnd}));
    if(!circuitsEnabled||!groupEligible)this.run("UPDATE queue SET state='suppressed' WHERE id=?",key);
    for(const id of ids){this.run('INSERT INTO queue_members VALUES(?,?)',id,key);this.run('DELETE FROM circuit_pending WHERE disclosure_id=?',id);}
   }

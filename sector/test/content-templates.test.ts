@@ -45,6 +45,14 @@ test('no data yields no invented rows, chart or values, and markup is escaped',(
  assert(svg.includes('&lt;script&gt;'));assert(!svg.includes('<script>'));assert(svg.includes('1 &amp; 2'));
  assert(cardDataFields(data).length>5);
 });
+test('circuit artwork shows only the brand and DEVRE KESICI, never tickers, dates, status or model text',async()=>{
+ for(const theme of ['navy','paper'] as const)for(const layout of CARD_LAYOUTS){
+  const svg=cardSvg({template:'circuit',headline:'KARCL ve THYAO paylarında devre kesici',body:'İşlemler 10:35:06 itibarıyla yeniden başlayacak.',card_data:{ticker:'KARCL',as_of:'22 Ekim 2026',metrics:[{label:'Gizli değer',value:'99 TL'}]}},[],'',false,theme,layout);
+  assert(!/KARCL|THYAO|10:35|2026|PAY PİYASASI|Gizli değer|99 TL|yeniden başlayacak/.test(svg));
+  const texts=[...svg.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)].map(m=>m[1]);assert.deepEqual(texts,['ENDEKS','HABER','DEVRE','KESİCİ']);
+  const b=Buffer.from(await png(svg));assert.equal(b.readUInt32BE(16),1080);assert.equal(b.readUInt32BE(20),1350);
+ }
+});
 test('five long institution names fit every AKD redesign without truncating amounts',()=>{
  const rows=Array.from({length:5},(_,i)=>({label:'Uzun Unvanlı Yatırım Menkul Değerler '+String(i+1),value:'1.234.567.890 adet'}));
  for(const layout of CARD_LAYOUTS){const svg=cardSvg({template:'akd',headline:'ABCD aracı kurum dağılımı',body:'Alıcı ve satıcı kurumlar kaynak verilerine göre gösteriliyor.',card_data:{buy:rows,sell:rows}},[],'',false,'navy',layout);assert(svg.includes('1.234.567.890 adet'));}

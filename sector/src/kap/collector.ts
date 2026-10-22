@@ -1,5 +1,5 @@
 import type {Disclosure,Indices,Listing} from './parser';
-import {KapStore,type Job,type Lease} from './store';
+import {KapStore,CIRCUIT_WINDOW_MS,type Job,type Lease} from './store';
 export interface Source {listing():Promise<Listing[]>;disclosure(id:number):Promise<Disclosure|null>;indices():Promise<Indices>;}
 export class KapCollector {
  constructor(readonly store:KapStore,readonly source:Source,private clock=Date.now){}
@@ -8,7 +8,7 @@ export class KapCollector {
   try {
    if(job==='discovery'){this.store.discover(await this.source.listing(),lease,this.clock());interval=60_000;}
    else if(job==='indices'){const data=await this.source.indices();this.store.transaction(()=>{this.store.guard(lease,this.clock());this.store.set('indices',data);});interval=86400_000;}
-   else if(job==='groups'){this.store.freeze(lease,this.clock());interval=1000;}
+   else if(job==='groups'){this.store.freeze(lease,this.clock());interval=CIRCUIT_WINDOW_MS-this.clock()%CIRCUIT_WINDOW_MS;}
    else if(this.store.get('notification_start')===null){interval=5000;}
    else if(job==='reconcile'){for(let n=0;n<3;n++){const id=this.store.nextRepair(this.clock());if(id===null)break;await this.process(id,lease,false);}}
    else {

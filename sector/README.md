@@ -176,3 +176,5 @@ Yeni RSS eklenmedi. 14 mevcut beslemenin HTTP/XML/tarih sonuçları `reports/end
 
 
 Haber, devre kesici, kurumların alıp sattığı hisseler, tek hisse AKD ve hacim için ayrı [görsel aileleri](reports/content-templates/contact-sheet.png) vardır. İsteğe bağlı kaynak denetimli `card_data` alanı sayıları ve tabloları taşır; otomatik AKD/hacim veri kaynağı kurulmaz. Ayrıntılar: [ENDEKS.md](ENDEKS.md#konuya-özel-görsel-aileleri).
+
+Devre kesici akışı üç dakikada bir kapanan tek toplu bildirimdir. Aynı penceredeki kodlar tek tweetin etiketlerinde bir kez yer alır; kısa metin kaynakta doğrulanan durdurmayı geçmiş zamanla aktarır. Devre kesici görselinde marka dışında yalnız büyük DEVRE KESİCİ bulunur. Ayrı KAP taraması ve diğer önemli bildirimlerin hızları korunur.

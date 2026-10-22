@@ -7,6 +7,7 @@ const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,
 // Each content family owns its hierarchy. Layout changes alter frame, rail,
 // header or alignment while retaining the same evidence and financial values.
 export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'>,theme:CardTheme,layout:CardLayout,fit:(s:string,b:Box)=>string):string {
+ if(d.template==='circuit')return circuitCard(theme,layout);
  const bg=COLORS[theme],fg=theme==='navy'?COLORS.paper:COLORS.navy,steel=COLORS.steel;
  const data=d.card_data,variant=CARD_LAYOUTS.indexOf(layout),left=layout==='rail'?122:76,width=1080-left-76;
  const rect=(x:number,y:number,w:number,h:number,fill:string,stroke?:string)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${stroke?` stroke="${stroke}" stroke-width="2"`:''}/>`;
@@ -22,13 +23,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
  if(data?.as_of)art+=text(data.as_of,left,222,24,steel);
  const centered=layout==='center',align=centered?'center' as const:undefined;
  const separateTicker=data?.ticker&&!d.headline.includes(data.ticker);
- if(d.template==='circuit'){
-  art+=rect(left,272,12,82,steel);
-  if(separateTicker)art+=text(data!.ticker!,left+30,345,80,fg,700);
-  else art+=text('PAY PİYASASI',left+30,326,30,steel,700);
-  art+=block(d.headline,left,422,width,415,94,fg,56,700,align);
-  art+=rect(left,940,width,318,fg)+block(d.body,left+38,978,width-76,235,39,bg,28);
- }else if(d.template==='volume'){
+ if(d.template==='volume'){
   art+=block(d.headline,left,276,width,200,65,fg,42,700,align);
   if(separateTicker)art+=text(data!.ticker!,1004,505,32,steel,700,'end');
   const hero=data?.metrics?.[0];
@@ -79,4 +74,24 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
  // A visible footer mark differentiates frame variants without invented charts.
  art+=`<path d="M${left} 1308 H${left+56+variant*22}" stroke="${steel}" stroke-width="${layout==='brief'?7:3}"/>`;
  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1350" viewBox="0 0 1080 1350" role="img"><title>${BRAND_NAME} — ${esc(d.headline)}</title>${rect(0,0,1080,1350,bg)}<g font-family="Noto Sans">${art}</g></svg>`;
+}
+// A circuit batch has one visual signal. Tickers and official facts belong in
+// the caption, so neither model text nor card_data can leak onto this artwork.
+function circuitCard(theme:CardTheme,layout:CardLayout):string {
+ const bg=COLORS[theme],ink=theme==='navy'?COLORS.paper:COLORS.navy,steel=COLORS.steel;
+ const centered=layout==='center',x=centered?540:layout==='rail'?130:80,anchor=centered?'middle':'start';
+ const panel=layout==='brief'||layout==='masthead',fg=panel?bg:ink;
+ const frame=layout==='frame'?`<rect x="32" y="32" width="1016" height="1286" fill="none" stroke="${steel}" stroke-width="2"/>`:layout==='rail'?`<rect width="24" height="1350" fill="${ink}"/><rect x="24" width="6" height="1350" fill="${steel}"/>`:'';
+ const y=layout==='brief'?570:layout==='masthead'?620:centered?625:600;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350" role="img"><title>${BRAND_NAME} — DEVRE KESİCİ</title>
+ <rect width="1080" height="1350" fill="${bg}"/>${frame}
+ <image x="80" y="66" width="76" height="76" href="${PROFILE_DATA}"/>
+ <g font-family="Noto Sans"><text x="178" y="103" font-size="36" font-weight="700" fill="${ink}">ENDEKS</text><text x="180" y="136" font-size="20" font-weight="700" letter-spacing="6" fill="${steel}">HABER</text>
+ <path d="M80 192 H1000" stroke="${steel}" stroke-width="1"/>
+ ${panel?`<rect x="48" y="330" width="984" height="660" fill="${ink}"/>`:''}
+ <path d="M${centered?474:x} ${y-200} h132" stroke="${steel}" stroke-width="12"/>
+ <text x="${x}" y="${y}" font-size="184" font-weight="700" letter-spacing="-6" text-anchor="${anchor}" fill="${fg}">DEVRE</text>
+ <text x="${x}" y="${y+205}" font-size="184" font-weight="700" letter-spacing="-6" text-anchor="${anchor}" fill="${fg}">KESİCİ</text>
+ <path d="M80 1200 H1000" stroke="${steel}" stroke-width="1"/><path d="M80 1200 H${240+CARD_LAYOUTS.indexOf(layout)*28}" stroke="${ink}" stroke-width="6"/>
+ </g></svg>`;
 }

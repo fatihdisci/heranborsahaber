@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {parseDisclosure,flightText,jsonValue,kapDate,parseListing,parseIndices,fullText,type Disclosure} from '../src/kap/parser';
 import {DEFAULTS,preferences,decide,classify,digestAt,type Preferences} from '../src/kap/rules';
-import {KapStore,type Lease} from '../src/kap/store';
+import {KapStore,CIRCUIT_WINDOW_MS,type Lease} from '../src/kap/store';
 import {KapCollector,type Source} from '../src/kap/collector';
 import {KapClient} from '../src/kap/client';
 const NOW=Date.parse('2026-10-21T13:00:00Z');
@@ -81,10 +81,26 @@ test('KAP lease fences survive restart and reject stale writers, other applicati
  const other=path+'.other',db=new DatabaseSync(other);db.exec('CREATE TABLE private_data(x)');db.close();assert.throws(()=>new KapStore(other),/namespace/);
  }finally{close();}
 });
-test('KAP circuit groups freeze after 12s without edge, max100 and late members start another group',()=>{
- const {store,close}=setup();try{store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
- const g=store.claim('groups',NOW)!;store.freeze(g,NOW+11_999);assert.equal(store.health().queue,0);store.freeze(g,NOW+12_000);const q=store.rows<{payload:string}>('SELECT payload FROM queue');assert.equal(q.length,2);assert.equal(JSON.parse(q[0].payload).disclosureIds.length,100);assert.deepEqual(JSON.parse(q[0].payload).codes,['AKBNK','THYAO']);
- store.save(item(202,{title:'Devre Kesici',stockCode:null,relatedStocks:'MEPET'}),l,NOW+13_000,true);store.freeze(g,NOW+24_999);assert.equal(store.health().queue,2);store.freeze(g,NOW+25_000);assert.equal(store.health().queue,3);
+test('KAP circuits freeze one complete three-minute bucket, deduplicate codes and keep late arrivals separate',()=>{
+ const {store,close}=setup();try{
+  store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;
+  for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
+  const end=NOW+CIRCUIT_WINDOW_MS,g=store.claim('groups',end-1)!;
+  store.freeze(g,end-1);assert.equal(store.health().queue,0);
+  store.freeze(g,end);let q=store.rows<{payload:string}>('SELECT payload FROM queue');assert.equal(q.length,1);
+  assert.equal(JSON.parse(q[0].payload).disclosureIds.length,101);assert.deepEqual(JSON.parse(q[0].payload).codes,['AKBNK','THYAO']);
+  assert.equal(JSON.parse(q[0].payload).windowStart,NOW);assert.equal(JSON.parse(q[0].payload).windowEnd,end);
+  const nextLive=store.claim('live',end)!;store.save(item(202,{title:'Devre Kesici',stockCode:null,relatedStocks:'MEPET'}),nextLive,end,true);
+  store.freeze(g,end+1);assert.equal(store.health().queue,1);store.finish(g,end+1,0);
+  const next=store.claim('groups',end+CIRCUIT_WINDOW_MS)!;store.freeze(next,end+CIRCUIT_WINDOW_MS);
+  q=store.rows<{payload:string}>('SELECT payload FROM queue ORDER BY created_at');assert.equal(q.length,2);assert.deepEqual(JSON.parse(q[1].payload).codes,['MEPET']);
+  store.freeze(next,end+CIRCUIT_WINDOW_MS);assert.equal(store.health().queue,2);
+ }finally{close();}
+});
+test('KAP circuit checks align to three-minute boundaries without slowing the live collector',async()=>{
+ const {store,close}=setup();let now=NOW+1234;const source:Source={listing:async()=>[],indices:async()=>{throw Error('unused');},disclosure:async()=>null};
+ try{const c=new KapCollector(store,source,()=>now);await c.run('groups');assert.equal(store.row<{next_at:number}>("SELECT next_at FROM jobs WHERE name='groups'")!.next_at,NOW+CIRCUIT_WINDOW_MS);
+  now+=1000;assert.equal(await c.run('groups'),false);await c.run('live');assert.equal(store.row<{next_at:number}>("SELECT next_at FROM jobs WHERE name='live'")!.next_at,now+30_000);
  }finally{close();}
 });
 test('KAP a missing ID cannot stall later disclosures; later publication is recovered once',async()=>{
@@ -140,14 +156,14 @@ test('KAP circuit opt-out overrides watchlists, selected topics, index priority 
 });
 test('KAP disabling circuits suppresses queued and not-yet-frozen groups without deleting source history',()=>{
  const {store,close}=setup();try{
-  store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;
-  store.save(item(101,{title:'Devre Kesici'}),l,NOW,true);const g=store.claim('groups',NOW)!;store.freeze(g,NOW+12_000);
-  store.save(item(102,{title:'Devre Kesici'}),l,NOW+13_000,true);store.save(item(103,{title:'Yeni İş İlişkisi'}),l,NOW+13_000,true);
-  store.configure(pref());store.freeze(g,NOW+25_000);
+  store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;store.save(item(101,{title:'Devre Kesici'}),l,NOW,true);
+  const end=NOW+CIRCUIT_WINDOW_MS,g=store.claim('groups',end)!;store.freeze(g,end);store.finish(g,end,0);
+  const next=store.claim('live',end)!;store.save(item(102,{title:'Devre Kesici'}),next,end+1,true);store.save(item(103,{title:'Yeni İş İlişkisi'}),next,end+1,true);
+  store.configure(pref());const later=store.claim('groups',end+CIRCUIT_WINDOW_MS)!;store.freeze(later,end+CIRCUIT_WINDOW_MS);
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='circuit' AND state='ready'")!.n,0);
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='circuit' AND state='suppressed'")!.n,2);
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='instant' AND state='ready'")!.n,1);
-  store.save(item(104,{title:'Devre Kesici'}),l,NOW+25_000,true);assert.equal(store.health().sources,4);assert.equal(store.health().circuitPending,0);
+  const last=store.claim('live',end+CIRCUIT_WINDOW_MS)!;store.save(item(104,{title:'Devre Kesici'}),last,end+CIRCUIT_WINDOW_MS,true);assert.equal(store.health().sources,4);assert.equal(store.health().circuitPending,0);
  }finally{close();}
 });
 

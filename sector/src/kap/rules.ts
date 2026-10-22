@@ -1,4 +1,5 @@
 import {EQUITY,normalize,type Disclosure,type Indices} from './parser';
+import {focusedDisclosureTickers} from './ticker-scope';
 export const TOPICS=['dividend','buyback','financial','capital','business','share_trade','circuit','other'] as const;
 export type Topic=typeof TOPICS[number];
 export interface Preferences {
@@ -67,6 +68,10 @@ export function decide(d:Disclosure,p:Preferences,indices:Indices|null):Decision
  if(d.isFund&&p.funds==='off')return result('off','funds_off');
  if(/ESAS\s+SOZLESME/.test(normalize(d.title)))return result('off','mandatory_mute');
  if(mkkSettlement(d))return result('off','mkk_settlement_excluded');
+ // Circuit/share transaction alerts are intentionally narrowed to the user’s
+ // IPO/crisis cohorts plus the currently verified BIST 30/100 constituents.
+ // Keep out-of-scope source records for audit, but do not enqueue them.
+ if((topics.includes('circuit')||shares)&&!focusedDisclosureTickers(d,indices).length)return result('off','ticker_out_of_scope');
  if(shares)return result('instant','share_transaction_override');
  if(muted(d.title)||muted(subject(d)))return result('off','mandatory_mute');
  if(p.excludedTitles.some(t=>normalize(d.title).includes(normalize(t))))return result('off','excluded_title');

@@ -64,6 +64,13 @@ Devre kesici tercihi kapalıdan açığa geçerken `circuit_since` etkinleştirm
 
 Doğrulanmış günlük BIST 30/100 listesi hem kaynak belgelerindeki `index_tier` alanını hem iş sıralamasını besler. Endeks önceliği zamanla sınırlı bir avantajdır (8/4 dakika); diğer şirketlerin önemli bildirimleri kuyrukta kalıcı olarak geriye atılmaz. Yönetim/personel formları ve derecelendirmeler susturulur; pay işlemlerinin BIST 50 kısıtlaması yoktur.
 
+### Devre kesici ve pay işlemi bildirimlerinde hisse kapsamı (22 Ekim 2026)
+Devre kesici, pay alım-satım ve pay geri alımı bildirimleri yalnız kullanıcının ekran görüntülerinden aktarılan son halka arz grubu (`NETGL, BKRGY, INTET, KPEKS, CITAS, VEYAS, TKNKA, KARCL, QUICK, MASFN, ALBTN, METEN, SARAE, ISVEA`), fon krizinden etkilenen grup (`KTLEV, TRHOL, TEHOL, ODINE, GUNDG, OZATD, DSTKF, KARCL, ASTOR`) veya o anda KAP'tan doğrulanmış BIST 30/100 üyeliği bulunan hisseler için kuyruğa alınır. Ekran görüntülerindeki `MASFN` kodu, KAP'ın resmî 2026/4 dönem PDF'sinde de `MASFN — MASFEN ENERJİ` olarak doğrulanmıştır.
+
+Güncel endeks bileşenleri koda gömülmez: KAP `/tr/Endeksler` sayfası günde bir okunur; 30/50/100 üye sayısı, kod biçimi ve altküme ilişkisi doğrulanır. 2026/4 dönem değişikliklerinin resmî KAP bildirimi 21 Eylül 2026'da yayımlandı ve 1 Ekim–31 Aralık dönemi için geçerlidir; dönem içi KAP değişiklikleri de günlük sayfa yenilemesine yansır. Sayfa ilk kurulumu sırasında henüz doğrulanmamışsa bu özel bildirim türleri kapalı kalır. Başarısız güncellemede son doğrulanmış liste korunur.
+
+Bu kapsam yalnızca devre kesici, pay alım-satım ve geri alım sinyallerini sınırlar; diğer önemli şirket açıklamaları mevcut kurallarla işlem görmeye devam eder. Kapsam dışı özel işlem bildirimleri kaynak/akış geçmişinde saklanır ancak Telegram kuyruğuna alınmaz. Bu gruptaki bir halka arz hissesinin KAP tweet'inin etiketlerine sona `#HalkaArz` eklenir; diğer bildirimlere bu etiket eklenmez. Gelecek halka arzlar ve kullanıcı tarafından değişen kriz hisseleri `src/kap/ticker-scope.ts` içindeki listede yönetilir.
+
 Güncelleme: `python3 scripts/install_kap.py --update`. Haber servisiyle aynı doğrulanmış staging, başlangıç kapısı ve otomatik geri dönüş kullanılır. Yalnız `com.sectorhaber.kap` yönetilir; bot/Hermes erişim bilgileri yüklenmez ve tercihler değiştirilmez. Ayrıntılı kontrollü etkinleştirme: [ENDEKS.md](ENDEKS.md).
 
 ## Hızlı doğrulama ve sınırlı yeniden inceleme

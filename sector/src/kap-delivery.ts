@@ -3,6 +3,7 @@
 import {KapStore} from './kap/store';
 import {decide} from './kap/rules';
 import type {Disclosure,Indices} from './kap/parser';
+import {focusedDisclosureTickers} from './kap/ticker-scope';
 import {enqueueEvidence} from './ingest';
 import {quota} from './pipeline';
 import {retryKapModel} from './model-recovery';
@@ -72,7 +73,9 @@ export class KapDelivery {
     let timer:ReturnType<typeof setTimeout>|undefined;
     const batch=await Promise.race([Promise.all(members.slice(start,start+3).map(async d=>{
      const loaded=await this.load(d.id),tier=d.subjectCodes.some(c=>indices?.bist30.includes(c))?30:d.subjectCodes.some(c=>indices?.bist100.includes(c))?100:undefined;
-     return loaded.map(doc=>({...doc,index_tier:tier as 30|100|undefined}));
+     const decision=decide(d,this.store.prefs(),indices),scopeLimited=decision.topics.some(t=>t==='circuit'||t==='buyback'||t==='share_trade');
+     const codes=scopeLimited?focusedDisclosureTickers(d,indices):d.subjectCodes;
+     return loaded.map(doc=>({...doc,index_tier:tier as 30|100|undefined,...(scopeLimited&&doc.source_id==='kap'?{equity_codes:codes}:{})}));
     })),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('kap_group_timeout')),remaining);})]).finally(()=>clearTimeout(timer));
     for(const loaded of batch){size+=JSON.stringify(loaded).length;if(size>3_000_000)throw Error('kap_evidence_limit');docs.push(...loaded);}
    }

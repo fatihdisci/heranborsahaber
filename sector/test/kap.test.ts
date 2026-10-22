@@ -9,6 +9,7 @@ import {DEFAULTS,preferences,decide,classify,digestAt,type Preferences} from '..
 import {KapStore,CIRCUIT_WINDOW_MS,type Lease} from '../src/kap/store';
 import {KapCollector,type Source} from '../src/kap/collector';
 import {KapClient} from '../src/kap/client';
+import {RECENT_IPO_TICKERS,FUND_CRISIS_TICKERS,focusedDisclosureTickers} from '../src/kap/ticker-scope';
 const NOW=Date.parse('2026-10-21T13:00:00Z');
 const basic=(more:Record<string,unknown>={})=>({disclosureIndex:101,title:'Yeni İş İlişkisi',companyTitle:'TEST SANAYİ A.Ş.',stockCode:'TEST',relatedStocks:null,disclosureClass:'ODA',disclosureType:'ODA',disclosureCategory:'ODA',publishDate:'2026.10.21 16:00:00',disclosureId:'a'.repeat(32),relatedDisclosureOid:null,isChanged:null,summary:'Sözleşme imzalandı.',...more});
 function page(b=basic(),body=''){const data='7:'+JSON.stringify({disclosureBasic:b});const split=23;return `<script>self.__next_f.push(${JSON.stringify([1,data.slice(0,split)])})</script><script>self.__next_f.push(${JSON.stringify([1,data.slice(split)])})</script>${body}`;}
@@ -37,8 +38,28 @@ test('KAP topic matching covers Turkish accents and all selected topics',()=>{
  const examples:Record<string,string>={'Kâr Payı Dağıtımı':'dividend','payların geri alınmasına ilişkin bildirim':'buyback','Geri Satım Bildirimi':'buyback','Finansal Sonuç':'financial','Faaliyet Raporu':'financial','Bedelsiz Sermaye Artırımı':'capital','Yeni İş İlişkisi':'business','Pay Satım Bildirimi':'share_trade','Pay Bazında Devre Kesici Bildirimi':'circuit'};
  for(const [title,topic] of Object.entries(examples))assert.ok(classify(item(101,{title})).includes(topic as never),title);
 });
-test('KAP exact legacy precedence: funds off first, shares override exclusions, no BIST50 restriction',()=>{
- const share=item(101,{title:'Pay Alım Bildirimi - Kredi Kullanımı'});assert.equal(decide(share,pref({otherCompanies:'off',priorityIndices:false}),null).action,'instant');
+test('KAP user scope narrows circuits, buybacks and share trades to supplied cohorts or verified BIST30/100',()=>{
+ assert.deepEqual(RECENT_IPO_TICKERS,['NETGL','BKRGY','INTET','KPEKS','CITAS','VEYAS','TKNKA','KARCL','QUICK','MASFN','ALBTN','METEN','SARAE','ISVEA']);
+ assert.deepEqual(FUND_CRISIS_TICKERS,['KTLEV','TRHOL','TEHOL','ODINE','GUNDG','OZATD','DSTKF','KARCL','ASTOR']);
+ const noIndices=null,p=pref({otherCompanies:'important',priorityIndices:false,circuitNotifications:true});
+ for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Pay Alım Bildirimi','Pay Bazında Devre Kesici Bildirimi']){
+  const allowed=item(101,{title,stockCode:'KPEKS'}),unknown=item(101,{title,stockCode:'TEST'});
+  assert.equal(decide(allowed,p,noIndices).action,title.includes('Devre Kesici')?'circuit':'instant',title);
+  const denied=decide(unknown,p,noIndices);assert.equal(denied.action,'off',title);assert.equal(denied.reason,'ticker_out_of_scope');assert.equal(denied.store,true);
+ }
+ const crisis=item(101,{title:'Devre Kesici Uygulaması',stockCode:null,relatedStocks:'KTLEV,TEST'});
+ assert.deepEqual(focusedDisclosureTickers(crisis,noIndices),['KTLEV']);assert.equal(decide(crisis,p,noIndices).action,'circuit');
+ const indexOnly=item(101,{title:'Pay Satım Bildirimi',stockCode:'THYAO'});
+ const indices={bist30:['THYAO'],bist50:[],bist100:['THYAO'],checkedAt:'2026-10-22T00:00:00.000Z',source:'KAP'};
+ assert.equal(decide(indexOnly,p,indices).action,'instant');
+ const noSubject=item(101,{title:'Pay Satım Bildirimi',stockCode:null,relatedStocks:'TEST,ZZZZ'});
+ assert.equal(decide(noSubject,p,indices).action,'off');
+ // The new ticker restriction is specific to high-volume transaction alerts.
+ assert.equal(decide(item(101,{title:'Finansal Sonuç',stockCode:'TEST'}),pref(),noIndices).action,'instant');
+});
+test('KAP exact precedence keeps funds and mandatory mutes first while the new transaction scope overrides defaults',()=>{
+ const share=item(101,{title:'Pay Alım Bildirimi - Kredi Kullanımı',stockCode:'KPEKS'});assert.equal(decide(share,pref({otherCompanies:'off',priorityIndices:false}),null).action,'instant');
+ const outside=item(101,{title:'Pay Alım Bildirimi - Kredi Kullanımı',stockCode:'TEST'});assert.equal(decide(outside,pref({otherCompanies:'off',priorityIndices:false}),null).action,'off');
  assert.equal(decide({...share,isFund:true},pref(),null).action,'off');
  const crisis=item(101,{title:'Tasfiye ve Ödeme',disclosureType:'FON'});assert.equal(decide(crisis,pref(),null).action,'off');assert.equal(decide(crisis,pref({funds:'digest'}),null).action,'instant');
  const muted=item(101,{title:'İç Tüzük Tasfiye',disclosureType:'FON'});assert.equal(decide(muted,pref({funds:'instant'}),null).action,'off');
@@ -49,6 +70,16 @@ test('KAP storage and notification differ; routine explicit tracking and mandato
  const excluded=item(101,{title:'İhraç Belgesi'});assert.equal(decide(excluded,pref(),null).store,true);assert.equal(decide(excluded,pref(),null).action,'off');
  for(const title of ['İç Tüzük','Fon Gider Bilgileri','Fon Toplam Giderinin Dağılımı','Faizsiz Pay Dışı Sermaye Piyasası Aracı İşlemleri','Kurumsal Yönetim Bilgi Formu (Güncelleme) – Yönetim Kurulu-2'])assert.equal(decide(item(101,{title}),tracked,null).action,'off',title);
  assert.equal(decide(routine,pref({otherCompanies:'topics',otherTopics:['other']}),null).store,true);
+});
+test('out-of-scope transaction disclosures remain auditable but never enter Telegram queue',()=>{
+ const {store,close}=setup();try{
+  const lease=store.claim('live',NOW)!;
+  store.save(item(101,{title:'Payların Geri Alınmasına İlişkin Bildirim',stockCode:'TEST'}),lease,NOW,true);
+  assert.equal(store.rows('SELECT * FROM disclosures').length,1);assert.equal(store.rows('SELECT * FROM feed').length,1);
+  assert.equal(store.rows('SELECT * FROM queue').length,0);assert.equal(store.row<{disposition:string}>('SELECT disposition FROM checks WHERE id=101')!.disposition,'stored');
+  store.save(item(102,{title:'Payların Geri Alınmasına İlişkin Bildirim',stockCode:'KPEKS'}),lease,NOW+1,true);
+  assert.equal(store.rows('SELECT * FROM queue').length,1);assert.equal(store.row<{source_ref:string}>('SELECT source_ref FROM queue')!.source_ref,'kap:102');
+ }finally{close();}
 });
 test('KAP fund digest uses Istanbul 19:00 and preference validation is strict',()=>{
  assert.equal(new Date(digestAt(NOW,'19:00')).toISOString(),'2026-10-21T16:00:00.000Z');assert.equal(new Date(digestAt(NOW+4*3600_000,'19:00')).toISOString(),'2026-10-22T16:00:00.000Z');
@@ -84,17 +115,30 @@ test('KAP lease fences survive restart and reject stale writers, other applicati
 test('KAP circuits freeze one complete three-minute bucket, deduplicate codes and keep late arrivals separate',()=>{
  const {store,close}=setup();try{
   store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;
-  for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
+  for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'KTLEV,ASTOR',stockCode:null}),l,NOW,true);
   const end=NOW+CIRCUIT_WINDOW_MS,g=store.claim('groups',end-1)!;
   store.freeze(g,end-1);assert.equal(store.health().queue,0);
   store.freeze(g,end);let q=store.rows<{payload:string}>('SELECT payload FROM queue');assert.equal(q.length,1);
-  assert.equal(JSON.parse(q[0].payload).disclosureIds.length,101);assert.deepEqual(JSON.parse(q[0].payload).codes,['AKBNK','THYAO']);
+  assert.equal(JSON.parse(q[0].payload).disclosureIds.length,101);assert.deepEqual(JSON.parse(q[0].payload).codes,['ASTOR','KTLEV']);
   assert.equal(JSON.parse(q[0].payload).windowStart,NOW);assert.equal(JSON.parse(q[0].payload).windowEnd,end);
-  const nextLive=store.claim('live',end)!;store.save(item(202,{title:'Devre Kesici',stockCode:null,relatedStocks:'MEPET'}),nextLive,end,true);
+  const nextLive=store.claim('live',end)!;store.save(item(202,{title:'Devre Kesici',stockCode:null,relatedStocks:'KTLEV'}),nextLive,end,true);
   store.freeze(g,end+1);assert.equal(store.health().queue,1);store.finish(g,end+1,0);
   const next=store.claim('groups',end+CIRCUIT_WINDOW_MS)!;store.freeze(next,end+CIRCUIT_WINDOW_MS);
-  q=store.rows<{payload:string}>('SELECT payload FROM queue ORDER BY created_at');assert.equal(q.length,2);assert.deepEqual(JSON.parse(q[1].payload).codes,['MEPET']);
+  q=store.rows<{payload:string}>('SELECT payload FROM queue ORDER BY created_at');assert.equal(q.length,2);assert.deepEqual(JSON.parse(q[1].payload).codes,['KTLEV']);
   store.freeze(next,end+CIRCUIT_WINDOW_MS);assert.equal(store.health().queue,2);
+ }finally{close();}
+});
+test('legacy mixed circuit windows retain only in-scope members and codes',()=>{
+ const {store,close}=setup();try{
+  store.configure(pref({circuitNotifications:true}),NOW);const lease=store.claim('live',NOW)!;
+  store.save(item(101,{title:'Devre Kesici',stockCode:'KTLEV'}),lease,NOW,true);
+  const outside=item(102,{title:'Devre Kesici',stockCode:'MEPET'});store.save(outside,lease,NOW,true);
+  // Simulate a pending row written by the previous, unfiltered collector.
+  store.run('INSERT INTO circuit_pending VALUES(?,?,?)',102,NOW,JSON.stringify(['MEPET']));
+  const end=(Math.floor(NOW/CIRCUIT_WINDOW_MS)+1)*CIRCUIT_WINDOW_MS;store.freeze(store.claim('groups',end)!,end);
+  const queue=store.row<{payload:string}>('SELECT payload FROM queue WHERE kind=\'circuit\'')!;
+  assert.deepEqual(JSON.parse(queue.payload).disclosureIds,[101]);assert.deepEqual(JSON.parse(queue.payload).codes,['KTLEV']);
+  assert.equal(store.rows('SELECT * FROM circuit_pending').length,0);assert.equal(store.rows('SELECT * FROM disclosures').length,2);
  }finally{close();}
 });
 test('KAP circuit checks align to three-minute boundaries without slowing the live collector',async()=>{
@@ -156,14 +200,14 @@ test('KAP circuit opt-out overrides watchlists, selected topics, index priority 
 });
 test('KAP disabling circuits suppresses queued and not-yet-frozen groups without deleting source history',()=>{
  const {store,close}=setup();try{
-  store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;store.save(item(101,{title:'Devre Kesici'}),l,NOW,true);
+  store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;store.save(item(101,{title:'Devre Kesici',stockCode:'KTLEV'}),l,NOW,true);
   const end=NOW+CIRCUIT_WINDOW_MS,g=store.claim('groups',end)!;store.freeze(g,end);store.finish(g,end,0);
-  const next=store.claim('live',end)!;store.save(item(102,{title:'Devre Kesici'}),next,end+1,true);store.save(item(103,{title:'Yeni İş İlişkisi'}),next,end+1,true);
+  const next=store.claim('live',end)!;store.save(item(102,{title:'Devre Kesici',stockCode:'KTLEV'}),next,end+1,true);store.save(item(103,{title:'Yeni İş İlişkisi'}),next,end+1,true);
   store.configure(pref());const later=store.claim('groups',end+CIRCUIT_WINDOW_MS)!;store.freeze(later,end+CIRCUIT_WINDOW_MS);
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='circuit' AND state='ready'")!.n,0);
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='circuit' AND state='suppressed'")!.n,2);
   assert.equal(store.row<{n:number}>("SELECT count(*) n FROM queue WHERE kind='instant' AND state='ready'")!.n,1);
-  const last=store.claim('live',end+CIRCUIT_WINDOW_MS)!;store.save(item(104,{title:'Devre Kesici'}),last,end+CIRCUIT_WINDOW_MS,true);assert.equal(store.health().sources,4);assert.equal(store.health().circuitPending,0);
+  const last=store.claim('live',end+CIRCUIT_WINDOW_MS)!;store.save(item(104,{title:'Devre Kesici',stockCode:'KTLEV'}),last,end+CIRCUIT_WINDOW_MS,true);assert.equal(store.health().sources,4);assert.equal(store.health().circuitPending,0);
  }finally{close();}
 });
 
@@ -177,8 +221,11 @@ test('focused KAP subjects exclude governance and ratings while retaining deals,
   assert.equal(decide(d,focused,null).action,'off');
   assert.equal(decide(d,pref({watchlist:[{ticker:'TEST',mode:'all',topics:[]}]}),{bist30:['TEST'],bist100:['TEST'],checkedAt:'',source:''}).action,'off');
  }
- for(const summary of ['SIAL Paris Fuarı Kapsamında Alınan Yeni Siparişler','Şirket Pay Alım Bildirimi','9A26 Finansalları Hk.','Yeni İş Anlaşması','Yeni Sözleşme İmzalanması'])assert.equal(decide(item(101,{title:'Özel Durum Açıklaması (Genel)',summary}),focused,null).action,'instant',summary);
- for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Payların Alınıp Satılmasına İlişkin Bildirim','Pay Alım Satım Bildirimi','Finansal Rapor','Faaliyet Raporu (Konsolide Olmayan)','Yönetim Kurulu Faaliyet Raporu','Bilanço','Yeni İş İlişkisi','Yeni İşler','İhale Sonucu','Sözleşme İmzalanması'])assert.equal(decide(item(101,{title,summary:'Yönetim Kurulu karar tarihi 01.10.2026'}),focused,null).action,'instant',title);
+ for(const summary of ['SIAL Paris Fuarı Kapsamında Alınan Yeni Siparişler','9A26 Finansalları Hk.','Yeni İş Anlaşması','Yeni Sözleşme İmzalanması'])assert.equal(decide(item(101,{title:'Özel Durum Açıklaması (Genel)',summary}),focused,null).action,'instant',summary);
+ assert.equal(decide(item(101,{title:'Özel Durum Açıklaması (Genel)',summary:'Şirket Pay Alım Bildirimi',stockCode:'KPEKS'}),focused,null).action,'instant');
+ assert.equal(decide(item(101,{title:'Özel Durum Açıklaması (Genel)',summary:'Şirket Pay Alım Bildirimi',stockCode:'TEST'}),focused,null).action,'off');
+ for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Payların Alınıp Satılmasına İlişkin Bildirim','Pay Alım Satım Bildirimi'])assert.equal(decide(item(101,{title,stockCode:'KPEKS',summary:'Yönetim Kurulu karar tarihi 01.10.2026'}),focused,null).action,'instant',title);
+ for(const title of ['Finansal Rapor','Faaliyet Raporu (Konsolide Olmayan)','Yönetim Kurulu Faaliyet Raporu','Bilanço','Yeni İş İlişkisi','Yeni İşler','İhale Sonucu','Sözleşme İmzalanması'])assert.equal(decide(item(101,{title,summary:'Yönetim Kurulu karar tarihi 01.10.2026'}),focused,null).action,'instant',title);
  assert.equal(decide(item(101,{title:'Borsa Dışı Repo Sözleşmesi'}),focused,null).action,'off');
 });
 
@@ -206,7 +253,8 @@ test('index priority does not elevate routine forms over selected material topic
    assert.equal(decide(item(101,{title,disclosureType:'FON'}),p,null).action,'off');
   }
  }
- for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Pay Alım Satım Bildirimi','Yeni İş İlişkisi','Finansal Rapor'])assert.equal(decide(item(101,{title}),pref(),null).action,'instant');
+ for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Pay Alım Satım Bildirimi'])assert.equal(decide(item(101,{title,stockCode:'KPEKS'}),pref(),null).action,'instant');
+ for(const title of ['Yeni İş İlişkisi','Finansal Rapor'])assert.equal(decide(item(101,{title}),pref(),null).action,'instant');
  });
 
 test('articles of association are muted even with share override; ordinary contracts stay enabled',()=>{
@@ -223,5 +271,5 @@ test('MKK settlement issuer/title pair is muted across suffixes and tracking ove
  }
  assert.equal(decide(item(101,{title:'Yeni İş İlişkisi',companyTitle:'MERKEZİ KAYIT KURULUŞU A.Ş.'}),p,null).action,'instant');
  assert.equal(decide(item(101,{title,companyTitle:'TEST SANAYİ A.Ş.'}),p,null).action,'instant');
- assert.equal(decide(item(101,{title:'Payların Geri Alınmasına İlişkin Bildirim'}),p,null).action,'instant');
+ assert.equal(decide(item(101,{title:'Payların Geri Alınmasına İlişkin Bildirim',stockCode:'KPEKS'}),p,null).action,'instant');
 });

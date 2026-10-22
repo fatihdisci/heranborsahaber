@@ -1,6 +1,7 @@
 import {cardDataFields} from './card-data';
 import {repairKapShareWording} from './kap-unit-evidence';
 import {verifiedEquityCodes} from './equity-codes';
+import {isRecentIpoTicker} from './kap/ticker-scope';
 import type {Document,Draft} from './types';
 const fold=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('tr-TR').replace(/ı/g,'i');
 export function editorialPolicy(documents:Document[]){
@@ -16,7 +17,8 @@ export function editorialPolicy(documents:Document[]){
   ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
   :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
- return {required_hashtags:circuit?['#Borsa','#BIST',...(codes.length?codes.map(c=>'#'+c):['#DevreKesici'])]:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(documents.some(d=>d.market_data?.kind==='institutional')?[]:codes.map(c=>'#'+c))]:[],verified_equity_codes:codes,
+ const ipo=!!kap?.official&&!fund&&codes.some(isRecentIpoTicker),ipoTag=ipo?['#HalkaArz']:[];
+ return {required_hashtags:circuit?['#Borsa','#BIST',...(codes.length?codes.map(c=>'#'+c):['#DevreKesici']),...ipoTag]:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(documents.some(d=>d.market_data?.kind==='institutional')?[]:codes.map(c=>'#'+c)),...ipoTag]:[],verified_equity_codes:codes,
   publisher_names:[...new Set(documents.filter(d=>!d.official).map(d=>d.source_name))],
   instruction:'Etiketleri yalnız hashtags dizisinde ver; başlık, gövde ve kart alanlarına hashtag satırı ekleme. Devre kesici gruplarında #Borsa #BIST ve gruptaki bütün doğrulanmış asıl hisse kodlarını kullan; yalnız kod yoksa #DevreKesici kullan. Bu gruplarda zorunlu kodlar 3 etiket sınırından önceliklidir; ek konu etiketi ekleme. Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Çok hisseli haberlerde kodları gruplandırıp her grubun ilk beşini tweet gövdesinde göster; doğrulanmış kod etiketleri 3 etiket sınırından önceliklidir. Görselde tam listeyi koru. Diğer içeriklerde konu etiketleri 2–3 adet; required_hashtags zorunludur. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
 }

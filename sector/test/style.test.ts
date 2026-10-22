@@ -41,6 +41,14 @@ test('KAP empty fund fields and buyback budgets do not override company tags',()
  }
  assert.deepEqual(editorialPolicy([doc({source_id:'kap',title:'Özel Durum Açıklaması',body:'Yatırım fonlarının tasfiye sürecine ilişkin açıklama.',equity_codes:['TEST']})]).required_hashtags,['#Fon','#PBLK','#Tasfiye']);
 });
+test('recent IPO KAP tickers require exactly one final HalkaArz hashtag',()=>{
+ const source=doc({source_id:'kap',official:true,title:'KPEKS — Payların Geri Alınmasına İlişkin Bildirim',equity_codes:['KPEKS']});
+ assert.deepEqual(editorialPolicy([source]).required_hashtags,['#Borsa','#BIST','#KPEKS','#HalkaArz']);
+ const draft=repairDraftStyle({...groundedDraft,hashtags:['#Şirket','#KPEKS','#HalkaArz','#HalkaArz']},[source]);
+ assert.deepEqual(draft.hashtags,['#Borsa','#BIST','#KPEKS','#HalkaArz']);
+ assert.equal(draft.hashtags.filter(t=>t==='#HalkaArz').length,1);
+ const nonIpo=doc({...source,equity_codes:['THYAO']});assert(!editorialPolicy([nonIpo]).required_hashtags.includes('#HalkaArz'));
+});
 
 import {repairDraftStyle} from '../src/style';
 import {postText,validateDraft} from '../src/editorial';
@@ -113,11 +121,11 @@ test('equity display normalization does not strip other instruments, unknown cod
  assert.equal(fixed.body,body);
 });
 test('circuit tickers lead the caption once and source-backed artwork metadata survives normalization',()=>{
- const docs=['KARCL','THYAO','A1CAP'].map(code=>doc({source_id:'kap',official:true,title:'Pay Bazında Devre Kesici Bildirimi',equity_codes:[code]}));
+ const docs=['TUPRS','THYAO','A1CAP'].map(code=>doc({source_id:'kap',official:true,title:'Pay Bazında Devre Kesici Bildirimi',equity_codes:[code]}));
  const d=repairDraftStyle({...groundedDraft,headline:'🚨 Devre kesici uygulandı',body:'Sürekli işleme ara verildi.',card_data:{tickers:['FAKE']}},docs);
- assert.deepEqual(d.card_data?.tickers,['KARCL','THYAO','A1CAP']);
- const text=postText(d);assert.equal(text.split('\n')[0],'🚨 #KARCL #THYAO #A1CAP');
- assert(text.startsWith('🚨 #KARCL #THYAO #A1CAP\nDevre kesici uygulandı\n\n'));
+ assert.deepEqual(d.card_data?.tickers,['TUPRS','THYAO','A1CAP']);
+ const text=postText(d);assert.equal(text.split('\n')[0],'🚨 #TUPRS #THYAO #A1CAP');
+ assert(text.startsWith('🚨 #TUPRS #THYAO #A1CAP\nDevre kesici uygulandı\n\n'));
  assert(text.endsWith('#Borsa #BIST'));for(const code of d.card_data!.tickers!)assert.equal(text.split('#'+code).length-1,1);
  assert.deepEqual(repairDraftStyle(d,docs),d);
 });

@@ -2,6 +2,7 @@ import {DatabaseSync,type SQLInputValue} from 'node:sqlite';
 import {randomUUID} from 'node:crypto';
 import type {Disclosure,Indices,Listing} from './parser';
 import {decide,digestAt,preferences,DEFAULTS,type Preferences} from './rules';
+import {focusedDisclosureTickers} from './ticker-scope';
 export type Job='live'|'backfill'|'reconcile'|'discovery'|'indices'|'groups';
 export const CIRCUIT_WINDOW_MS=180_000;
 export interface Lease {job:Job;token:string;cursor:number;ceiling:number|null;failures:number;}
@@ -96,7 +97,7 @@ export class KapStore {
     this.run('INSERT INTO disclosures VALUES(?,?,?,?,?,?,?,?,?,?)',d.id,d.sourceRef,d.oid,d.relatedOid,Number(d.isCorrection),d.publishedAt,firstSeen,JSON.stringify(d),JSON.stringify(decision),Number(silent));
     this.run('INSERT INTO feed VALUES(?,?,?,?,?,?,?,?,?)',d.id,d.sourceRef,d.title,d.company,d.publishedAt,firstSeen,JSON.stringify(decision.topics),JSON.stringify(d.subjectCodes),JSON.stringify(d.relatedCodes));
     if(!silent&&decision.action!=='off'){
-     if(decision.action==='circuit'){const since=this.get<number>('circuit_since')??0;if(now>=since&&Date.parse(d.publishedAt)>=since)this.run('INSERT INTO circuit_pending VALUES(?,?,?)',d.id,now,JSON.stringify(d.subjectCodes));}
+     if(decision.action==='circuit'){const since=this.get<number>('circuit_since')??0;if(now>=since&&Date.parse(d.publishedAt)>=since)this.run('INSERT INTO circuit_pending VALUES(?,?,?)',d.id,now,JSON.stringify(focusedDisclosureTickers(d,this.get<Indices>('indices'))));}
      else {const key=d.sourceRef;this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,decision.action,now,decision.action==='digest'?digestAt(now,p.fundDigestTime):now,now,JSON.stringify({disclosureId:d.id,sourceRef:d.sourceRef,reason:decision.reason}));this.run('INSERT INTO queue_members VALUES(?,?)',d.id,key);}
     }
    }
@@ -115,11 +116,17 @@ export class KapStore {
    const windowStart=Math.floor(first.first_seen/CIRCUIT_WINDOW_MS)*CIRCUIT_WINDOW_MS,windowEnd=windowStart+CIRCUIT_WINDOW_MS;if(now<windowEnd)break;
    const since=this.get<number>('circuit_since')??0,eligible=(r:{first_seen:number;published_at:string})=>r.first_seen>=since&&Date.parse(r.published_at)>=since;
    const groupEligible=eligible(first);
-   const members=this.rows<{disclosure_id:number;codes:string;first_seen:number;published_at:string}>('SELECT c.*,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id WHERE c.first_seen<? ORDER BY c.first_seen,c.disclosure_id',windowEnd).filter(m=>eligible(m)===groupEligible);
-   const ids=members.map(m=>m.disclosure_id),codes=[...new Set(members.flatMap(m=>JSON.parse(m.codes) as string[]))].sort(),key=`kap:circuit:${ids[0]}`;
-   this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart,windowEnd}));
-   if(!circuitsEnabled||!groupEligible)this.run("UPDATE queue SET state='suppressed' WHERE id=?",key);
-   for(const id of ids){this.run('INSERT INTO queue_members VALUES(?,?)',id,key);this.run('DELETE FROM circuit_pending WHERE disclosure_id=?',id);}
+   const members=this.rows<{disclosure_id:number;codes:string;first_seen:number;published_at:string;metadata:string}>('SELECT c.*,d.published_at,d.metadata FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id WHERE c.first_seen<? ORDER BY c.first_seen,c.disclosure_id',windowEnd).filter(m=>eligible(m)===groupEligible);
+   const indices=this.get<Indices>('indices'),scoped=members.filter(m=>focusedDisclosureTickers(JSON.parse(m.metadata) as Disclosure,indices).length>0);
+   const ids=scoped.map(m=>m.disclosure_id),codes=[...new Set(scoped.flatMap(m=>focusedDisclosureTickers(JSON.parse(m.metadata) as Disclosure,indices)))].sort();
+   if(ids.length){const key=`kap:circuit:${ids[0]}`;
+    this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart,windowEnd}));
+    if(!circuitsEnabled||!groupEligible)this.run("UPDATE queue SET state='suppressed' WHERE id=?",key);
+    for(const id of ids)this.run('INSERT INTO queue_members VALUES(?,?)',id,key);
+   }
+   // Out-of-scope disclosures remain in source/feed history, but an older
+   // pending group must not contaminate an allowed ticker's combined post.
+   for(const m of members)this.run('DELETE FROM circuit_pending WHERE disclosure_id=?',m.disclosure_id);
   }
  });}
  health(now=Date.now()){

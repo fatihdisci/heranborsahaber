@@ -29,7 +29,7 @@ class HermesJobContract(unittest.TestCase):
 
     def job(self):return {'id':'test','provider':'openai-codex','model':'gpt-6-luna','effort':'medium','allowed_tools':[],'deadline':time.time()+600,'prompt':'Grounded editor','schema':{},'documents':[],'audit_prompt':'Check facts'}
     def test_no_paid_provider_or_tools_can_run(self):
-        for change in [{'provider':'openai-api'},{'allowed_tools':['terminal']},{'effort':'low'},{'effort':'medium'},{'model':'gpt-5.6-terra'},{'model':'gpt-6.1-sol'}]:
+        for change in [{'provider':'openai-api'},{'allowed_tools':['terminal']},{'effort':'low'},{'effort':'high'},{'model':'gpt-5.6-terra'},{'model':'gpt-6.1-sol'}]:
             with patch.object(job_module,'call') as call:
                 with self.assertRaises(RuntimeError):job_module.main(self.job()|change)
                 call.assert_not_called()

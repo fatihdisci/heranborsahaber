@@ -13,7 +13,7 @@ import {queueManual} from '../src/manual';
 import type {Env,Document} from '../src/types';
 const NOW=Date.now();
 function page(summary='Açıklama',count=0){const date=new Date(NOW+3*3600_000).toISOString().replace(/-/g,'.').replace('T',' ').slice(0,19);
- const basic={disclosureIndex:101,title:'Payların Geri Alınmasına İlişkin Bildirim',companyTitle:'TEST SANAYİ A.Ş.',stockCode:'TEST',relatedStocks:null,disclosureClass:'ODA',disclosureType:'ODA',disclosureCategory:'ODA',publishDate:date,disclosureId:'a'.repeat(32),relatedDisclosureOid:null,isChanged:null,summary,attachmentCount:count};
+ const basic={disclosureIndex:101,title:'Payların Geri Alınmasına İlişkin Bildirim',companyTitle:'KAPEKS KİMYA A.Ş.',stockCode:'KPEKS',relatedStocks:null,disclosureClass:'ODA',disclosureType:'ODA',disclosureCategory:'ODA',publishDate:date,disclosureId:'a'.repeat(32),relatedDisclosureOid:null,isChanged:null,summary,attachmentCount:count};
  return `<script>self.__next_f.push(${JSON.stringify([1,JSON.stringify({disclosureBasic:basic})])})</script><div class="disclosureScrollableArea"><p>Tam metin işlem hakkında bilgi verir.</p><table><tr><td>İşlem Tarihi</td><td>20.10.2026</td></tr></table></div>`;
 }
 async function setup(){const s=new KapStore(':memory:');const l=s.claim('discovery',NOW)!;s.discover([{id:100,publishedAt:new Date(NOW-5000).toISOString()}],l,NOW-2000);
@@ -44,6 +44,14 @@ test('KAP preference recheck excludes breakers before expensive reading; no noti
  const {s,env}=await setup();try{const row=s.row<{metadata:string}>('SELECT metadata FROM disclosures')!;const d=JSON.parse(row.metadata);d.summary='Devre Kesici';s.run('UPDATE disclosures SET metadata=?',JSON.stringify(d));let reads=0;
  const c=new KapDelivery(s,env,async()=>{reads++;return [];},()=>NOW);assert.equal((await c.run()).state,'idle');assert.equal(reads,0);assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'suppressed');
  assert.equal((await new KapDelivery(s,{...env,MODE:'dry_run'},async()=>[],()=>NOW).run()).state,'disabled');
+ }finally{s.close();}
+});
+test('ticker scope is rechecked at the final Telegram send boundary',async()=>{
+ const {s,env,docs}=await setup();try{
+  const c=new KapDelivery(s,env,async()=>docs,()=>NOW),meta=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);
+  meta.subjectCodes=['TEST'];meta.relatedCodes=['TEST'];meta.issuerCode='TEST';s.run('UPDATE disclosures SET metadata=?',JSON.stringify(meta));
+  assert.equal(c.deliveryDecision(docs),'suppress');assert.equal(s.row<{state:string}>('SELECT state FROM queue')!.state,'suppressed');
+  assert.equal(s.row<{n:number}>('SELECT COUNT(*) n FROM disclosures')!.n,1);assert.equal(s.row<{n:number}>('SELECT COUNT(*) n FROM feed')!.n,1);
  }finally{s.close();}
 });
 test('KAP PDF transport accepts exact serialized byte arrays, never arbitrary prefixes or corrupt lengths',()=>{
@@ -158,17 +166,17 @@ import type {Draft} from '../src/types';
 test('frozen circuit group reads all official members and delivers one branded photo with source button',async()=>{
  const {s,env}=await setup();const images=new Map<string,Uint8Array>();Object.assign(env,{AI_MODEL:'gpt-6-luna',AI_EFFORT:'medium',TELEGRAM_BOT_TOKEN:'123:test',TELEGRAM_VERIFIED_BOT_ID:'123',MEDIA:{put:async(k:string,b:Uint8Array)=>images.set(k,b),get:async(k:string)=>images.has(k)?{arrayBuffer:async()=>images.get(k)!.buffer}:null}});
  const previous=globalThis.fetch;let photos=0;const reads:number[]=[];
- globalThis.fetch=async(url,options)=>{assert.match(String(url),/^https:\/\/api\.telegram\.org\//);if(String(url).endsWith('/sendPhoto')){photos++;const form=options!.body as FormData;assert.match(String(form.get('caption')),/ABCD.*EFGH/);const buttons=JSON.parse(String(form.get('reply_markup')));assert(buttons.inline_keyboard.flat().some((b:any)=>b.text==='🔗'));}return Response.json({ok:true,result:{message_id:99}});};
+ globalThis.fetch=async(url,options)=>{assert.match(String(url),/^https:\/\/api\.telegram\.org\//);if(String(url).endsWith('/sendPhoto')){photos++;const form=options!.body as FormData;assert.match(String(form.get('caption')),/KTLEV.*ASTOR/);const buttons=JSON.parse(String(form.get('reply_markup')));assert(buttons.inline_keyboard.flat().some((b:any)=>b.text==='🔗'));}return Response.json({ok:true,result:{message_id:99}});};
  try{
   s.run("UPDATE queue SET state='suppressed'");s.configure({...s.prefs(),circuitNotifications:true},NOW);
   const l=s.claim('reconcile',NOW)!;const base=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);
-  for(const [id,code] of [[102,'ABCD'],[103,'EFGH']] as const)s.save({...base,id,sourceRef:'kap:'+id,url:'https://www.kap.org.tr/tr/Bildirim/'+id,title:'Devre Kesici Uygulaması',publishedAt:new Date(NOW+1000).toISOString(),subjectCodes:[code],relatedCodes:[code]},l,NOW+1000,false);
+  for(const [id,code] of [[102,'KTLEV'],[103,'ASTOR']] as const)s.save({...base,id,sourceRef:'kap:'+id,url:'https://www.kap.org.tr/tr/Bildirim/'+id,title:'Devre Kesici Uygulaması',publishedAt:new Date(NOW+1000).toISOString(),subjectCodes:[code],relatedCodes:[code]},l,NOW+1000,false);
   const end=(Math.floor((NOW+1000)/CIRCUIT_WINDOW_MS)+1)*CIRCUIT_WINDOW_MS; s.freeze(s.claim('groups',end)!,end);
-  const consumer=new KapDelivery(s,env,async id=>{reads.push(id);const code=id===102?'ABCD':'EFGH',text=code+' payında tek fiyat emir toplama işlemi başlamıştır.';return [{source_id:'kap',source_name:'KAP',family:'kap',official:true,url:'https://www.kap.org.tr/tr/Bildirim/'+id,title:code+' — Devre Kesici Uygulaması',body:text,published_at:new Date(NOW).toISOString(),equity_codes:[code],passages:[{id:'p1',text}]}];},()=>end+1000);
+  const consumer=new KapDelivery(s,env,async id=>{reads.push(id);const code=id===102?'KTLEV':'ASTOR',text=code+' payında tek fiyat emir toplama işlemi başlamıştır.';return [{source_id:'kap',source_name:'KAP',family:'kap',official:true,url:'https://www.kap.org.tr/tr/Bildirim/'+id,title:code+' — Devre Kesici Uygulaması',body:text,published_at:new Date(NOW).toISOString(),equity_codes:[code],passages:[{id:'p1',text}]}];},()=>end+1000);
   assert.equal((await consumer.run()).state,'model_queued');await consumer.run();assert.deepEqual(reads,[102,103]);
   env.KAP_DELIVERY_CHECK=docs=>consumer.deliveryDecision(docs);
   const job=(await leaseJob(env))!,documents=job.documents as Document[];assert.equal(documents.length,2);
-  const draft:Draft={card_data:{tickers:['ABCD','EFGH']},headline:'📢 ABCD ve EFGH paylarında devre kesici uygulandı',body:'Her iki payda tek fiyat emir toplama işlemi başladı.',card_headline:'ABCD ve EFGH paylarında devre kesici',card_body:'Tek fiyat emir toplama işlemi başladı.',hashtags:['#Borsa','#BIST','#DevreKesici'],category:'bist',importance:94,template:'circuit',entities:['ABCD','EFGH'],event_key:'circuit-abcd-efgh',uncertainties:[],claims:documents.map((d,i)=>({text:d.body,evidence:[{document:i,passage:'p1',quote:d.body}]}))};
+  const draft:Draft={card_data:{tickers:['KTLEV','ASTOR']},headline:'📢 KTLEV ve ASTOR paylarında devre kesici uygulandı',body:'Her iki payda tek fiyat emir toplama işlemi başladı.',card_headline:'KTLEV ve ASTOR paylarında devre kesici',card_body:'Tek fiyat emir toplama işlemi başladı.',hashtags:['#Borsa','#BIST','#DevreKesici'],category:'bist',importance:94,template:'circuit',entities:['KTLEV','ASTOR'],event_key:'circuit-ktlev-astor',uncertainties:[],claims:documents.map((d,i)=>({text:d.body,evidence:[{document:i,passage:'p1',quote:d.body}]}))};
   const svg=draftCard(draft,[],'',false,job.card_theme,job.card_layout);assert.match(svg,/ENDEKS HABER/);assert.match(svg,/DEVRE KESİCİ/);
   await submitJob(env,{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,draft,audit:{supported:true,issues:[]},runtime:{model:'gpt-6-luna',effort:'medium',provider:'openai-codex',tool_count:0,fallback_count:0},card_date:'',svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
   await deliver(env);await deliver(env);assert.equal(photos,1);

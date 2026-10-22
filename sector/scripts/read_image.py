@@ -62,6 +62,44 @@ def recover_labels(blocks,image,ocr):
             if re.fullmatch(r'[^\W\d_][\w .&’\'-]{0,59}',name):recovered.append({'text':name,'x':x[0],'y':y,'width':cuts[0]-x[0],'height':max(c['height'] for c in cells),'confidence':min(b['confidence'] for b in result)})
     return blocks+recovered
 
+def recover_numeric_cells(blocks,image,ocr):
+    """Re-read malformed AKD numeric cells from pixels, never strip OCR letters.
+
+    Two enlarged crops must independently agree. Valid original values are not
+    replaced, and disagreement retains the original error for the parser.
+    """
+    result=list(blocks);header=None;attempts=0
+    for y,cells in rows(blocks):
+        h={c['text'].upper().replace('İ','I'):c for c in cells}
+        if all(k in h for k in ['KURUM','ORAN','NET LOT','MALIYET']):header=h;continue
+        if not header:continue
+        xs=[header[k]['x'] for k in ['KURUM','ORAN','NET LOT','MALIYET']]
+        if xs!=sorted(xs):raise ValueError('image_market_table_incomplete')
+        cuts=[(xs[i]+xs[i+1])/2 for i in range(3)];columns=[[] for _ in range(4)]
+        for c in cells:columns[sum(c['x']>=v for v in cuts)].append(c)
+        if not all(columns):continue
+        for col in range(1,4):
+            validate=(lambda v:decimal_value(v,True)) if col==1 else lot_value if col==2 else decimal_value
+            raw=' '.join(c['text'] for c in columns[col])
+            try:validate(raw);continue
+            except ValueError:pass
+            attempts+=1
+            if attempts>6:raise ValueError('image_market_table_incomplete')
+            candidates=[]
+            with Image.open(image) as original:
+                w,hi=original.size;bottom=max(c['y']+c['height'] for c in cells)
+                crop=original.crop((0,int(hi*max(0,y-.008)),w,int(hi*min(1,y+.036)))).convert('RGB')
+                for scale in (3,4):
+                    path=image.parent/f'numeric-{attempts}-{scale}.png';crop.resize((crop.width*scale,crop.height*scale),Image.Resampling.LANCZOS).save(path);path.chmod(0o600)
+                    retry=subprocess.run([str(ocr),str(path)],capture_output=True,text=True,timeout=10,check=True)
+                    output=json.loads(retry.stdout);value=' '.join(b['text'] for b in sorted(output,key=lambda b:b.get('x',0)) if sum(b.get('x',0)>=v for v in cuts)==col).strip()
+                    try:validate(value);candidates.append(value)
+                    except ValueError:pass
+            if len(candidates)==2 and candidates[0]==candidates[1]:
+                result=[b for b in result if b not in columns[col]]
+                result.append({**columns[col][0],'text':candidates[0]})
+    return result
+
 def market_passages(blocks):
     grid=rows(blocks);tables=[]
     for i,(y,cells) in enumerate(grid):
@@ -169,11 +207,13 @@ def read_image(path,root,ocr):
     raw=subprocess.run([str(ocr),str(image)],capture_output=True,text=True,timeout=45,check=True)
     blocks=json.loads(raw.stdout)
     if not blocks:raise ValueError('image_unreadable')
+    raw_text=ocr_text(blocks)
     blocks=recover_labels(blocks,image,ocr)
+    blocks=recover_numeric_cells(blocks,image,ocr)
     text=ocr_text(blocks)
     if len(text)<20 or len(text)>100_000:raise ValueError('image_text_limit')
     parsed=institutional_passages(blocks) or market_passages(blocks)
-    original={'id':'image_ocr_raw','text':'OCR metni; sayfa görüntüsüyle kontrol edilmelidir:\n'+text}
+    original={'id':'image_ocr_raw','text':'İlk OCR metni; hücre tekrar okumasından önceki ham çıktı, doğrulanmış tablo yerine kullanılmaz:\n'+raw_text}
     market,passages=parsed if parsed else (None,[original])
     body='\n\n'.join(p['text'] for p in passages)
     return {'body':body,'passages':[original,*passages] if parsed else passages,'images':[str(image)],

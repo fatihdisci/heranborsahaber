@@ -186,3 +186,7 @@ BoPT `/kurum bank of america` yanıtının metni veya görseli editör botuna il
 Kaynağa veya hazırlanmış karta **Sadece alınanlar**, **Sadece satılanlar**, **İkisini de göster** diye yanıt vermek yeni bir görünüm oluşturur. Tam asıl kanıt korunur, hazırlanmış kart tekrar OCR ile okunmaz. Düzenle düğmesi de aynı seçimleri anlar. Tek taraf için geniş on satırlık liste, iki taraf için iki ayrı on satırlık panel kullanılır. Alım/satım yönü ve satır-tutar eşleşmesi gönderimden önce doğrulanır; farklı görünümler veya değişen veri görüntüleri başlık benzerliği yüzünden birleştirilmez.
 
 Mr/Mn ve ondalık nokta alan bağlamına göre normalleştirilir; lot/adet binlik noktaları korunur. Yuvarlanmış toplamlar yeniden hesaplanarak değiştirilmez. Görsel para birimi belirtmiyorsa TL tahmin edilmez; aynı tutarı TL ile açıklayan metin kanıt olarak kullanılabilir. Kaynaksız tarihe/saat bilgisine dayanarak anlık veri iddiası üretilmez.
+
+## ChatGPT kart paketi
+
+`node node_modules/tsx/dist/cli.mjs scripts/export_chatgpt_kit.ts` komutu `exports/ENDEKS-HABER-ChatGPT/` altında çevrimdışı kart motorunu, fontları, marka dosyalarını, JSON/SVG/PNG örneklerini ve `docs/chatgpt-kit-prompt.txt` kullanım promptunu paketler. `node render.mjs content.json kart.png` ile npm kurulmadan PNG üretir. Gizli bilgi veya canlı veri içermez. Devre kesici, tema/yerleşim seçimine bakmadan sabit lacivert/editorial şablonda doğrulanmış kod sayısına uyarlanır.

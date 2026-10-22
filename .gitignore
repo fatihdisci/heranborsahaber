@@ -9,3 +9,5 @@ __pycache__/
 *.running
 *.job.json
 *.result.json
+
+sector/exports/

@@ -7,7 +7,7 @@ const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,
 // Each content family owns its hierarchy. Layout changes alter frame, rail,
 // header or alignment while retaining the same evidence and financial values.
 export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'>,theme:CardTheme,layout:CardLayout,fit:(s:string,b:Box)=>string):string {
- if(d.template==='circuit')return circuitCard(theme,layout,d.card_data?.tickers??[]);
+ if(d.template==='circuit')return circuitCard('navy','editorial',d.card_data?.tickers??[]);
  const bg=COLORS[theme],fg=theme==='navy'?COLORS.paper:COLORS.navy,steel=COLORS.steel;
  const data=d.card_data,variant=CARD_LAYOUTS.indexOf(layout),left=layout==='rail'?122:76,width=1080-left-76;
  const rect=(x:number,y:number,w:number,h:number,fill:string,stroke?:string)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${stroke?` stroke="${stroke}" stroke-width="2"`:''}/>`;

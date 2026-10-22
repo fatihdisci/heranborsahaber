@@ -3,7 +3,7 @@ from unittest.mock import patch
 from PIL import Image,ImageDraw,ImageFont
 import sys
 sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
-from read_image import market_passages,institutional_passages,decimal_value,lot_value,read_image,recover_labels
+from read_image import market_passages,institutional_passages,decimal_value,lot_value,read_image,recover_labels,recover_numeric_cells
 
 def block(text,x,y):return {'text':text,'x':x,'y':y,'width':.08,'height':.025,'confidence':1}
 def table():
@@ -70,6 +70,16 @@ class ImageReaderTests(unittest.TestCase):
             response.stdout=json.dumps([{'text':'KURUM','confidence':1}])
             with patch('read_image.subprocess.run',return_value=response):unread=recover_labels(missing,p,pathlib.Path(temp)/'ocr')
             with self.assertRaisesRegex(ValueError,'incomplete'):market_passages(unread)
+    def test_numeric_recovery_requires_two_matching_pixel_reads_and_preserves_unresolved_errors(self):
+        with tempfile.TemporaryDirectory() as temp:
+            p=pathlib.Path(temp)/'source.png';Image.new('RGB',(900,1080),'black').save(p)
+            bad=[{**b,'text':'-264.966ął'} if b['text']=='-264.966' else b for b in table()]
+            def answer(v):return type('Result',(),{'stdout':json.dumps([block(v,.53,.2)])})
+            with patch('read_image.subprocess.run',side_effect=[answer('-264.966'),answer('-264.966')]):fixed=recover_numeric_cells(bad,p,pathlib.Path(temp)/'ocr')
+            self.assertIsNotNone(market_passages(fixed));self.assertTrue(any(b['text']=='-264.966ął' for b in bad))
+            for replies in [[answer('-264.966'),answer('-264.965')],[answer('-264.966ął'),answer('-264.966')]]:
+                with patch('read_image.subprocess.run',side_effect=replies):unresolved=recover_numeric_cells(bad,p,pathlib.Path(temp)/'ocr')
+                with self.assertRaises(ValueError):market_passages(unresolved)
     def test_explicit_data_dates_are_preserved_without_using_the_machine_clock(self):
         _,passages=market_passages(table()+[block('21 Ekim 2026',.2,.1)])
         self.assertIn('21 Ekim 2026',passages[0]['text']);self.assertNotIn('tarihi ve saati belirtilmemiş',passages[0]['text'])

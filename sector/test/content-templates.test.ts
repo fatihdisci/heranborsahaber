@@ -34,10 +34,10 @@ test('five content types remain visibly distinct and all redesign layouts render
     assert.match(svg,/ENDEKS HABER/);assert(!/linearGradient|radialGradient|filter=/.test(svg));layouts.add(svg);designs.add(svg);
     if(['institutional','akd'].includes(template))assert.match(svg,/1.250.000 adet/);
    }
-   assert.equal(layouts.size,6);
+   assert.equal(layouts.size,template==='circuit'?1:6);
   }
  }
- assert.equal(designs.size,60);
+ assert.equal(designs.size,49);
 });
 test('no data yields no invented rows, chart or values, and markup is escaped',()=>{
  for(const template of ['institutional','akd','volume'] as Template[]){const svg=cardSvg({template,headline:'Verili haber',body:'Sadece kaynakta bulunan bilgi.'});assert(!svg.includes('125 milyon'));assert(!svg.includes('Alfa Yatırım'));}
@@ -74,4 +74,11 @@ test('crowded circuit cards retain all 120 codes, fit every layout and render fu
 test('five long institution names fit every AKD redesign without truncating amounts',()=>{
  const rows=Array.from({length:5},(_,i)=>({label:'Uzun Unvanlı Yatırım Menkul Değerler '+String(i+1),value:'1.234.567.890 adet'}));
  for(const layout of CARD_LAYOUTS){const svg=cardSvg({template:'akd',headline:'ABCD aracı kurum dağılımı',body:'Alıcı ve satıcı kurumlar kaynak verilerine göre gösteriliyor.',card_data:{buy:rows,sell:rows}},[],'',false,'navy',layout);assert(svg.includes('1.234.567.890 adet'));}
+});
+
+test('circuit cards use one fixed navy layout while adapting to the verified ticker count',()=>{
+ const d={...base,template:'circuit' as const,card_data:{tickers:['KTLEV','THYAO']}};
+ const expected=draftCard(d,[],'',false,'navy','editorial');
+ for(const theme of ['navy','paper'] as const)for(const layout of CARD_LAYOUTS)assert.equal(draftCard(d,[],'',false,theme,layout),expected);
+ assert(expected.includes('#KTLEV'));assert(expected.includes('#THYAO'));
 });

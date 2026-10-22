@@ -1,3 +1,5 @@
+import {publishX,refreshXButton} from '../src/x-publish';
+import {xClient,validXKeys} from './x_client';
 import {awaitActivation} from './startup_gate';
 import {saveTelegramUpdates,processTelegramUpdates} from '../src/telegram-inbox';
 import {redesignOne} from '../src/card-redesign';
@@ -26,6 +28,7 @@ import type {Env,Document,Draft} from '../src/types';
 const directory=`${homedir()}/Library/Application Support/sector-haber`;
 const secrets=JSON.parse(await readFile(directory+'/secrets.json','utf8'));
 const env={...secrets,DB:await localDatabase(directory+'/sector-haber.sqlite',await readFile('migrations/0001_sector.sql','utf8')),MEDIA:await localMedia(directory+'/media'),MODE:'telegram_review',AI_MODEL:'gpt-6-luna',AI_EFFORT:'high',AI_DAILY_DRAFT_LIMIT:'240'} as Env;
+try{const keys=JSON.parse(await readFile(directory+'/x-credentials.json','utf8'));if(validXKeys(keys))env.X_PUBLISH_ENABLED='true';}catch{/* X stays disabled until credentials are saved locally. */}
 await seed(env);
 const lockPath=directory+'/service.lock';let lock;
 try{lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}
@@ -57,6 +60,10 @@ async function modelLoop(){while(!stopping){let job:Awaited<ReturnType<typeof le
 }}
 async function newsLoop(){let official=0;while(!stopping){try{await tick(env);await status('collector_health',{ok:true,at:new Date().toISOString()});if(Date.now()-official>10*60_000){try{await scanOfficial(async(_path,value)=>ingestOfficial(env,value as Record<string,unknown>),directory+'/official-state.json');official=Date.now();await status('official_health',{ok:true,at:new Date().toISOString()});}catch(e){await status('official_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}}catch(e){await status('collector_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(60_000);}}
 async function designLoop(){while(!stopping){try{await redesignOne(env,png);}catch(e){await status('design_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(1000);}}
+async function xLoop(){while(!stopping){try{
+ const keys=JSON.parse(await readFile(directory+'/x-credentials.json','utf8'));
+ if(validXKeys(keys)){env.X_PUBLISH_ENABLED='true';await publishX(env,xClient(keys));await refreshXButton(env);}
+ }catch{env.X_PUBLISH_ENABLED=undefined;}await pause(2000);}}
 async function deliveryLoop(){while(!stopping){try{await deliver(env);}catch(e){await status('delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
 async function kapLoop(){
  // Absence of the separate KAP database must not create/bootstrap one here.
@@ -85,4 +92,4 @@ else if(process.argv.includes('--prepare-once')){try{await tick(env);console.log
 else if(process.argv.includes('--model-once')){ // run one fully checked job for commissioning
  const stop=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){stopping=true;clearInterval(stop);}},1000);
  try{await modelLoop();}finally{clearInterval(stop);await lock.close();await unlink(lockPath);}
-}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),requestsLoop(),designLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}
+}else {try{await Promise.all([newsLoop(),modelLoop(),telegramLoop(),deliveryLoop(),kapLoop(),manualLoop(),requestsLoop(),designLoop(),xLoop()]);}finally{await lock.close();await unlink(lockPath).catch(()=>{});}}

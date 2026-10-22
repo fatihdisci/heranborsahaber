@@ -22,6 +22,7 @@ export interface Draft {
   card_headline:string;card_body:string;
 }
 export interface Env {
+  X_PUBLISH_ENABLED?:string;
   DB:D1Database; MEDIA:R2Bucket;
   MODE:'dry_run'|'telegram_review';
   ADMIN_TOKEN?:string; BRIDGE_TOKEN?:string; AI_MODEL:string; AI_EFFORT:'high';

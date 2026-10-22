@@ -13,7 +13,7 @@ export function parseCallback(value:string):{action:Action;id:string;revision:nu
  const m=value.match(/^s:(approve|reject|edit|defer):([a-f\d-]{36}):(\d{1,6})$/);
  if(!m)throw new Error('invalid_callback');return {action:m[1] as Action,id:m[2],revision:Number(m[3])};
 }
-// Publication is permanently outside this product. No approval enables it.
+// Legacy approval actions never publish. X requires the explicit owner-only xpost path.
 export function publicationGate(_target?:string):{allowed:false;reason:string} {
  return {allowed:false,reason:'x_publishing_permanently_disabled'};
 }

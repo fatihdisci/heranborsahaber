@@ -1,3 +1,4 @@
+import {requestX,xEnabled} from './x-publish';
 import {requestRedesign} from './card-redesign';
 import {requestNews} from './news-inbox';
 import {sendDraftAsset} from './draft-assets';
@@ -36,6 +37,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;
  if(!cb||!cb.message||!isOwner(env,String(cb.from?.id),String(cb.message.chat?.id),cb.message.chat?.type))return json({ok:true});
+ if(cb.data==='xcount'||cb.data?.startsWith('xpost:')){await requestX(env,cb.data,cb.message.message_id,cb.id);return json({ok:true});}
  if(cb.data?.startsWith('design:')){
   const answer=await requestRedesign(env,cb.data,cb.message.message_id,Number(id));
   await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});
@@ -80,7 +82,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
 export default {
  async fetch(request:Request,env:Env,ctx:ExecutionContext):Promise<Response> {
   const url=new URL(request.url);
-  if(url.pathname==='/health')return json({service:'ENDEKS HABER',mode:env.MODE,x_publishing:false,model:'Hermes / '+env.AI_MODEL});
+  if(url.pathname==='/health')return json({service:'ENDEKS HABER',mode:env.MODE,x_publishing:xEnabled(env),model:'Hermes / '+env.AI_MODEL});
   if(url.pathname==='/telegram/webhook'&&request.method==='POST'){try{return await webhook(request,env);}catch(e){const failure=e instanceof TelegramError?e.failure:e instanceof SyntaxError||['invalid_request','request_too_large','empty_request','manual_input_limit'].includes(errorCode(e))?'permanent':'retryable';return json({error:errorCode(e),failure,retry_after:e instanceof TelegramError?e.retryAfter:30},failure==='retryable'?503:400);}}
   const bridge=url.pathname.startsWith('/api/bridge/');
   const key=bridge?env.BRIDGE_TOKEN:env.ADMIN_TOKEN;
@@ -93,7 +95,7 @@ export default {
    if(request.method==='GET'&&url.pathname==='/api/sources'){await seed(env);return json((await env.DB.prepare('SELECT id,enabled,next_poll,failures,last_ok,last_error,last_count FROM sources').all()).results);}
    const source=url.pathname.match(/^\/api\/sources\/([a-z0-9-]+)$/);
    if(request.method==='POST'&&source){const input=await body(request);const known=registry.find(s=>s.id===source[1]);if(!known||typeof input.enabled!=='boolean')return json({error:'invalid_source'},400);await env.DB.prepare('UPDATE sources SET enabled=?,next_poll=0 WHERE id=?').bind(Number(input.enabled),source[1]).run();return json({ok:true});}
-   if(request.method==='GET'&&url.pathname==='/api/status')return json({x_publishing:false,mode:env.MODE,articles:(await env.DB.prepare('SELECT status,COUNT(*) AS count FROM articles GROUP BY status').all()).results,drafts:(await env.DB.prepare('SELECT state,delivery_state,COUNT(*) AS count FROM drafts GROUP BY state,delivery_state').all()).results,jobs:(await env.DB.prepare('SELECT state,COUNT(*) AS count FROM model_jobs GROUP BY state').all()).results});
+   if(request.method==='GET'&&url.pathname==='/api/status')return json({x_publishing:xEnabled(env),mode:env.MODE,articles:(await env.DB.prepare('SELECT status,COUNT(*) AS count FROM articles GROUP BY status').all()).results,drafts:(await env.DB.prepare('SELECT state,delivery_state,COUNT(*) AS count FROM drafts GROUP BY state,delivery_state').all()).results,jobs:(await env.DB.prepare('SELECT state,COUNT(*) AS count FROM model_jobs GROUP BY state').all()).results});
    return json({error:'not_found'},404);
   }catch(e){return json({error:errorCode(e)},400);}
  },

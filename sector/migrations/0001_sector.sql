@@ -78,3 +78,11 @@ CREATE TABLE IF NOT EXISTS telegram_effects (
  id TEXT PRIMARY KEY,update_id INTEGER NOT NULL,method TEXT NOT NULL,state TEXT NOT NULL,
  result TEXT,error_code INTEGER,updated_at INTEGER NOT NULL
 );
+-- Explicit owner-authorized X publications only; failed attempts remain auditable.
+CREATE TABLE IF NOT EXISTS x_posts (
+ id TEXT PRIMARY KEY,draft_id TEXT NOT NULL REFERENCES drafts(id),revision INTEGER NOT NULL,
+ day TEXT NOT NULL,state TEXT NOT NULL,content TEXT NOT NULL,media_key TEXT NOT NULL,
+ created_at INTEGER NOT NULL,started_at INTEGER,finished_at INTEGER,remote_id TEXT,error TEXT,update_id INTEGER UNIQUE
+);
+CREATE INDEX IF NOT EXISTS x_posts_day ON x_posts(day,state);
+CREATE UNIQUE INDEX IF NOT EXISTS x_posts_once ON x_posts(draft_id) WHERE state IN ('queued','uploading','posting','sent','uncertain');

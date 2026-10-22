@@ -29,7 +29,7 @@ Kurum net işlemi `broker_flow`, hisse işlem dağılımı `akd`, saklama dağı
 alış/satış gibi yorumlanmaz. Mr/Mn ölçeği ve sütunlara özgü sayı biçimi ayrı
 kanıt pasajlarına dönüştürülür. Tarihsiz görsele güncel tarih eklenmez, eksik
 kurum/sayı satırı sessizce atlanmaz. Yeni veri sağlayıcısı veya hesap oturumu
-gerekmez; mevcut model ve X yayınının kapalı durumu değişmez.
+gerekmez; mevcut model ve otomatik X yayın yasağı korunur.
 
 Yazım ve kart metinleri `gpt-6-luna`, `high` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
 
@@ -47,7 +47,7 @@ Eksik/çelişkili kanıtlar, belirsiz galeri/PDF veya doğrulamadan geçmeyen me
 `sources.json` ortak kayıttır. Sağlık, etag, son başarılı kontrol ve hata bekleme süreleri ayrı veritabanında tutulur.
 Kaynaklar tek tek `sources.candidates.json` ve `reports/source-check.json` üzerinden doğrulanmıştır.
 Kurulumda eski RSS arşivi canlı kuyruğa boşaltılmaz; başlangıç anı ve kısa zaman payı kaydedilir. Önem ve güncellik birlikte sıralanır.
-Günlük en fazla 240 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X yayını kalıcı olarak kapsam dışıdır.
+Günlük en fazla 240 model adayı ve aynı anda en fazla 12 teslim edilmemiş taslak kullanılır. Teslim edilmiş içerikler yeni haberleri durdurmaz. X paylaşımı yalnız açık Paylaş düğmesiyle ve günde en fazla 20 içerik için yapılır.
 NTV’nin denenen RSS’i ve TCMB’nin özel PPK beslemesi eski kaldığı için etkinleştirilmedi. PPK basın duyuruları genel TCMB basın akışından takip edilir.
 TÜİK RSS adayı 404, güncel veri portalı ise otomatik istemciye koruma sayfası verdi; bültenler okunmuş gibi sisteme eklenmedi.
 Haber okuyucusu KAP bağlantılarını birincil kaynak olarak okuyabilir. Ayrıca bağımsız KAP toplayıcısı çalışır; kalıcı cursor, saklama ve kuyruk kuralları [KAP.md](KAP.md) içindedir. Devre kesici gönderimi `circuitNotifications` tercihine bağlıdır; KAP kuyruğu haber servisindeki bağımsız Telegram tüketicisine bağlıdır.
@@ -64,7 +64,7 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 - Tekrarlanan/eski düğmeler sürüm kontrolünden geçemez.
 - Fotoğraf, Telegram’a PNG dosyası olarak yüklenir; link önizlemesi değildir.
 - Belirsiz gönderim zaman aşımı otomatik tekrar edilmez; çift kart oluşturulmaz.
-- **X yayını kalıcı olarak yoktur.** X hedef ayarı ve yayın hazırlığı kaldırılmıştır. Eski onay düğmeleri yalnız yerel taslak durumu değiştirir; yayın kaydı oluşturmaz.
+- **X paylaşımı isteğe bağlıdır.** OAuth 1.0 bağlantısı kurulduğunda yalnız @endeks_haber için açık Paylaş düğmesi kullanılır. Eski onay düğmeleri yalnız yerel taslak durumu değiştirir; yayın kaydı oluşturmaz.
 
 ## Kurulum ve işletim
 
@@ -74,7 +74,7 @@ Bloomberg HT, TRT, CNBC-e, BBC vb. kullanım koşulları kayıt altındadır; do
 MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
 Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
 
-Güncel kararlar: X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `high`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
+Güncel kararlar: Otomatik X yayını yok; Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `high`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
@@ -99,7 +99,7 @@ Ana Hermes gateway’i ve başka proje servisleri bu komutlara dahil değildir.
 Yeni ve ayrı Worker `sector-haber-review`, D1 `sector-haber-db`, R2 `sector-haber-media` oluşturuldu.
 Genel `workers.dev` / `pages.dev` ulaşımında TLS/erişim sorunu doğrulandığı için aktif yayın akışı bu adrese bağlanmaz.
 Cloudflare cron kapalı ve `MODE=dry_run` durumundadır. Aynı pipeline D1/R2 adaptörleriyle burada da çalışabilecek şekilde korunur.
-API anahtarı / ChatGPT oturumu buluta aktarılmaz. X yayını planlanmaz; hiçbir onay veya ayar X gönderimi açmaz.
+API anahtarı / ChatGPT oturumu buluta aktarılmaz. Zamanlanmış X yayını yoktur; yalnız özel sohbetteki Paylaş düğmesi X gönderimini başlatır.
 
 ## Doğrulamalar
 
@@ -127,7 +127,7 @@ Haber teslimatı kaynak taramasından ayrı 10 saniyelik döngüde çalışır. 
 
 ## Kendi haberini gönder
 
-@habernewssbot özel sohbetine desteklenen kaynaklardan haber bağlantısı, KAP bağlantısı, PDF dosyası veya en az 100 karakterlik haber metni gönder. Yalnız kayıtlı hesap sahibi kabul edilir. Hazırlanıyor bildirimi tamamlanan tweet ve görselle aynı mesajda değiştirilir. Aynı kaynak denetimi ve görsel üretimi uygulanır; X yayını yoktur. @Minihermesimbot genel Hermes sohbetidir. Bilinmeyen sitelerde tam metni veya PDF'yi gönder. Dosya/metin taslaklarının kaynak düğmesi orijinal Telegram gönderisini açmak için bot bağlantısını kullanır.
+@habernewssbot özel sohbetine desteklenen kaynaklardan haber bağlantısı, KAP bağlantısı, PDF dosyası veya en az 100 karakterlik haber metni gönder. Yalnız kayıtlı hesap sahibi kabul edilir. Hazırlanıyor bildirimi tamamlanan tweet ve görselle aynı mesajda değiştirilir. Aynı kaynak denetimi ve görsel üretimi uygulanır; Otomatik X yayını yoktur. @Minihermesimbot genel Hermes sohbetidir. Bilinmeyen sitelerde tam metni veya PDF'yi gönder. Dosya/metin taslaklarının kaynak düğmesi orijinal Telegram gönderisini açmak için bot bağlantısını kullanır.
 
 ## Haberler: önce önizleme, sonra istek üzerine üretim
 
@@ -168,7 +168,7 @@ Geri dönüş kopyaları `backups/update-<kimlik>/rollback.json` içinde listele
 
 ## ENDEKS marka ve kapsam geçişi
 
-Görünür marka ENDEKS HABER, hesap referansı `@endeks_haber` oldu. Teknik `sector-haber` dizinleri, `com.sectorhaber.*` servisleri, SQLite uygulama kimlikleri, Hermes profili ve Cloudflare bağları korunur. Model/oturum `gpt-6-luna / high`; X yayını kapalıdır.
+Görünür marka ENDEKS HABER, hesap referansı `@endeks_haber` oldu. Teknik `sector-haber` dizinleri, `com.sectorhaber.*` servisleri, SQLite uygulama kimlikleri, Hermes profili ve Cloudflare bağları korunur. Model/oturum `gpt-6-luna / high`; Otomatik X yayını kapalıdır.
 
 `src/brand.ts` ortak kimliği, `scripts/generate_brand.ts` profil/banner SVG ve PNG'lerini üretir. `scripts/preview_endeks.ts` altı yerleşim ve iki tema için çevrimdışı örnekleri `reports/endeks-previews/` altına yazar. `circuit`, `kap`, `market`, `finance` şablonları ve `bist`, `kap` kategorileri eski değerleri kaldırmadan eklendi. Özet/etiket/kanıt/birim denetimleri ve mevcut kart yeniden tasarlama korunur.
 
@@ -192,3 +192,12 @@ Mr/Mn ve ondalık nokta alan bağlamına göre normalleştirilir; lot/adet binli
 `node node_modules/tsx/dist/cli.mjs scripts/export_chatgpt_kit.ts` komutu `exports/ENDEKS-HABER-ChatGPT/` altında çevrimdışı kart motorunu, fontları, marka dosyalarını, JSON/SVG/PNG örneklerini ve `docs/chatgpt-kit-prompt.txt` kullanım promptunu paketler. `node render.mjs content.json kart.png` ile npm kurulmadan PNG üretir. Gizli bilgi veya canlı veri içermez. Devre kesici, tema/yerleşim seçimine bakmadan sabit lacivert/editorial şablonda doğrulanmış kod sayısına uyarlanır.
 
 Elle iletilen kurum/AKD/takas içeriklerinde Telegram’ın ilk mesaj zamanı İstanbul saatine çevrilir: 10–11 Açılışın ilk dakikaları; 11–14 Gün ortası; 14–18 Kapanışa doğru; 18–22 Gün sonu. Başlık bağlamı kaynak ölçüm saati değildir. Yeniden deneme ve seçim yanıtları ilk zamanı korur; açıkça farklı günün verisine veya saat bilgisi olmayan eski işlere bu başlıklar eklenmez.
+
+
+### Telegram üzerinden X paylaşımı
+
+Mac mini masaüstündeki `ENDEKS-X-Baglantisi.command`, OAuth 1.0 Consumer Key/Secret ve Read and Write Access Token/Secret bilgilerini gizli girişle alır. Yalnız `@endeks_haber` kimliği doğrulanırsa bilgileri çalışma dizinindeki `x-credentials.json` dosyasına (0600) kaydeder. Anahtarlar repoya ve ChatGPT/Hermes'e gönderilmez. Servis bu dosyayı algılar; yeni kartlara ve son 50 teslim edilmiş karta Paylaş ve Günlük kullanım düğmeleri ekler.
+
+Paylaş düğmesine yalnız kayıtlı Telegram sahibi özel sohbetten basabilir. Metin ve mevcut PNG birlikte gönderilir; yeniden model çağrısı yoktur. Kalıcı `x_posts` kayıtları İstanbul gününde en fazla 20 gönderim/rezervasyon sınırını atomik uygular. Başarısızlığı kesin olan gönderim kotayı serbest bırakır; sonucu belirsiz gönderim kotada kalır ve otomatik tekrarlanmaz. Gün değişiminde bekleyen eski istekler gönderilmez; yeniden açık tıklama gerekir. Aynı taslak düzenlense de iki kez yayımlanmaz. Bu sınır tweet sayısıdır; X API'nin parasal kredi sınırı değildir. Kimlik doğrulama ve medya yüklemesi ayrıca API kullanımına dahil olabilir.
+
+Bağlantıyı kapatmak için `x-credentials.json` dosyasını güvenli bir yere taşı. Otomatik yayın yoktur; eski Telegram onayları yayın başlatmaz. Her gönderim öncesi X kimliği denetlenir. Anahtar yenilemesinde aynı güvenli kurulum aracı tekrar kullanılır.

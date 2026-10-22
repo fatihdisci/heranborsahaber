@@ -1,8 +1,8 @@
 import {type CardLayout} from './card-layout';
 import {legacyTheme,type CardTheme} from './card-theme';
-import {PROFILE_DATA} from './brand';
+import {PROFILE_DATA,COLORS,MARK_PATH,BRAND_NAME} from './brand';
+export {COLORS} from './brand';
 import type {Draft} from './types';
-export const COLORS={navy:'#112333',paper:'#E4E9EC',steel:'#8095A4'};
 const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const measure=(s:string,size:number)=>[...s].reduce((n,c)=>n+(/[MW@%]/.test(c)?.94:/[ilıİ.,:;!' ]/.test(c)?.32:/[A-ZÇĞÖŞÜ0-9]/.test(c)?.69:.59),0)*size;
 export function wrap(text:string,size:number,width:number):string[] {
@@ -32,13 +32,14 @@ export function draftCard(d:Draft,sources:string[]=[],date='',demo=false,theme?:
 export function cardSvg(d:Pick<Draft,'headline'|'body'|'template'>,_sources:string[]=[],_date='',_demo=false,theme?:CardTheme,layout:CardLayout='editorial'):string {
  const headline=d.headline.replace(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u,'').trim();
  if(!headline||!d.body.trim())throw new Error('card_content_empty');
+ const label=templateLabel(d.template),special=d.template==='breaking'||d.template==='circuit';
  const dark=(theme??legacyTheme(d.template))==='navy';
  const bg=dark?COLORS.navy:COLORS.paper,fg=dark?COLORS.paper:COLORS.navy;
- if(layout!=='editorial')return alternateCard(headline,d.body,d.template==='breaking',bg,fg,layout);
+ if(layout!=='editorial')return alternateCard(headline,d.body,special,bg,fg,layout,label);
  const bodySize=36,bodyLines=wrap(d.body,bodySize,848);
  if(bodyLines.length>6)throw new Error('card_content_overflow');
  const bodyHeight=Math.max(290,bodyLines.length*53+114),panelY=1350-bodyHeight;
- const top=d.template==='breaking'?310:270,bottom=panelY-90,available=bottom-top;
+ const top=special?310:270,bottom=panelY-90,available=bottom-top;
  const preferredLines=headline.length>80?5:headline.length>64?4:3;
  let size=108,lines:string[]=[];
  for(;size>=60;size-=2){
@@ -49,19 +50,19 @@ export function cardSvg(d:Pick<Draft,'headline'|'body'|'template'>,_sources:stri
  const headlineY=top+Math.max(0,(available-lines.length*size*1.14)*.38)+size*.86;
  const text=(values:string[],x:number,y:number,fontSize:number,lineHeight:number,weight:number,color:string)=>values.map((v,i)=>`<text x="${x}" y="${Math.round(y+i*lineHeight)}" font-size="${fontSize}" font-weight="${weight}" fill="${color}">${esc(v)}</text>`).join('');
  // A geometric brand signature, never a chart or a fabricated illustration.
- const signature=`<path d="M815 30 H1060 V106 H891 V160 H1060 V290 H815 V214 H984 V160 H815 Z" fill="${COLORS.steel}" opacity=".10"/>`;
+ const signature=`<path d="${MARK_PATH}" transform="translate(740 -40) scale(.85)" fill="${COLORS.steel}" opacity=".10"/>`;
  const panelBg=dark?COLORS.paper:COLORS.navy,panelFg=dark?COLORS.navy:COLORS.paper;
  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1350" viewBox="0 0 1080 1350" role="img" aria-labelledby="card-title">
- <title id="card-title">SECTOR HABER — ${esc(headline)}</title>
+ <title id="card-title">${BRAND_NAME} — ${esc(headline)}</title>
  <rect width="1080" height="1350" fill="${bg}"/>
  ${signature}
  <image x="76" y="66" width="80" height="80" xlink:href="${PROFILE_DATA}"/>
  <g font-family="Noto Sans">
- <text x="178" y="107" fill="${fg}" font-size="38" font-weight="700" letter-spacing="1">SECTOR</text>
+ <text x="178" y="107" fill="${fg}" font-size="38" font-weight="700" letter-spacing="1">ENDEKS</text>
  <text x="180" y="139" fill="${COLORS.steel}" font-size="22" font-weight="700" letter-spacing="7">HABER</text>
  <path d="M76 192 H1004" stroke="${COLORS.steel}" stroke-width="1" opacity=".45"/>
  <path d="M76 192 H156" stroke="${fg}" stroke-width="5"/>
- ${d.template==='breaking'?`<rect x="76" y="236" width="12" height="12" fill="${COLORS.steel}"/><text x="106" y="251" fill="${fg}" font-size="22" font-weight="700" letter-spacing="3">SON DAKİKA</text>`:''}
+ ${special?`<rect x="76" y="236" width="12" height="12" fill="${COLORS.steel}"/><text x="106" y="251" fill="${fg}" font-size="22" font-weight="700" letter-spacing="3">${esc(label)}</text>`:''}
  ${text(lines,76,headlineY,size,size*1.14,700,fg)}
  <rect y="${panelY}" width="1080" height="${bodyHeight}" fill="${panelBg}"/>
  <path d="M76 ${panelY} H192" stroke="${COLORS.steel}" stroke-width="8"/>
@@ -69,6 +70,8 @@ export function cardSvg(d:Pick<Draft,'headline'|'body'|'template'>,_sources:stri
  ${text(bodyLines,112,panelY+88,bodySize,53,400,panelFg)}
  </g></svg>`;
 }
+
+export function templateLabel(template:Draft['template']):string {return ({breaking:'SON DAKİKA',circuit:'DEVRE KESİCİ',kap:'KAP BİLDİRİMİ',company:'ŞİRKET HABERLERİ',market:'BIST / PİYASA',finance:'EKONOMİ / FİNANS',economic_data:'EKONOMİK VERİ',global:'KÜRESEL PİYASALAR',info:'BİLGİ / İSTATİSTİK'} as const)[template];}
 
 type Box={x:number;y:number;width:number;height:number;size:number;min:number;weight:number;color:string;align?:'center'};
 function fitText(value:string,b:Box):string {
@@ -80,11 +83,11 @@ function fitText(value:string,b:Box):string {
  }
  throw Error('card_content_overflow');
 }
-function alternateCard(headline:string,body:string,breaking:boolean,bg:string,fg:string,layout:Exclude<CardLayout,'editorial'>):string {
+function alternateCard(headline:string,body:string,breaking:boolean,bg:string,fg:string,layout:Exclude<CardLayout,'editorial'>,label:string):string {
  const steel=COLORS.steel;
  const rect=(x:number,y:number,w:number,h:number,fill:string,stroke?:string)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"${stroke?` stroke="${stroke}" stroke-width="2"`:''}/>`;
  const line=(x:number,y:number,x2:number,y2:number,color=steel,width=2)=>`<path d="M${x} ${y} H${x2}" transform="translate(0 0)" stroke="${color}" stroke-width="${width}"/>`;
- const logo=(x:number,y:number,color:string)=>`<image x="${x}" y="${y}" width="72" height="72" xlink:href="${PROFILE_DATA}"/><text x="${x+94}" y="${y+33}" fill="${color}" font-size="32" font-weight="700" letter-spacing="1">SECTOR</text><text x="${x+96}" y="${y+61}" fill="${steel}" font-size="18" font-weight="700" letter-spacing="6">HABER</text>`;
+ const logo=(x:number,y:number,color:string)=>`<image x="${x}" y="${y}" width="72" height="72" xlink:href="${PROFILE_DATA}"/><text x="${x+94}" y="${y+33}" fill="${color}" font-size="32" font-weight="700" letter-spacing="1">ENDEKS</text><text x="${x+96}" y="${y+61}" fill="${steel}" font-size="18" font-weight="700" letter-spacing="6">HABER</text>`;
  let decoration='',brand='',head:Box,detail:Box;
  switch(layout){
   case 'frame':
@@ -115,6 +118,6 @@ function alternateCard(headline:string,body:string,breaking:boolean,bg:string,fg
  }
  const breakingY=layout==='masthead'?102:layout==='center'?286:260;
  const breakingColor=layout==='masthead'?bg:fg;
- const badge=breaking?`<text x="${layout==='rail'?126:76}" y="${breakingY}" font-size="22" font-weight="700" letter-spacing="3" fill="${breakingColor}">SON DAKİKA</text>`:'';
- return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1350" viewBox="0 0 1080 1350" role="img"><title>SECTOR HABER — ${esc(headline)}</title>${rect(0,0,1080,1350,bg)}<g font-family="Noto Sans">${decoration}${brand}${badge}${fitText(headline,head)}${fitText(body,detail)}</g></svg>`;
+ const badge=breaking?`<text x="${layout==='rail'?126:76}" y="${breakingY}" font-size="22" font-weight="700" letter-spacing="3" fill="${breakingColor}">${esc(label)}</text>`:'';
+ return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1080" height="1350" viewBox="0 0 1080 1350" role="img"><title>${BRAND_NAME} — ${esc(headline)}</title>${rect(0,0,1080,1350,bg)}<g font-family="Noto Sans">${decoration}${brand}${badge}${fitText(headline,head)}${fitText(body,detail)}</g></svg>`;
 }

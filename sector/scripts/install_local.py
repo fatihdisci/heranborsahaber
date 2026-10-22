@@ -1,15 +1,16 @@
-"""Stage and verify a release before stopping only the SECTOR news service.
+"""Stage and verify a release before stopping only the ENDEKS news service.
 
 Importing this module has no side effects. Tests use temporary roots and fake
 process commands. Secrets, databases and the main Hermes gateway are not managed
 here. Previous application/OCR/plist paths remain in the rollback directory.
 """
-import json,os,pathlib,plistlib,shutil,subprocess,time,sys,uuid,platform
+import json,os,pathlib,plistlib,shutil,subprocess,time,sys,uuid,platform,re
 
 class Installer:
-    def __init__(self,source,runtime,plist,node,run=subprocess.run):
+    def __init__(self,source,runtime,plist,node,run=subprocess.run,*,collector=False):
         self.source=pathlib.Path(source);self.runtime=pathlib.Path(runtime);self.plist=pathlib.Path(plist);self.node=node;self.run=run
-        self.domain=f'gui/{os.getuid()}';self.service=self.domain+'/com.sectorhaber.news'
+        self.collector=collector;self.label='com.sectorhaber.kap' if collector else 'com.sectorhaber.news'
+        self.domain=f'gui/{os.getuid()}';self.service=self.domain+'/'+self.label
         self.release_id=uuid.uuid4().hex
         self.release=self.runtime/'releases'/self.release_id
         self.backup=self.runtime/'backups'/('update-'+self.release_id)
@@ -22,9 +23,17 @@ class Installer:
         try:pid=int((self.runtime/'service.lock').read_text());os.kill(pid,0);return True
         except (FileNotFoundError,ValueError,ProcessLookupError):return False
     def stop(self):
+        # Older collectors had no process lock. Capture their launchd PID too.
+        snapshot=self.run(['launchctl','print',self.service],capture_output=True,text=True)
+        match=re.search(r'^\s*pid = (\d+)\s*$',snapshot.stdout or '',re.MULTILINE)
+        previous_pid=int(match[1]) if match else None
+        def previous_alive():
+            if previous_pid is None:return False
+            try:os.kill(previous_pid,0);return True
+            except ProcessLookupError:return False
         if self.loaded():self.command(['launchctl','bootout',self.service])
         deadline=time.monotonic()+650
-        while self.loaded() or self.process_alive():
+        while self.loaded() or self.process_alive() or previous_alive():
             if time.monotonic()>deadline:raise RuntimeError('sector_service_did_not_stop')
             time.sleep(.5)
     def wait_ready(self,release=None):
@@ -50,20 +59,21 @@ class Installer:
         # Install scripts are disabled, just as in CI. All checks precede bootout.
         self.command(['npm','ci','--ignore-scripts'],cwd=app)
         for check in ['check','test','build']:self.command(['npm','run',check],cwd=app)
-        pdf=self.runtime/'pdf-venv/bin/python'
+        pdf=(self.runtime.parent if self.collector else self.runtime)/'pdf-venv/bin/python'
         if not pdf.exists():
             pdf=self.release/'pdf-venv/bin/python'
             self.command([sys.executable,'-m','venv',pdf.parent.parent])
             self.command([pdf,'-m','pip','install','-r',app/'requirements-pdf.txt'])
         self.command([pdf,'-c','import pdfplumber,pypdfium2'])
         self.command([pdf,'-m','unittest','discover','-s','test','-p','test_*.py'],cwd=app)
-        ocr=self.release/'pdf-ocr'
-        self.command(['/usr/bin/xcrun','swiftc','-O',app/'scripts/pdf_ocr.swift','-o',ocr])
-        ocr.chmod(0o700)
+        if not self.collector:
+            ocr=self.release/'pdf-ocr'
+            self.command(['/usr/bin/xcrun','swiftc','-O',app/'scripts/pdf_ocr.swift','-o',ocr])
+            ocr.chmod(0o700)
         # The release stays at this path; virtualenv and node paths never move.
         self.command(['npm','prune','--omit=dev','--ignore-scripts'],cwd=app)
         logs=self.runtime/'logs'
-        payload={'Label':'com.sectorhaber.news','ProgramArguments':[self.node,str(self.runtime/'app/node_modules/tsx/dist/cli.mjs'),str(self.runtime/'app/scripts/local_service.ts')],
+        payload={'Label':self.label,'ProgramArguments':[self.node,str(self.runtime/'app/node_modules/tsx/dist/cli.mjs'),str(self.runtime/('app/scripts/kap_service.ts' if self.collector else 'app/scripts/local_service.ts'))],
           'WorkingDirectory':str(self.runtime/'app'),'RunAtLoad':True,'KeepAlive':True,'ThrottleInterval':30,'ExitTimeOut':600,
           'EnvironmentVariables':{'HOME':str(pathlib.Path.home()),'PATH':str(pathlib.Path(self.node).parent)+':/opt/homebrew/bin:/usr/bin:/bin','NODE_NO_WARNINGS':'1','SECTOR_RELEASE_ID':self.release_id},
           'StandardOutPath':str(logs/'service.log'),'StandardErrorPath':str(logs/'service.error.log')}
@@ -103,7 +113,7 @@ class Installer:
             if was_running:self.stop()
             try:
                 self.replace(self.runtime/'app',self.release/'app')
-                self.replace(self.runtime/'bin/pdf-ocr',self.release/'pdf-ocr')
+                if not self.collector:self.replace(self.runtime/'bin/pdf-ocr',self.release/'pdf-ocr')
                 if (self.release/'pdf-venv').exists():self.replace(self.runtime/'pdf-venv',self.release/'pdf-venv')
                 self.replace(self.plist,self.release/'service.plist',symlink=False)
                 (self.runtime/'logs').mkdir(exist_ok=True)
@@ -129,6 +139,6 @@ def main():
     if not node:raise RuntimeError('node_required')
     home=pathlib.Path.home()
     Installer(pathlib.Path(__file__).resolve().parents[1],home/'Library/Application Support/sector-haber',home/'Library/LaunchAgents/com.sectorhaber.news.plist',node,run=subprocess.run).install('--update' in sys.argv)
-    print('SECTOR HABER release verified and activated. Rollback files retained; main Hermes gateway unchanged.')
+    print('ENDEKS HABER release verified and activated. Rollback files retained; main Hermes gateway unchanged.')
 
 if __name__=='__main__':main()

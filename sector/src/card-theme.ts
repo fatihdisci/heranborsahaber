@@ -1,6 +1,6 @@
 import type {Env,Template} from './types';
 export type CardTheme='navy'|'paper';
-export function legacyTheme(template:Template):CardTheme{return template==='info'||template==='economic_data'?'paper':'navy';}
+export function legacyTheme(template:Template):CardTheme{return template==='info'||template==='economic_data'||template==='market'?'paper':'navy';}
 export async function savedTheme(env:Env,articleId:string):Promise<CardTheme|null>{
  const row=await env.DB.prepare('SELECT value FROM system_state WHERE key=?').bind('card_theme:'+articleId).first<{value:string}>();
  if(!row)return null;

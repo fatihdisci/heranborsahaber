@@ -37,7 +37,8 @@ export class KapStore {
  get<T>(key:string):T|null {const row=this.row<{value:string}>('SELECT value FROM settings WHERE key=?',key);return row?JSON.parse(row.value):null;}
  set(key:string,value:unknown){this.run('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',key,JSON.stringify(value));}
  prefs(){return preferences(this.get('preferences'));}
- configure(value:unknown){const p=preferences(value);this.transaction(()=>{
+ configure(value:unknown,at=Date.now()){const p=preferences(value);this.transaction(()=>{
+  if(p.circuitNotifications&&!this.prefs().circuitNotifications)this.set('circuit_since',at);
   this.set('preferences',p);if(!p.circuitNotifications)this.suppressCircuits();
   // Re-evaluate already collected, not-yet-delivered notifications. Keep source
   // records and delivered messages; a preference change must not replay history.
@@ -94,7 +95,7 @@ export class KapStore {
     this.run('INSERT INTO disclosures VALUES(?,?,?,?,?,?,?,?,?,?)',d.id,d.sourceRef,d.oid,d.relatedOid,Number(d.isCorrection),d.publishedAt,firstSeen,JSON.stringify(d),JSON.stringify(decision),Number(silent));
     this.run('INSERT INTO feed VALUES(?,?,?,?,?,?,?,?,?)',d.id,d.sourceRef,d.title,d.company,d.publishedAt,firstSeen,JSON.stringify(decision.topics),JSON.stringify(d.subjectCodes),JSON.stringify(d.relatedCodes));
     if(!silent&&decision.action!=='off'){
-     if(decision.action==='circuit')this.run('INSERT INTO circuit_pending VALUES(?,?,?)',d.id,now,JSON.stringify(d.subjectCodes));
+     if(decision.action==='circuit'){const since=this.get<number>('circuit_since')??0;if(now>=since&&Date.parse(d.publishedAt)>=since)this.run('INSERT INTO circuit_pending VALUES(?,?,?)',d.id,now,JSON.stringify(d.subjectCodes));}
      else {const key=d.sourceRef;this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,decision.action,now,decision.action==='digest'?digestAt(now,p.fundDigestTime):now,now,JSON.stringify({disclosureId:d.id,sourceRef:d.sourceRef,reason:decision.reason}));this.run('INSERT INTO queue_members VALUES(?,?)',d.id,key);}
     }
    }
@@ -108,11 +109,13 @@ export class KapStore {
   const circuitsEnabled=this.prefs().circuitNotifications;if(!circuitsEnabled)this.suppressCircuits();
   // Close by the first member's wall clock window, independent of live cursor/edge.
   for(let group=0;group<10;group++){
-   const first=this.row<{first_seen:number}>('SELECT first_seen FROM circuit_pending ORDER BY first_seen,disclosure_id LIMIT 1');if(!first||now<first.first_seen+12_000)break;
-   const members=this.rows<{disclosure_id:number;codes:string}>('SELECT disclosure_id,codes FROM circuit_pending WHERE first_seen<? ORDER BY first_seen,disclosure_id LIMIT 100',first.first_seen+12_000);
+   const first=this.row<{first_seen:number;published_at:string}>('SELECT c.first_seen,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id ORDER BY c.first_seen,c.disclosure_id LIMIT 1');if(!first||now<first.first_seen+12_000)break;
+   const since=this.get<number>('circuit_since')??0,eligible=(r:{first_seen:number;published_at:string})=>r.first_seen>=since&&Date.parse(r.published_at)>=since;
+   const groupEligible=eligible(first);
+   const members=this.rows<{disclosure_id:number;codes:string;first_seen:number;published_at:string}>('SELECT c.*,d.published_at FROM circuit_pending c JOIN disclosures d ON d.id=c.disclosure_id WHERE c.first_seen<? ORDER BY c.first_seen,c.disclosure_id',first.first_seen+12_000).filter(m=>eligible(m)===groupEligible).slice(0,100);
    const ids=members.map(m=>m.disclosure_id),codes=[...new Set(members.flatMap(m=>JSON.parse(m.codes) as string[]))].sort(),key=`kap:circuit:${ids[0]}`;
    this.run('INSERT INTO queue(id,source_ref,kind,created_at,available_at,frozen_at,payload) VALUES(?,?,?,?,?,?,?)',key,key,'circuit',first.first_seen,now,now,JSON.stringify({disclosureIds:ids,codes,windowStart:first.first_seen,windowEnd:first.first_seen+12_000}));
-   if(!circuitsEnabled)this.run("UPDATE queue SET state='suppressed' WHERE id=?",key);
+   if(!circuitsEnabled||!groupEligible)this.run("UPDATE queue SET state='suppressed' WHERE id=?",key);
    for(const id of ids){this.run('INSERT INTO queue_members VALUES(?,?)',id,key);this.run('DELETE FROM circuit_pending WHERE disclosure_id=?',id);}
   }
  });}

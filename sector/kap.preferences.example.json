@@ -2,7 +2,7 @@
   "version": 1,
   "funds": "off",
   "fundDigestTime": "19:00",
-  "priorityIndices": false,
+  "priorityIndices": true,
   "otherCompanies": "topics",
   "otherTopics": [
     "business",
@@ -10,7 +10,8 @@
     "buyback",
     "share_trade",
     "dividend",
-    "capital"
+    "capital",
+    "circuit"
   ],
   "watchlist": [],
   "excludedTitles": [
@@ -18,5 +19,5 @@
     "Fon İhraç Sözleşmesi",
     "Kredi Kullanımı"
   ],
-  "circuitNotifications": false
+  "circuitNotifications": true
 }

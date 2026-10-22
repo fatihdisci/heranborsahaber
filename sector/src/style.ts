@@ -11,13 +11,14 @@ export function editorialPolicy(documents:Document[]){
  // KAP templates contain empty "İlgili Fonlar" fields and buyback budget
  // labels. Neither makes a company's contract/buyback a fund story.
  const kap=documents.find(d=>d.source_id==='kap');
+ const circuit=documents.some(d=>d.source_id==='kap'&&/devre kesici/i.test(d.title));
  const fund=(kap?[kap]:documents).some(d=>d.source_id==='kap'
   ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
   :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
- return {required_hashtags:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(codes.length===1?['#'+codes[0]]:[])]:[],verified_equity_codes:codes,
+ return {required_hashtags:circuit?['#Borsa','#BIST',codes.length===1?'#'+codes[0]:'#DevreKesici']:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(codes.length===1?['#'+codes[0]]:[])]:[],verified_equity_codes:codes,
   publisher_names:[...new Set(documents.filter(d=>!d.official).map(d=>d.source_name))],
-  instruction:'Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Etiketler 2–3 adet; required_hashtags zorunludur. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
+  instruction:'Devre kesici gruplarında #Borsa #BIST ve tek doğrulanmış kod ya da #DevreKesici kullan. Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Etiketler 2–3 adet; required_hashtags zorunludur. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
 }
 export function hasPublisherAttribution(text:string,names:string[]):boolean {
  const t=fold(text);
@@ -51,5 +52,6 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  const tags=Array.isArray(value.hashtags)?[...new Set(value.hashtags.filter((t):t is string=>typeof t==='string').map(t=>'#'+t.trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'')))]:[];
  const valid=tags.filter(t=>/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));
  const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,3):valid;
- return repairKapShareWording({...value,headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
+ const circuit=documents.some(d=>d.official&&d.source_id==='kap'&&/devre kesici/i.test(d.title));
+ return repairKapShareWording({...value,...(circuit?{template:'circuit' as const,category:'bist' as const}:{}),headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
 }

@@ -10,7 +10,7 @@ export async function queueManual(env:Env,updateId:number,m:InputMessage):Promis
   const source=text.match(/^\/start source_(\d+)$/);
   if(source){const id=Number(source[1]),row=await env.DB.prepare('SELECT message_id FROM manual_requests WHERE message_id=?').bind(id).first();
    if(row)await telegram(env,'copyMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,from_chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(id)}));
-  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber bağlantısını, KAP bağlantısını, PDF dosyasını veya haber metnini buraya gönder. Kaynağın tamamını okuyup SECTOR HABER tarzında tweet ve görsel hazırlayacağım. Okunamayan içerikten taslak üretmem.'}));
+  }else await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Haber bağlantısını, KAP bağlantısını, PDF dosyasını veya haber metnini buraya gönder. Kaynağın tamamını okuyup ENDEKS HABER tarzında tweet ve görsel hazırlayacağım. Okunamayan içerikten taslak üretmem.'}));
   return true;
  }
  const url=text.match(/https:\/\/[^\s<>]+/)?.[0]?.replace(/[),.;]+$/,'');

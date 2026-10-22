@@ -1,6 +1,6 @@
-# SECTOR HABER
+# ENDEKS HABER
 
-Türkiye ve dünya ekonomisi, finans, şirketler, teknoloji ve önemli küresel gelişmeler için Telegram haber masası. Bu repo yalnız güncel SECTOR HABER uygulamasını içerir. Uygulama ve bağımlılıkları [`sector/`](sector/README.md) altındadır.
+Borsa İstanbul, önemli KAP açıklamaları, hisseler, finans piyasaları ve yatırımcı açısından anlamlı ekonomi haberleri için Telegram haber masası. Bu repo yalnız güncel ENDEKS HABER uygulamasını içerir. Uygulama ve bağımlılıkları [`sector/`](sector/README.md) altındadır.
 
 ## Güncel sistem
 
@@ -40,4 +40,11 @@ Build yalnız deneme derlemesidir; bu kontroller gerçek Telegram veya X gönder
 
 Canlı servisler Mac mini'de `~/Library/Application Support/sector-haber/` altında, depodan ayrı çalışma kopyalarıyla çalışır. Repo adı değişikliği veya Git pull/push canlı servisi yeniden başlatmaz. `sector/` uygulama dizini ve servis yolları korunur. MacBook üzerinden geliştirmede ikinci bir bot tüketicisi başlatılmamalıdır.
 
-Gizli bilgiler, Hermes oturumu, canlı veritabanları ve medya Git'e eklenmez. SECTOR'a ait Cloudflare yapılandırması korunur; aktif çalışma ortamı Mac mini'dir. Önceki uygulamanın kaldırılan dosyaları gerektiğinde Git geçmişinden incelenebilir.
+Gizli bilgiler, Hermes oturumu, canlı veritabanları ve medya Git'e eklenmez. ENDEKS'e ait Cloudflare yapılandırması korunur; aktif çalışma ortamı Mac mini'dir. Önceki uygulamanın kaldırılan dosyaları gerektiğinde Git geçmişinden incelenebilir.
+
+
+## ENDEKS HABER kimliği
+
+X kullanıcı adı `@endeks_haber`; dış hesap ayarları uygulama tarafından değiştirilmez. Profil: [`profile.png`](sector/assets/profile.png), banner: [`banner.png`](sector/assets/banner.png). Düzenlenebilir SVG dosyaları aynı klasördedir. [Kart galerisi](sector/reports/endeks-previews/contact-sheet.png) altı yerleşimi ve iki renk temasını gösterir. Galerideki şirket/veri örnekleri yalnız çevrimdışı tasarım verisidir; yayın kuyruğuna girmez.
+
+Haber önizlemesi → istek üzerine tweet ve görsel → düzenleme, yeniden tasarım ve kopyalama akışı korunur. X yayını daima kapalıdır. [Geçiş ve doğrulama](sector/ENDEKS.md) canlı Mac mini için uygulanacak adımları açıklar.

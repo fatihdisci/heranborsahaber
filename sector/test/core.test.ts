@@ -63,7 +63,7 @@ test('syndicated wire copies are one family; unrelated entities never merge',()=
  assert(sameEvent(draft,{...draft,headline:'Örnek Holding yeni tesis yatırımına hazırlanıyor'}));
  assert(!sameEvent(draft,{...draft,entities:['Farklı Şirket']}));
 });
-test('SECTOR topics include global tech, domestic funds and central banks',()=>{
+test('ENDEKS topics include global tech, domestic funds and central banks',()=>{
  for(const title of ['Nvidia yapay zeka yatırımı açıkladı','Fed faiz kararını açıkladı','Fon krizi ve takas kesinliği PBLK kararı'])assert(topicScore(title).score>=60);
  assert.equal(topicScore('Anlık hisse verisi AKD kurum dağılımı').score,0);
 });

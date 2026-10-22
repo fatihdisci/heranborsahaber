@@ -1,15 +1,16 @@
-export type Category = 'turkiye'|'central_banks'|'companies'|'technology'|'energy'|'global'|'data';
-export type Template = 'breaking'|'economic_data'|'company'|'global'|'info';
+export type Category = 'turkiye'|'central_banks'|'companies'|'technology'|'energy'|'global'|'data'|'bist'|'kap';
+export type Template = 'breaking'|'economic_data'|'company'|'global'|'info'|'circuit'|'kap'|'market'|'finance';
 export type Status = 'pending'|'deferred'|'rejected'|'approved'|'needs_review'|'published';
 export interface Source {
   id:string; name:string; url:string; family:string; language:string; official:boolean;
   allowed_hosts:string[]; poll_seconds:number; fresh_hours:number; enabled:boolean;
+  editorial_priority?:number; minimum_score?:number;
   checked_at:string; terms_url:string; rights_note:string; review_mode:string;
   article_mode?:'html'|'feed_only';
   method?:'rss'|'bridge_pdf'|'reference';
 }
 export interface Item {title:string;url:string;summary:string;published_at:string|null;}
-export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];language?:string;images?:string[];coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
+export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];index_tier?:30|100;language?:string;images?:string[];coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface Draft {

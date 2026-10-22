@@ -1,4 +1,6 @@
 import {retryDraftDelivery,deliveryTarget} from './delivery-recovery';
+import {topicScore} from './editorial';
+import type {Source} from './types';
 import {telegram,TelegramError} from './telegram';
 import {titleSimilarity} from './dedupe';
 import type {Env} from './types';
@@ -42,8 +44,9 @@ export async function announceNews(env:Env):Promise<void> {
  await env.DB.prepare("UPDATE news_cards SET state='uncertain' WHERE state='sending' AND next_try<?").bind(time).run();
  const cutoff=(await env.DB.prepare("SELECT value FROM system_state WHERE key='news_preview_since'").first<{value:string}>())?.value??new Date(Date.now()-300_000).toISOString();
  // Already displayed stories and uncertain sends are never replayed after restart.
- const rows=await env.DB.prepare(`SELECT a.*,s.config,c.id AS card_id,c.state AS card_state FROM articles a JOIN sources s ON s.id=a.source_id LEFT JOIN news_cards c ON c.article_id=a.id WHERE s.enabled=1 AND a.status='queued' AND a.published_at>=? AND (c.id IS NULL OR (c.state='waiting' AND c.next_try<=?)) ORDER BY a.published_at DESC LIMIT 3`).bind(cutoff,time).all<{id:string;title:string;summary:string;url:string;published_at:string;config:string;card_id:string|null}>();
+ const rows=await env.DB.prepare(`SELECT a.*,s.config,c.id AS card_id,c.state AS card_state FROM articles a JOIN sources s ON s.id=a.source_id LEFT JOIN news_cards c ON c.article_id=a.id WHERE s.enabled=1 AND a.status='queued' AND a.published_at>=? AND (c.id IS NULL OR (c.state='waiting' AND c.next_try<=?)) ORDER BY (julianday(a.published_at)*1440+COALESCE(json_extract(s.config,'$.editorial_priority'),50)/10) DESC LIMIT 3`).bind(cutoff,time).all<{id:string;title:string;summary:string;url:string;published_at:string;config:string;card_id:string|null}>();
  for(const a of rows.results??[]){
+  const source=JSON.parse(a.config) as Source;if(topicScore(a.title,a.summary,source.official).score<(source.minimum_score??60))continue;
   const id=a.card_id??crypto.randomUUID();
   if(!a.card_id){
    const existing=await env.DB.prepare("SELECT c.id,a.title FROM news_cards c JOIN articles a ON a.id=c.article_id WHERE c.state!='duplicate' AND ABS(julianday(a.published_at)-julianday(?))<0.25").bind(a.published_at).all<{id:string;title:string}>();

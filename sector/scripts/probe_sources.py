@@ -3,7 +3,7 @@ import concurrent.futures, datetime as dt, email.utils, json, pathlib, re
 import urllib.request, urllib.error, urllib.parse, xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-UA = 'SectorHaber-SourceCheck/1.0 (RSS validation; private editorial review)'
+UA = 'EndeksHaber-SourceCheck/1.0 (RSS validation; private editorial review)'
 
 def get(url):
     req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'application/rss+xml,application/atom+xml,text/html;q=0.8'})

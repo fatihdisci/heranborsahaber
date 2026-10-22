@@ -80,7 +80,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
 export default {
  async fetch(request:Request,env:Env,ctx:ExecutionContext):Promise<Response> {
   const url=new URL(request.url);
-  if(url.pathname==='/health')return json({service:'SECTOR HABER',mode:env.MODE,x_publishing:false,model:'Hermes / '+env.AI_MODEL});
+  if(url.pathname==='/health')return json({service:'ENDEKS HABER',mode:env.MODE,x_publishing:false,model:'Hermes / '+env.AI_MODEL});
   if(url.pathname==='/telegram/webhook'&&request.method==='POST'){try{return await webhook(request,env);}catch(e){const failure=e instanceof TelegramError?e.failure:e instanceof SyntaxError||['invalid_request','request_too_large','empty_request','manual_input_limit'].includes(errorCode(e))?'permanent':'retryable';return json({error:errorCode(e),failure,retry_after:e instanceof TelegramError?e.retryAfter:30},failure==='retryable'?503:400);}}
   const bridge=url.pathname.startsWith('/api/bridge/');
   const key=bridge?env.BRIDGE_TOKEN:env.ADMIN_TOKEN;

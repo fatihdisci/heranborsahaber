@@ -27,6 +27,6 @@ test('revision replaces the same photo message without sending another post',asy
 });
 test('artwork contains no demo stamp, date, source list, handle, or extra category captions',()=>{
  const svg=cardSvg({headline:'Örnek Holding yeni tesis planlıyor',body:'İzin süreci devam ediyor.',template:'company'},['Gizli kaynak listesi'],'21.10.2026',true);
- assert(!/DENEME|KAYNAK|Gizli kaynak|21.10.2026|@sectorhaber|ŞİRKET HABERLERİ/.test(svg));assert(svg.includes('SECTOR HABER'));
+ assert(!/DENEME|KAYNAK|Gizli kaynak|21.10.2026|@endeks_haber|ŞİRKET HABERLERİ/.test(svg));assert(svg.includes('ENDEKS HABER'));
  assert.equal(sourceKeyboard([...docs,{...docs[0],url:'https://example.com/secondary'}]).length,1);
 });

@@ -23,7 +23,7 @@ export async function seed(env:Env):Promise<void> {
 export async function poll(env:Env):Promise<void> {
  const time=now();
  const cutoff=(await env.DB.prepare("SELECT value FROM system_state WHERE key='live_since'").first<{value:string}>())?.value;
- const due=await env.DB.prepare('SELECT id,config,etag,modified,failures,last_ok FROM sources WHERE enabled=1 AND next_poll<=? AND lease_until<? ORDER BY next_poll,id LIMIT 18').bind(time,time).all<SourceRow>();
+ const due=await env.DB.prepare(`SELECT id,config,etag,modified,failures,last_ok FROM sources WHERE enabled=1 AND next_poll<=? AND lease_until<? ORDER BY COALESCE(json_extract(config,'$.editorial_priority'),50) DESC,next_poll,id LIMIT 18`).bind(time,time).all<SourceRow>();
  const rows=due.results??[];
  // At most three slow publishers occupy network slots simultaneously.
  for(let index=0;index<rows.length;index+=3)await Promise.all(rows.slice(index,index+3).map(async row=>{
@@ -37,7 +37,7 @@ export async function poll(env:Env):Promise<void> {
    const items=parseFeed(feed.text,source),dated=items.filter(i=>i.published_at&&Date.parse(i.published_at)<=Date.now()+5*60_000);
    const newest=Math.max(0,...dated.map(i=>Date.parse(i.published_at!)));
    if(!newest||Date.now()-newest>source.fresh_hours*3600_000)throw new Error('stale_or_undated_feed');
-   const selected=dated.filter(i=>Date.now()-Date.parse(i.published_at!)<24*3600_000&&(!cutoff||i.published_at!>=cutoff)&&topicScore(i.title,i.summary,source.official).score>=60);
+   const selected=dated.filter(i=>Date.now()-Date.parse(i.published_at!)<24*3600_000&&(!cutoff||i.published_at!>=cutoff)&&topicScore(i.title,i.summary,source.official).score>=(source.minimum_score??60));
    const inserts=await Promise.all(selected.slice(0,25).map(async i=>env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').bind(await sha256(i.url),source.id,i.url,i.title,i.summary,i.published_at!,time)));
    if(inserts.length)await env.DB.batch(inserts);
    await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0,etag=?,modified=?,failures=0,last_ok=?,last_error=NULL,last_count=? WHERE id=?').bind(time+source.poll_seconds,feed.headers.get('etag'),feed.headers.get('last-modified'),time,items.length,row.id).run();

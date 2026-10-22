@@ -82,7 +82,7 @@ test('KAP lease fences survive restart and reject stale writers, other applicati
  }finally{close();}
 });
 test('KAP circuit groups freeze after 12s without edge, max100 and late members start another group',()=>{
- const {store,close}=setup();try{store.configure(pref({circuitNotifications:true}));const l=store.claim('live',NOW)!;for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
+ const {store,close}=setup();try{store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;for(let id=101;id<=201;id++)store.save(item(id,{title:'Devre Kesici',relatedStocks:'AKBNK,THYAO',stockCode:null}),l,NOW,true);
  const g=store.claim('groups',NOW)!;store.freeze(g,NOW+11_999);assert.equal(store.health().queue,0);store.freeze(g,NOW+12_000);const q=store.rows<{payload:string}>('SELECT payload FROM queue');assert.equal(q.length,2);assert.equal(JSON.parse(q[0].payload).disclosureIds.length,100);assert.deepEqual(JSON.parse(q[0].payload).codes,['AKBNK','THYAO']);
  store.save(item(202,{title:'Devre Kesici',stockCode:null,relatedStocks:'MEPET'}),l,NOW+13_000,true);store.freeze(g,NOW+24_999);assert.equal(store.health().queue,2);store.freeze(g,NOW+25_000);assert.equal(store.health().queue,3);
  }finally{close();}
@@ -140,7 +140,7 @@ test('KAP circuit opt-out overrides watchlists, selected topics, index priority 
 });
 test('KAP disabling circuits suppresses queued and not-yet-frozen groups without deleting source history',()=>{
  const {store,close}=setup();try{
-  store.configure(pref({circuitNotifications:true}));const l=store.claim('live',NOW)!;
+  store.configure(pref({circuitNotifications:true}),NOW);const l=store.claim('live',NOW)!;
   store.save(item(101,{title:'Devre Kesici'}),l,NOW,true);const g=store.claim('groups',NOW)!;store.freeze(g,NOW+12_000);
   store.save(item(102,{title:'Devre Kesici'}),l,NOW+13_000,true);store.save(item(103,{title:'Yeni İş İlişkisi'}),l,NOW+13_000,true);
   store.configure(pref());store.freeze(g,NOW+25_000);
@@ -164,4 +164,21 @@ test('focused KAP subjects exclude governance and ratings while retaining deals,
  for(const summary of ['SIAL Paris Fuarı Kapsamında Alınan Yeni Siparişler','Şirket Pay Alım Bildirimi','9A26 Finansalları Hk.','Yeni İş Anlaşması','Yeni Sözleşme İmzalanması'])assert.equal(decide(item(101,{title:'Özel Durum Açıklaması (Genel)',summary}),focused,null).action,'instant',summary);
  for(const title of ['Payların Geri Alınmasına İlişkin Bildirim','Payların Alınıp Satılmasına İlişkin Bildirim','Pay Alım Satım Bildirimi','Finansal Rapor','Faaliyet Raporu (Konsolide Olmayan)','Yönetim Kurulu Faaliyet Raporu','Bilanço','Yeni İş İlişkisi','Yeni İşler','İhale Sonucu','Sözleşme İmzalanması'])assert.equal(decide(item(101,{title,summary:'Yönetim Kurulu karar tarihi 01.10.2026'}),focused,null).action,'instant',title);
  assert.equal(decide(item(101,{title:'Borsa Dışı Repo Sözleşmesi'}),focused,null).action,'off');
+});
+
+test('enabling circuits never replays late-discovered old disclosures or suppressed groups',()=>{
+ const {store,close}=setup();try{
+  store.configure(pref({circuitNotifications:true}),NOW+1000);const l=store.claim('live',NOW)!;
+  store.save(item(101,{title:'Devre Kesici',publishDate:'2026.10.21 12:00:00'}),l,NOW+2000,true);
+  assert.equal(store.health().circuitPending,0);
+  store.configure(pref(),NOW+3000);store.configure(pref({circuitNotifications:true}),NOW+4000);
+  assert.equal(store.rows("SELECT * FROM queue WHERE kind='circuit' AND state='ready'").length,0);
+ }finally{close();}
+});
+
+test('index priority does not elevate routine forms over selected material topics',()=>{
+ const p=pref({priorityIndices:true,otherCompanies:'topics',otherTopics:['business','financial','buyback','share_trade','dividend','capital','circuit']});
+ const indices={bist30:['TEST'],bist100:['TEST'],checkedAt:new Date(NOW).toISOString(),source:'verified fixture'};
+ for(const title of ['Finansal Takvim','Sorumluluk Beyanı (Konsolide Olmayan)','Genel Kurul Bildirimi'])assert.equal(decide(item(101,{title}),p,indices).action,'off');
+ for(const title of ['Yeni İş İlişkisi','Kar Payı Dağıtımı','Sermaye Artırımı','Finansal Rapor'])assert.equal(decide(item(101,{title}),p,indices).action,'instant');
 });

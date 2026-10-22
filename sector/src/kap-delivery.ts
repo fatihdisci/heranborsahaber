@@ -11,17 +11,19 @@ export class KapDelivery {
  constructor(private store:KapStore,private env:Env,private load:(id:number)=>Promise<Document[]>,private clock=Date.now){
   store.db.exec(`CREATE TABLE IF NOT EXISTS kap_model_jobs(queue_id TEXT PRIMARY KEY REFERENCES queue(id),job_id TEXT,attempts INTEGER NOT NULL DEFAULT 0,lease_until INTEGER NOT NULL DEFAULT 0,last_error TEXT,message_id INTEGER);`);
  }
- private allowed(d:Disclosure){return decide(d,this.store.prefs(),this.store.get<Indices>('indices')).action==='instant';}
+ private allowed(d:Disclosure,kind='instant'){return decide(d,this.store.prefs(),this.store.get<Indices>('indices')).action===(kind==='circuit'?'circuit':'instant');}
+ private members(id:string){return this.store.rows<{metadata:string}>('SELECT d.metadata FROM queue_members m JOIN disclosures d ON d.id=m.disclosure_id WHERE m.queue_id=? ORDER BY d.id',id).map(r=>JSON.parse(r.metadata) as Disclosure);}
+ private queueAllowed(id:string,kind:string){const members=this.members(id);return members.length>0&&members.every(d=>this.allowed(d,kind));}
  // Called synchronously immediately before the sender invokes Telegram. A
  // preference change during AI/rendering cannot rely on an old enqueue decision.
  deliveryDecision(documents:Document[]):'allow'|'suppress'|'hold'{
   const id=documents[0]?.source_id==='kap'?documents[0].url.match(/^https:\/\/www\.kap\.org\.tr\/tr\/Bildirim\/(\d+)$/)?.[1]:undefined;
   if(!id)return 'hold';
   return this.store.transaction(()=>{
-   const row=this.store.row<{id:string;state:string;metadata:string}>("SELECT q.id,q.state,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE d.id=?",Number(id));
+   const row=this.store.row<{id:string;state:string;kind:string;metadata:string}>("SELECT q.id,q.state,q.kind,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE d.id=?",Number(id));
    if(!row)return 'hold';
    if(row.state==='suppressed')return 'suppress';
-   if(!this.allowed(JSON.parse(row.metadata))){this.store.run("UPDATE queue SET state='suppressed' WHERE id=? AND sent_at IS NULL",row.id);return 'suppress';}
+   if(!this.queueAllowed(row.id,row.kind)){this.store.run("UPDATE queue SET state='suppressed' WHERE id=? AND sent_at IS NULL",row.id);return 'suppress';}
    return 'allow';
   });
  }
@@ -42,9 +44,9 @@ export class KapDelivery {
   const row=s.transaction(()=>{
    s.run("UPDATE queue SET state='ready' WHERE state='preparing' AND id IN (SELECT queue_id FROM kap_model_jobs WHERE lease_until<?)",now);
    for(let i=0;i<100;i++){
-    const r=s.row<{id:string;metadata:string}>(`SELECT q.id,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE q.kind='instant' AND q.state='ready' AND q.available_at<=? AND d.silent=0 ORDER BY d.published_at DESC,q.id LIMIT 1`,now);
+    const r=s.row<{id:string;metadata:string;kind:string}>(`SELECT q.id,q.kind,d.metadata FROM queue q JOIN queue_members m ON m.queue_id=q.id JOIN disclosures d ON d.id=m.disclosure_id WHERE q.kind IN ('instant','circuit') AND q.state='ready' AND q.available_at<=? AND d.silent=0 ORDER BY (julianday(d.published_at)*1440+CASE json_extract(d.decision,'$.indexTier') WHEN 30 THEN 8 WHEN 100 THEN 4 ELSE 0 END) DESC,q.id LIMIT 1`,now);
     if(!r)return null;const d=JSON.parse(r.metadata) as Disclosure;
-    if(!this.allowed(d)){s.run("UPDATE queue SET state='suppressed' WHERE id=?",r.id);continue;}
+    if(!this.queueAllowed(r.id,r.kind)){s.run("UPDATE queue SET state='suppressed' WHERE id=?",r.id);continue;}
     s.run("UPDATE queue SET state='preparing' WHERE id=?",r.id);
     s.run('INSERT INTO kap_model_jobs(queue_id,attempts,lease_until) VALUES(?,1,?) ON CONFLICT(queue_id) DO UPDATE SET attempts=attempts+1,lease_until=excluded.lease_until',r.id,now+300_000);
     return {...r,disclosure:d};
@@ -53,15 +55,29 @@ export class KapDelivery {
   if(!row){
    // Fresh notifications above always win. Retry only source-complete model
    // failures, never a completed draft or an ambiguous Telegram delivery.
-   for(const r of s.rows<{id:string;metadata:string;job_id:string}>("SELECT q.id,d.metadata,m.job_id FROM queue q JOIN queue_members qm ON qm.queue_id=q.id JOIN disclosures d ON d.id=qm.disclosure_id JOIN kap_model_jobs m ON m.queue_id=q.id WHERE q.state='needs_review' AND d.silent=0 ORDER BY d.published_at DESC")){
-    if(!this.allowed(JSON.parse(r.metadata))){s.run("UPDATE queue SET state='suppressed' WHERE id=?",r.id);continue;}
+   for(const r of s.rows<{id:string;metadata:string;job_id:string;kind:string}>("SELECT q.id,q.kind,d.metadata,m.job_id FROM queue q JOIN queue_members qm ON qm.queue_id=q.id JOIN disclosures d ON d.id=qm.disclosure_id JOIN kap_model_jobs m ON m.queue_id=q.id WHERE q.state='needs_review' AND d.silent=0 ORDER BY d.published_at DESC")){
+    if(!this.queueAllowed(r.id,r.kind)){s.run("UPDATE queue SET state='suppressed' WHERE id=?",r.id);continue;}
     if(await retryKapModel(this.env,r.job_id,Math.floor(now/1000))){s.run("UPDATE queue SET state='model_queued' WHERE id=?",r.id);return {state:'model_retry_queued',id:r.id};}
    }
    return {state:s.row<{n:number}>("SELECT COUNT(*) n FROM queue WHERE state='needs_review'")!.n?'needs_review':'idle'};
   }
   try{
-   const docs=await this.load(row.disclosure.id);
-   if(!this.allowed(row.disclosure)||s.row<{state:string}>('SELECT state FROM queue WHERE id=?',row.id)?.state==='suppressed'){s.run("UPDATE queue SET state='suppressed' WHERE id=?",row.id);return {state:'suppressed',id:row.id};}
+   // A frozen circuit group is one event. Read every member from the official
+   // full-text reader; metadata is never substituted for missing evidence.
+   const members=this.members(row.id),docs:Document[]=[];
+   const indices=s.get<Indices>('indices');
+   let size=0;const deadline=Date.now()+180_000;
+   for(let start=0;start<members.length;start+=3){
+    const remaining=deadline-Date.now();if(remaining<=0)throw Error('kap_group_timeout');
+    let timer:ReturnType<typeof setTimeout>|undefined;
+    const batch=await Promise.race([Promise.all(members.slice(start,start+3).map(async d=>{
+     const loaded=await this.load(d.id),tier=d.subjectCodes.some(c=>indices?.bist30.includes(c))?30:d.subjectCodes.some(c=>indices?.bist100.includes(c))?100:undefined;
+     return loaded.map(doc=>({...doc,index_tier:tier as 30|100|undefined}));
+    })),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error('kap_group_timeout')),remaining);})]).finally(()=>clearTimeout(timer));
+    for(const loaded of batch){size+=JSON.stringify(loaded).length;if(size>3_000_000)throw Error('kap_evidence_limit');docs.push(...loaded);}
+   }
+   if(!this.queueAllowed(row.id,row.kind)||s.row<{state:string}>('SELECT state FROM queue WHERE id=?',row.id)?.state==='suppressed'){s.run("UPDATE queue SET state='suppressed' WHERE id=?",row.id);return {state:'suppressed',id:row.id};}
+   if(row.kind==='circuit'&&members.some(d=>!docs.some(doc=>doc.official&&doc.source_id==='kap'&&doc.url===d.url)))throw Error('kap_group_evidence_missing');
    if(!await quota(this.env,'kap-ai-budget')){s.run("UPDATE queue SET state='ready',available_at=? WHERE id=?",now+1800_000,row.id);return {state:'budget_wait',id:row.id};}
    const jobId=await enqueueEvidence(this.env,docs,'kap');
    s.transaction(()=>{s.run('UPDATE kap_model_jobs SET job_id=?,lease_until=0,last_error=NULL WHERE queue_id=?',jobId,row.id);s.run("UPDATE queue SET state='model_queued' WHERE id=? AND state='preparing'",row.id);});

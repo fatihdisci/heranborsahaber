@@ -10,7 +10,7 @@ export async function readPublic(url:string,hosts:string[],headers:Record<string
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),18_000);
   try {
     for(let i=0;i<4;i++) {
-      const response=await fetcher(current,{headers:{'User-Agent':'SectorHaber/1.0 (editorial RSS reader)',Accept:'application/rss+xml,application/atom+xml,text/html;q=0.8',...headers},redirect:'manual',signal:controller.signal});
+      const response=await fetcher(current,{headers:{'User-Agent':'EndeksHaber/1.0 (editorial RSS reader)',Accept:'application/rss+xml,application/atom+xml,text/html;q=0.8',...headers},redirect:'manual',signal:controller.signal});
       if([301,302,303,307,308].includes(response.status)) {
         await response.body?.cancel();
         const location=response.headers.get('location');if(!location)throw new Error('redirect_without_location');

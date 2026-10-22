@@ -1,4 +1,4 @@
-# SECTOR HABER — ayrı KAP toplama hattı
+# ENDEKS HABER — ayrı KAP toplama hattı
 
 ## Doğrulanan sözleşme (21 Ekim 2026)
 
@@ -54,11 +54,17 @@ Tam HTML metni ve satır/sütun birleşimleri açılmış tablolar okunur. Her r
 
 Bir bildirim tek görsel, tweet ve Kaynağı aç düğmesi olarak gönderilir. Her KAP numarası ayrı olaydır; başlık benzerliği farklı bildirimleri birleştirmez. Model bütçesi haberlerden ayrıdır; abonelik kotası ortaktır. Fon özeti tüketicisi yoktur; fonlar ve devre kesiciler kapalı kalır. `deliveryEnabled` son 60 saniyedeki tüketici kalp atışını gösterir.
 
-## SECTOR yayın odağı
+## ENDEKS yayın odağı
 
-Canlı tercih: endeks üyeliği tek başına gönderim sebebi değildir. Yeni iş, sipariş, ihale, sözleşme/anlaşma; finansal sonuç, bilanço/faaliyet raporu; geri alım ve pay alım/satımı seçili konulardır. Temettü ve sermaye işlemleri korunur. Devre kesici ve fon gönderimi kapalı kalır. `kap.preferences.example.json` bu seçimi içerir; genel kütüphane varsayılanları eski tercih sözleşmesini korur.
+Önemli iş/sipariş/ihale/sözleşme; finansal sonuç, bilanço/faaliyet raporu; geri alım, pay işlemleri, temettü ve sermaye işlemleri korunur. `kap.preferences.example.json` bu konulara devre kesiciyi ve doğrulanmış BIST 30/100 önceliğini ekler. Diğer şirketler dışlanmaz. Genel kütüphane varsayılanı eski tercih sözleşmesini korur; mevcut tercihler kurulumla kendiliğinden değişmez.
 
-Genel özel durum başlıklarında konu özette aranır. Yönetim kurulu/personel değişiklikleri, yönetim bilgi formları ve kredi derecelendirmeleri susturulur. İşlem bildirimlerinin tam metnindeki yönetim kurulu karar tarihi engelleme sebebi değildir. Pay işlemlerinin öncelikli kuralı korunur; BIST 50 sınırı yoktur. Tercih değişikliği bekleyen hazır kuyruğu da yeniden değerlendirir; kaynak kayıtları silinmez, gönderilmiş bildirimler yeniden açılmaz.
+Devre kesiciler 12 saniyelik sabitlenmiş gruplarla ayrı `circuit` içeriği olur. Grubun her üyesinin resmî tam metni okunur; tek AI işi ve tek görselli Telegram kartı hazırlanır. Eksik kaynak metadata ile tamamlanmaz. Hisse/durum/yeniden başlama saati kaynaktan doğrulanır; açıklanmayan saat veya sebep üretilmez. Grubun ilk resmî bildirimi aynı mesajdaki Kaynağı aç düğmesindedir; bütün üyeler kanıt belgelerinde saklanır.
+
+Devre kesici tercihi kapalıdan açığa geçerken `circuit_since` etkinleştirme zamanı kaydedilir. Bu zamandan eski yayınlar ve eski susturulmuş kuyruklar yeniden açılmaz. KAP'ın saniye çözünürlüğündeki yayın saati etkinleştirmeden önce kalıyorsa bildirim sessiz tutulur. Kapatma, AI/teslimat bekleyen grupları da susturur. Gönderimden hemen önce bütün üyeler yeniden tercihe göre denetlenir.
+
+Doğrulanmış günlük BIST 30/100 listesi hem kaynak belgelerindeki `index_tier` alanını hem iş sıralamasını besler. Endeks önceliği zamanla sınırlı bir avantajdır (8/4 dakika); diğer şirketlerin önemli bildirimleri kuyrukta kalıcı olarak geriye atılmaz. Yönetim/personel formları ve derecelendirmeler susturulur; pay işlemlerinin BIST 50 kısıtlaması yoktur.
+
+Güncelleme: `python3 scripts/install_kap.py --update`. Haber servisiyle aynı doğrulanmış staging, başlangıç kapısı ve otomatik geri dönüş kullanılır. Yalnız `com.sectorhaber.kap` yönetilir; bot/Hermes erişim bilgileri yüklenmez ve tercihler değiştirilmez. Ayrıntılı kontrollü etkinleştirme: [ENDEKS.md](ENDEKS.md).
 
 ## Hızlı doğrulama ve sınırlı yeniden inceleme
 

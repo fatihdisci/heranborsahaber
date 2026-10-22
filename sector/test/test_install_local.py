@@ -53,7 +53,7 @@ class StagedInstallerTests(unittest.TestCase):
         plist=root/'service.plist';plist.write_text('old plist')
         return FakeInstaller(source,runtime,plist,'/fake/node',failure=failure)
     def test_prepare_failures_leave_old_files_and_service_running(self):
-        for failure in ('npm','build','ocr'):
+        for failure in getattr(self,'prepare_failures',('npm','build','ocr')):
             with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
                 i=self.setup_installer(Path(tmp),failure)
                 with self.assertRaises(RuntimeError):i.install(update=True)
@@ -86,3 +86,20 @@ class StagedInstallerTests(unittest.TestCase):
             with patch.object(i,'stop',side_effect=RuntimeError('still running')):
                 with self.assertRaises(RuntimeError):i.install(update=True)
             self.assertEqual((i.runtime/'app/old.txt').read_text(),'old');self.assertFalse((i.runtime/'app').is_symlink())
+
+class CollectorInstallerTests(StagedInstallerTests):
+    prepare_failures=('npm','build')
+    def setup_installer(self,root,failure=None):
+        installer=super().setup_installer(root,failure)
+        installer.collector=True;installer.label='com.sectorhaber.kap';installer.service=installer.domain+'/'+installer.label
+        pdf=root/'pdf-venv/bin/python';pdf.parent.mkdir(parents=True,exist_ok=True);pdf.touch()
+        return installer
+    def test_collector_uses_its_own_label_entrypoint_and_preserves_news_ocr(self):
+        import plistlib
+        with tempfile.TemporaryDirectory() as tmp:
+            i=self.setup_installer(Path(tmp));i.install(update=True)
+            plist=plistlib.loads(i.plist.read_bytes())
+            self.assertEqual(plist['Label'],'com.sectorhaber.kap')
+            self.assertTrue(plist['ProgramArguments'][-1].endswith('/app/scripts/kap_service.ts'))
+            self.assertEqual((i.runtime/'bin/pdf-ocr').read_text(),'old OCR')
+            self.assertFalse(any(event.startswith('/usr/bin/xcrun') for event in i.events))

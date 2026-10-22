@@ -1,12 +1,12 @@
-# SECTOR HABER — Telegram haber masası
+# ENDEKS HABER — Telegram haber masası
 
 Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalışır.
-`@habernewssbot`, sahibinin açık izniyle SECTOR HABER editör botu olarak yeniden kullanılır.
+`@habernewssbot`, sahibinin açık izniyle ENDEKS HABER editör botu olarak yeniden kullanılır.
 `@Minihermesimbot` gateway’i, ana Hermes ayarları ve eski X hesabı değiştirilmez.
 
 ## Kod ve kapsam
 
-- Aktif SECTOR HABER kodu `fatihdisci/sector` reposunun `main` dalında, `sector/` dizinindedir. Repo yalnız bu sistemi içerir; önceki uygulamanın dosyaları Git geçmişinde kalır.
+- Aktif ENDEKS HABER kodu `fatihdisci/sector` reposunun `main` dalında, `sector/` dizinindedir. Repo yalnız bu sistemi içerir; önceki uygulamanın dosyaları Git geçmişinde kalır.
 - `src/reused/` içindeki ana metin, tablo ve metin yardımcıları aktif okuyucular tarafından kullanılır. Bu bağımsız dosyalar korunur; önceki uygulama veya başka repo çalışma anında gerekmez.
 - Hisse fiyatı, AKD, Terane, kurum dağılımı, eski OAuth/MKK anahtarları ve eski X yayın hedefi taşınmadı.
 - Yeni kaynak kaydı, Türkçe editör promptu, kaynak denetimi, marka kartları, olay gruplama ve Telegram içerik kuyruğu eklendi.
@@ -72,7 +72,7 @@ npm run build
 python3 scripts/install_local.py
 ```
 
-Güncelleme: `python3 scripts/install_local.py --update`. Yalnız SECTOR servisi durdurulur.
+Güncelleme: `python3 scripts/install_local.py --update`. Yalnız ENDEKS servisi durdurulur.
 Durdurma: `launchctl bootout gui/$(id -u)/com.sectorhaber.news`.
 Ana Hermes gateway’i ve başka proje servisleri bu komutlara dahil değildir.
 
@@ -137,12 +137,21 @@ Fotoğraflı taslaklarda “Tweet’i kopyala” bulunur. Telegram’ın CopyTex
 - `src/kap/store.ts`, `src/kap-delivery.ts`, `src/pipeline.ts`: KAP tercihleri hazırlama sırasında ve gerçek gönderimden hemen önce yeniden okunur. Kapatılan bekleyen kayıtlar saklanır, gönderilmez ve kategori tekrar açıldığında geçmişe dönük oynatılmaz. Mevcut pay işlemi önceliği değişmez. Tercih deposuna erişilemiyorsa gönderim bekler.
 - `migrations/0003_recovery.sql`: Yalnız yeni gelen-kuyruk/işlem-makbuzu tabloları eklenir. Yerel başlangıç şeması aynı ekleri içerir; veri silen migration yoktur.
 
-`scripts/install_local.py --update`, temiz bir `releases/<kimlik>/app` dizininde bağımlılıkları, TypeScript/Python testlerini, dry-run build'i ve macOS OCR derlemesini tamamlar. Ardından yalnız SECTOR servisi durdurulur ve sürüm değiştirilir. Yeni süreç hazır olduğunu bildirene kadar haber/Telegram/model döngülerini başlatmaz (`scripts/startup_gate.ts`). Başlangıç doğrulanınca etkinleştirilir. Başlatma başarısızsa önceki uygulama, OCR ve servis dosyası geri yüklenir. Normal kurulum mevcut kurulumu değiştirmeyi reddeder.
+`scripts/install_local.py --update`, temiz bir `releases/<kimlik>/app` dizininde bağımlılıkları, TypeScript/Python testlerini, dry-run build'i ve macOS OCR derlemesini tamamlar. Ardından yalnız ENDEKS servisi durdurulur ve sürüm değiştirilir. Yeni süreç hazır olduğunu bildirene kadar haber/Telegram/model döngülerini başlatmaz (`scripts/startup_gate.ts`). Başlangıç doğrulanınca etkinleştirilir. Başlatma başarısızsa önceki uygulama, OCR ve servis dosyası geri yüklenir. Normal kurulum mevcut kurulumu değiştirmeyi reddeder.
 
-Geri dönüş kopyaları `backups/update-<kimlik>/rollback.json` içinde listelenir. Başarılı geçişten sonra manuel geri dönüş gerekirse önce yalnız SECTOR servisi durdurulmalı; bekleyen `telegram_updates` kayıtları uzlaştırılmalı, ardından listedeki önceki dosyalar ters sırayla geri alınmalıdır. Offset geri sarılmamalı ve veritabanı eski kopyayla değiştirilmemelidir. Önceki sürüm yeni gelen-kuyruk tablosunu tüketmediğinden bekleyen istekler göz ardı edilmemelidir. Makbuzu olmayan dış teslimat için exactly-once garantisi yoktur.
+Geri dönüş kopyaları `backups/update-<kimlik>/rollback.json` içinde listelenir. Başarılı geçişten sonra manuel geri dönüş gerekirse önce yalnız ENDEKS servisi durdurulmalı; bekleyen `telegram_updates` kayıtları uzlaştırılmalı, ardından listedeki önceki dosyalar ters sırayla geri alınmalıdır. Offset geri sarılmamalı ve veritabanı eski kopyayla değiştirilmemelidir. Önceki sürüm yeni gelen-kuyruk tablosunu tüketmediğinden bekleyen istekler göz ardı edilmemelidir. Makbuzu olmayan dış teslimat için exactly-once garantisi yoktur.
 
 ## CI ve izole doğrulama
 
 `.github/workflows/checks.yml`, Node 22 ile `npm ci --ignore-scripts`, `npm run check`, `npm test`, `npm run build` ve Python testlerini çalıştırır. Canlı sır, servis kurulumu, gerçek Telegram gönderimi veya deploy adımı bulunmaz. GitHub Actions sürümleri commit kimliğiyle sabittir; izin yalnız repo okumadır.
 
 `test/telegram-recovery.test.ts`, `test/recovery.test.ts`, `test/kap-delivery.test.ts`, `test/startup-gate.test.ts` ve `test/test_install_local.py` hata/toparlanma senaryolarını geçici veritabanları ve sahte dış servislerle sınar. Native Vision OCR kontrolü ayrı macOS işidir (`test/test_macos_ocr.py`); Linux'ta bu test açıkça atlanır. Yerelde `SECTOR_TEST_OCR_BINARY` yalnız geçici dizinde derlenen test binary'sine verilmelidir.
+
+
+## ENDEKS marka ve kapsam geçişi
+
+Görünür marka ENDEKS HABER, hesap referansı `@endeks_haber` oldu. Teknik `sector-haber` dizinleri, `com.sectorhaber.*` servisleri, SQLite uygulama kimlikleri, Hermes profili ve Cloudflare bağları korunur. Model/oturum `gpt-5.6-terra / medium`; X yayını kapalıdır.
+
+`src/brand.ts` ortak kimliği, `scripts/generate_brand.ts` profil/banner SVG ve PNG'lerini üretir. `scripts/preview_endeks.ts` altı yerleşim ve iki tema için çevrimdışı örnekleri `reports/endeks-previews/` altına yazar. `circuit`, `kap`, `market`, `finance` şablonları ve `bist`, `kap` kategorileri eski değerleri kaldırmadan eklendi. Özet/etiket/kanıt/birim denetimleri ve mevcut kart yeniden tasarlama korunur.
+
+Yeni RSS eklenmedi. 14 mevcut beslemenin HTTP/XML/tarih sonuçları `reports/endeks-source-check.json` içindedir. Kaynak önceliği ve içerik alt eşiği merkezi `sources.json` kaydında bulunur. KAP bağımsız toplayıcıyla, SPK mevcut PDF hattıyla, TCMB/Fed/ECB kendi kaynaklarıyla izlenir. Borsa İstanbul açıklamaları KAP üzerinden resmî kaynak olarak alınır; doğrulanmamış yeni bir Borsa RSS adresi etkinleştirilmez. [Canlı geçiş](ENDEKS.md).

@@ -7,7 +7,7 @@
     "language": "tr",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 60,
     "checked_at": "2026-10-21T12:02:07.934328+00:00",
     "terms_url": "https://www.bloomberght.com/kullanimkosullari",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -16,7 +16,9 @@
       "www.bloomberght.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 92,
+    "minimum_score": 60
   },
   {
     "id": "trt-ekonomi",
@@ -35,7 +37,9 @@
       "www.trthaber.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 80,
+    "minimum_score": 60
   },
   {
     "id": "ekonomim",
@@ -45,7 +49,7 @@
     "language": "tr",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 60,
     "checked_at": "2026-10-21T12:02:07.934683+00:00",
     "terms_url": "https://www.ekonomim.com/rss",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -54,7 +58,9 @@
       "www.ekonomim.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 94,
+    "minimum_score": 60
   },
   {
     "id": "cnbce",
@@ -64,7 +70,7 @@
     "language": "tr",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 60,
     "checked_at": "2026-10-21T12:02:07.934729+00:00",
     "terms_url": "https://www.cnbce.com/kullanim-kosullari",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -73,7 +79,9 @@
       "www.cnbce.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 96,
+    "minimum_score": 60
   },
   {
     "id": "bbc-business",
@@ -83,7 +91,7 @@
     "language": "en",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 240,
     "checked_at": "2026-10-21T12:02:07.934806+00:00",
     "terms_url": "https://www.bbc.co.uk/usingthebbc/terms/",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -96,7 +104,9 @@
       "www.bbc.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 68,
+    "minimum_score": 66
   },
   {
     "id": "bbc-technology",
@@ -106,7 +116,7 @@
     "language": "en",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 600,
     "checked_at": "2026-10-21T12:02:08.060917+00:00",
     "terms_url": "https://www.bbc.co.uk/usingthebbc/terms/",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -119,7 +129,9 @@
       "www.bbc.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 30,
+    "minimum_score": 70
   },
   {
     "id": "cnbc",
@@ -129,7 +141,7 @@
     "language": "en",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 240,
     "checked_at": "2026-10-21T12:02:08.231363+00:00",
     "terms_url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -138,7 +150,9 @@
       "www.cnbc.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 72,
+    "minimum_score": 66
   },
   {
     "id": "foreks",
@@ -148,7 +162,7 @@
     "language": "tr",
     "official": false,
     "fresh_hours": 72,
-    "poll_seconds": 120,
+    "poll_seconds": 60,
     "checked_at": "2026-10-21T12:02:08.253993+00:00",
     "terms_url": "https://www.foreks.com/rss",
     "rights_note": "Private editorial monitoring and original attributed facts only. No full-text republication, publisher image rights or bulk/AI-training license assumed. Public X release requires a separate rights review.",
@@ -157,7 +171,9 @@
       "www.foreks.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 98,
+    "minimum_score": 60
   },
   {
     "id": "tcmb-press",
@@ -176,7 +192,9 @@
       "www.tcmb.gov.tr"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 100,
+    "minimum_score": 60
   },
   {
     "id": "tcmb-data",
@@ -195,7 +213,9 @@
       "www.tcmb.gov.tr"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 100,
+    "minimum_score": 60
   },
   {
     "id": "tcmb-speech",
@@ -214,7 +234,9 @@
       "www.tcmb.gov.tr"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 96,
+    "minimum_score": 60
   },
   {
     "id": "ecb",
@@ -234,7 +256,9 @@
       "www.ecb.europa.eu"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 82,
+    "minimum_score": 66
   },
   {
     "id": "apple",
@@ -244,7 +268,7 @@
     "language": "en",
     "official": true,
     "fresh_hours": 240,
-    "poll_seconds": 180,
+    "poll_seconds": 600,
     "checked_at": "2026-10-21T12:02:08.472287+00:00",
     "terms_url": "https://www.apple.com/newsroom/rss-feed.rss",
     "rights_note": "Private editorial monitoring only; original attributed facts; no publisher images or full-text republication.",
@@ -253,7 +277,9 @@
       "www.apple.com"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 25,
+    "minimum_score": 70
   },
   {
     "id": "fed",
@@ -273,7 +299,9 @@
       "federalreserve.gov"
     ],
     "enabled": true,
-    "article_mode": "html"
+    "article_mode": "html",
+    "editorial_priority": 88,
+    "minimum_score": 66
   },
   {
     "id": "spk",
@@ -293,7 +321,9 @@
     "terms_url": "https://spk.gov.tr/",
     "rights_note": "Official public bulletin; attributed facts only; original tables retained privately for verification.",
     "review_mode": "official_facts",
-    "method": "bridge_pdf"
+    "method": "bridge_pdf",
+    "editorial_priority": 100,
+    "minimum_score": 60
   },
   {
     "id": "kap",
@@ -311,8 +341,10 @@
     "enabled": false,
     "checked_at": "2026-10-21",
     "terms_url": "https://www.kap.org.tr/tr",
-    "rights_note": "Primary disclosure reference only. No inherited licensed API or cursor scanning.",
+    "rights_note": "Primary reference; the separate persistent KAP collector polls public disclosures. Not an RSS feed or licensed MKK API.",
     "review_mode": "official_facts",
-    "method": "reference"
+    "method": "reference",
+    "editorial_priority": 100,
+    "minimum_score": 60
   }
 ]

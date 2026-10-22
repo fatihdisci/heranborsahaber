@@ -39,6 +39,7 @@ export function muted(title:string):boolean {
 }
 export function important(d:Disclosure):boolean {
  const t=subject(d);
+ if(/FINANSAL TAKVIM|SORUMLULUK BEYANI|GENEL KURUL BILDIRIMI/.test(t)&&classify(d).every(topic=>topic==='other'))return false;
  return !(/PORTFOY DAGILIM RAPORU|BORSA DISI VAAD SOZLESMESI|BORSA DISI REPO|BORSA DISI TERS REPO|FON SUREKLI BILGILENDIRME|KREDI DERECELENDIR|YATIRIMCI BILGI FORMU|RISK OLCUM|DEGERLEME ESASLARI|SIRKET GENEL BILGI FORMU|HAK KULLANIM SUREC DURUM/.test(t)||(/FAIZ/.test(t)&&/PAY DISI SERMAYE PIYASASI ARACI/.test(t))||muted(d.title)||muted(t));
 }
 export function criticalFund(d:Disclosure):boolean {

@@ -149,3 +149,35 @@ test('KAP preference changes during source reading remain suppressed after re-en
   assert.equal((await consumer.run()).state,'suppressed');assert.equal((await env.DB.prepare('SELECT COUNT(*) n FROM model_jobs').first<any>()).n,0);
  }finally{s.close();}
 });
+
+import {leaseJob,submitJob} from '../src/bridge';
+import {draftCard} from '../src/card';
+import {png} from '../scripts/render_local';
+import {sha256} from '../src/utils/text';
+import type {Draft} from '../src/types';
+test('frozen circuit group reads all official members and delivers one branded photo with source button',async()=>{
+ const {s,env}=await setup();const images=new Map<string,Uint8Array>();Object.assign(env,{AI_MODEL:'gpt-5.6-terra',AI_EFFORT:'medium',TELEGRAM_BOT_TOKEN:'123:test',TELEGRAM_VERIFIED_BOT_ID:'123',MEDIA:{put:async(k:string,b:Uint8Array)=>images.set(k,b),get:async(k:string)=>images.has(k)?{arrayBuffer:async()=>images.get(k)!.buffer}:null}});
+ const previous=globalThis.fetch;let photos=0;const reads:number[]=[];
+ globalThis.fetch=async(url,options)=>{assert.match(String(url),/^https:\/\/api\.telegram\.org\//);if(String(url).endsWith('/sendPhoto')){photos++;const form=options!.body as FormData;assert.match(String(form.get('caption')),/ABCD.*EFGH/);const buttons=JSON.parse(String(form.get('reply_markup')));assert(buttons.inline_keyboard.flat().some((b:any)=>b.text==='Kaynağı aç'));}return Response.json({ok:true,result:{message_id:99}});};
+ try{
+  s.run("UPDATE queue SET state='suppressed'");s.configure({...s.prefs(),circuitNotifications:true},NOW);
+  const l=s.claim('reconcile',NOW)!;const base=JSON.parse(s.row<{metadata:string}>('SELECT metadata FROM disclosures')!.metadata);
+  for(const [id,code] of [[102,'ABCD'],[103,'EFGH']] as const)s.save({...base,id,sourceRef:'kap:'+id,url:'https://www.kap.org.tr/tr/Bildirim/'+id,title:'Devre Kesici Uygulaması',publishedAt:new Date(NOW+1000).toISOString(),subjectCodes:[code],relatedCodes:[code]},l,NOW+1000,false);
+  s.freeze(s.claim('groups',NOW)!,NOW+13_000);
+  const consumer=new KapDelivery(s,env,async id=>{reads.push(id);const code=id===102?'ABCD':'EFGH',text=code+' payında tek fiyat emir toplama işlemi başlamıştır.';return [{source_id:'kap',source_name:'KAP',family:'kap',official:true,url:'https://www.kap.org.tr/tr/Bildirim/'+id,title:code+' — Devre Kesici Uygulaması',body:text,published_at:new Date(NOW).toISOString(),equity_codes:[code],passages:[{id:'p1',text}]}];},()=>NOW+14_000);
+  assert.equal((await consumer.run()).state,'model_queued');await consumer.run();assert.deepEqual(reads,[102,103]);
+  env.KAP_DELIVERY_CHECK=docs=>consumer.deliveryDecision(docs);
+  const job=(await leaseJob(env))!,documents=job.documents as Document[];assert.equal(documents.length,2);
+  const draft:Draft={headline:'📢 ABCD ve EFGH paylarında devre kesici uygulandı',body:'Her iki payda tek fiyat emir toplama işlemi başladı.',card_headline:'ABCD ve EFGH paylarında devre kesici',card_body:'Tek fiyat emir toplama işlemi başladı.',hashtags:['#Borsa','#BIST','#DevreKesici'],category:'bist',importance:94,template:'circuit',entities:['ABCD','EFGH'],event_key:'circuit-abcd-efgh',uncertainties:[],claims:documents.map((d,i)=>({text:d.body,evidence:[{document:i,passage:'p1',quote:d.body}]}))};
+  const svg=draftCard(draft,[],'',false,job.card_theme,job.card_layout);assert.match(svg,/ENDEKS HABER/);assert.match(svg,/DEVRE KESİCİ/);
+  await submitJob(env,{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,draft,audit:{supported:true,issues:[]},runtime:{model:'gpt-5.6-terra',effort:'medium',provider:'openai-codex',tool_count:0,fallback_count:0},card_date:'',svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
+  await deliver(env);await deliver(env);assert.equal(photos,1);
+  await consumer.run();assert.equal(s.row<{state:string}>("SELECT state FROM queue WHERE kind='circuit'")!.state,'sent');
+ }finally{globalThis.fetch=previous;s.close();}
+});
+test('circuit preference off during reading prevents the group from entering AI',async()=>{
+ const {s,env}=await setup();try{s.run("UPDATE queue SET kind='circuit',payload='{}'");s.configure({...s.prefs(),circuitNotifications:true},NOW);s.run("UPDATE disclosures SET metadata=json_set(metadata,'$.title','Devre Kesici Uygulaması')");
+  const c=new KapDelivery(s,env,async()=>{s.configure({...s.prefs(),circuitNotifications:false},NOW+1);return [];},()=>NOW+1);
+  assert.equal((await c.run()).state,'suppressed');assert.equal((await env.DB.prepare('SELECT COUNT(*) n FROM model_jobs').first<{n:number}>())!.n,0);
+ }finally{s.close();}
+});

@@ -15,6 +15,22 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 
 `RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → Telegram başlık/özet → sahibin oluştur düğmesi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → tek fotoğraflı Telegram mesajı`
 
+Haber kartı, oluşturma istendiğinde aynı mesaj üzerinde okuma, sıra/bekleme,
+hazırlama ve teslimat durumlarını gösterir. Durum değişmedikçe Telegram'a tekrar
+düzenleme isteği yapılmaz; kaynak kartı silinmişse hata sonraki işleri engellemez.
+
+Diğer Telegram botunun `/kurum`, `/akd ASELS` veya `/takas THYAO` yanıtı
+@habernewssbot'a **iletilerek** kaynak olarak kullanılabilir. Metin, fotoğraf ve
+görsel dosyaları desteklenir; sistem diğer botlara otomatik komut göndermez.
+İleti sahibi kontrolü, tam kaynak, görselin iki model geçişinde kontrolü ve tek
+mesajı güncelleyen hazırlama akışı korunur. Bot verisi resmî teyit sayılmaz.
+Kurum net işlemi `broker_flow`, hisse işlem dağılımı `akd`, saklama dağılımı
+`custody` kartıdır. Takas satırları `card_data.holdings` içinde tutulur; net
+alış/satış gibi yorumlanmaz. Mr/Mn ölçeği ve sütunlara özgü sayı biçimi ayrı
+kanıt pasajlarına dönüştürülür. Tarihsiz görsele güncel tarih eklenmez, eksik
+kurum/sayı satırı sessizce atlanmaz. Yeni veri sağlayıcısı veya hesap oturumu
+gerekmez; mevcut model ve X yayınının kapalı durumu değişmez.
+
 Yazım ve kart metinleri `gpt-5.6-terra`, `medium` ile mevcut Hermes ChatGPT oturumundan hazırlanır.
 Araç, MCP, bellek enjeksiyonu, alternatif model ve ücretli API sağlayıcısı kapalıdır.
 Oturum yenilemesini Hermes’in kendi kilitli kimlik çözümleyicisi yapar; tokenlar kopyalanmaz veya Cloudflare’a aktarılmaz.

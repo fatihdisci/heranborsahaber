@@ -7,9 +7,19 @@ import {readPdf} from './pdf_reader';
 import {pdfBytes,boundedBytes} from '../src/pdf-transport';
 import {telegram,sendDraft} from '../src/telegram';
 import {enqueueEvidence} from '../src/ingest';
+import {readImage,type ImageEvidence} from './image_reader';
+import {withMarketText} from '../src/market-input';
 import type {Env,Document,Source} from '../src/types';
-export async function manualDocuments(env:Env,kind:string,input:string,messageId:number):Promise<Document[]> {
- const value=JSON.parse(input) as {url?:string;text:string;document?:{file_id:string;file_name?:string;file_size?:number}};
+async function telegramFile(env:Env,file:{file_id:string;file_size?:number}):Promise<Uint8Array>{
+ if(!file?.file_id||(file.file_size!==undefined&&(!Number.isSafeInteger(file.file_size)||file.file_size<0||file.file_size>20_000_000)))throw Error('manual_file_size_limit');
+ const result=await telegram(env,'getFile',new URLSearchParams({file_id:file.file_id}));
+ const path=String(result.file_path??'');if(!/^[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..')||path.startsWith('/'))throw Error('telegram_file_path');
+ const r=await fetch(`https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${path}`,{redirect:'manual',signal:AbortSignal.timeout(20_000)});
+ if(!r.ok){await r.body?.cancel();throw Error('telegram_file_unavailable');}
+ return boundedBytes(r);
+}
+export async function manualDocuments(env:Env,kind:string,input:string,messageId:number,extractImage:(bytes:Uint8Array)=>Promise<ImageEvidence>=readImage):Promise<Document[]> {
+ const value=JSON.parse(input) as {url?:string;text:string;origin_bot?:string;image?:{file_id:string;file_size?:number};document?:{file_id:string;file_name?:string;file_size?:number}};
  if(kind==='url'){
   const u=new URL(value.url!);const kap=u.hostname==='www.kap.org.tr'&&u.pathname.match(/^\/tr\/Bildirim\/(\d+)$/);
   if(kap)return kapDocuments(Number(kap[1]),readPdf);
@@ -18,18 +28,21 @@ export async function manualDocuments(env:Env,kind:string,input:string,messageId
  }
  const sourceUrl=`https://t.me/habernewssbot?start=source_${messageId}`;
  const base={source_id:'manual-input',source_name:'Gönderdiğin belge',family:'owner-submitted',official:false,url:sourceUrl,published_at:null,language:'tr'};
+ if(kind==='image'){
+  const evidence=await extractImage(await telegramFile(env,value.image!));
+  const caption=value.text.trim();
+  const d:Document={...base,...evidence,title:evidence.market_data?.ticker?evidence.market_data.ticker+' aracı kurum dağılımı':'İlettiğin görsel',source_name:value.origin_bot?'İlettiğin @'+value.origin_bot+' görseli':'İlettiğin görsel',
+   ...(evidence.market_data?.ticker?{equity_codes:[evidence.market_data.ticker]}:{}),body:[evidence.body,caption].filter(Boolean).join('\n\n'),passages:[...evidence.passages,...(caption?[{id:'provided_caption',text:caption}]:[])]};
+  return [d];
+ }
  if(kind==='pdf'){
   if(!value.document?.file_id||(value.document.file_size??0)>20_000_000)throw Error('pdf_size_limit');
-  const file=await telegram(env,'getFile',new URLSearchParams({file_id:value.document.file_id}));
-  const path=String(file.file_path??'');if(!/^[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('telegram_file_path');
-  const r=await fetch(`https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${path}`,{redirect:'manual',signal:AbortSignal.timeout(20_000)});
-  if(!r.ok){await r.body?.cancel();throw Error('telegram_file_unavailable');}
-  const pdf=await readPdf(pdfBytes(await boundedBytes(r)));
+  const pdf=await readPdf(pdfBytes(await telegramFile(env,value.document)));
   return [{...base,title:value.document.file_name??'Gönderilen PDF',...pdf}];
  }
  if(kind==='text'){
   const text=value.text.trim();if(text.length<100||text.length>100_000)throw Error('manual_text_length');
-  return [{...base,source_name:'Gönderdiğin metin',title:text.split('\n')[0].slice(0,180),body:text,passages:[{id:'provided_text',text}]}];
+  return [withMarketText({...base,source_name:value.origin_bot?'İlettiğin @'+value.origin_bot+' metni':'Gönderdiğin metin',title:text.split('\n')[0].slice(0,180),body:text,passages:[{id:'provided_text',text}]})];
  }
  throw Error('manual_kind');
 }
@@ -57,7 +70,7 @@ export async function runManual(env:Env):Promise<void> {
  if(failed&&env.MODE==='telegram_review'){
   // Claim before sending an error reply; never flood on a delivery timeout.
   await env.DB.prepare('UPDATE manual_requests SET notified=1 WHERE update_id=?').bind(failed.update_id).run();
-  const text=failed.error==='delivery_uncertain'?'Tweet ve görsel hazır; teslimatın sonucu belirsiz. Aynı içerik otomatik olarak tekrar gönderilmeyecek.':failed.error==='delivery_failed'?'Tweet ve görsel hazır ancak Telegram teslimatı başarısız oldu. Yeniden AI kullanılmadı.':failed.error==='delivery_suppressed'?'Bu içerik güncel gönderim tercihlerine göre kapatıldı.':failed.error==='model_retry_unavailable'?'Bu içerik için yeniden deneme sınırına ulaşıldı veya mevcut hata güvenli biçimde yeniden denenemiyor. Hazır içerik varsa tekrar oluşturulmaz.':/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
+  const text=failed.error==='delivery_uncertain'?'Tweet ve görsel hazır; teslimatın sonucu belirsiz. Aynı içerik otomatik olarak tekrar gönderilmeyecek.':failed.error==='delivery_failed'?'Tweet ve görsel hazır ancak Telegram teslimatı başarısız oldu. Yeniden AI kullanılmadı.':failed.error==='delivery_suppressed'?'Bu içerik güncel gönderim tercihlerine göre kapatıldı.':failed.error==='model_retry_unavailable'?'Bu içerik için yeniden deneme sınırına ulaşıldı veya mevcut hata güvenli biçimde yeniden denenemiyor. Hazır içerik varsa tekrar oluşturulmaz.':/subscription|hermes|quota|lease_expired/.test(failed.error)?'Kaynağın alındı ancak içerik hazırlama hizmeti şu anda yanıt veremedi. Aynı içeriği yeniden gönderebilirsin.':failed.error.startsWith('image_')?'Görseldeki tabloyu veya metni eksiksiz okuyamadım. Kurum ya da sayı tahmin etmedim. Daha net görseli veya botun metin çıktısını iletebilirsin.':failed.error==='manual_source_unsupported'?'Bu siteyi henüz okuyamıyorum. Haberi PDF olarak veya metniyle buraya gönderebilirsin.':'Bu içeriğin tamamını güvenilir biçimde okuyup doğrulayamadım; eksik bilgiden tweet üretmedim. Farklı bir PDF veya tam haber metnini gönderebilirsin.';
   const statusId=await manualStatusId(env,failed.update_id);
   await telegram(env,statusId?'editMessageText':'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,...(statusId?{message_id:String(statusId)}:{reply_parameters:JSON.stringify({message_id:failed.message_id,allow_sending_without_reply:true})})}));
  }
@@ -69,7 +82,7 @@ export async function runManual(env:Env):Promise<void> {
   const docs=await manualDocuments(env,row.kind,row.input,row.message_id),job=await enqueueEvidence(env,docs,'manual');
   await env.DB.prepare("UPDATE manual_requests SET state='model_queued',job_id=?,lease_until=0,error=NULL WHERE update_id=?").bind(job,row.update_id).run();
  }catch(e){const error=e instanceof Error&&/^[a-z_]{3,70}$/.test(e.message)?e.message:'manual_read_failed';
-  const permanent=/unsupported|limit|invalid|model_retry_unavailable/.test(error)||row.attempts>=2;
+  const permanent=/unsupported|limit|invalid|model_retry_unavailable|image_market_/.test(error)||row.attempts>=2;
   await env.DB.prepare('UPDATE manual_requests SET state=?,lease_until=?,error=? WHERE update_id=?').bind(permanent?'needs_review':'queued',now+60,error,row.update_id).run();
  }
 }

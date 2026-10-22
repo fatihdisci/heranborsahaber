@@ -13,7 +13,8 @@ export function editorialPolicy(documents:Document[]){
  // labels. Neither makes a company's contract/buyback a fund story.
  const kap=documents.find(d=>d.source_id==='kap');
  const circuit=documents.some(d=>d.source_id==='kap'&&/devre kesici/i.test(d.title));
- const fund=(kap?[kap]:documents).some(d=>d.source_id==='kap'
+ const market=documents.some(d=>d.market_data);
+ const fund=!market&&(kap?[kap]:documents).some(d=>d.source_id==='kap'
   ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
   :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
@@ -34,6 +35,7 @@ export function styleIssues(draft:Draft,documents:Document[]):string[]{
  if(invalidEmojiPlacement(draft))issues.push('invalid_emoji_placement');
  if(hasPublisherAttribution([draft.headline,draft.body,draft.card_headline,draft.card_body].join('\n'),p.publisher_names))issues.push('publisher_attribution');
  if(p.required_hashtags.some(tag=>!draft.hashtags.some(t=>fold(t)===fold(tag))))issues.push('missing_market_hashtags');
+ if(documents.some(d=>d.market_data)&&/bugün|anlık|son seans/iu.test([draft.headline,draft.body,draft.card_headline,draft.card_body,...cardDataFields(draft.card_data).map(([,v])=>v)].join('\n')))issues.push('unsupported_market_relative_period');
  return issues;
 }
 
@@ -54,5 +56,6 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  const valid=tags.filter(t=>/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));
  const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,3):valid;
  const circuit=documents.some(d=>d.official&&d.source_id==='kap'&&/devre kesici/i.test(d.title));
- return repairKapShareWording({...value,...(circuit?{template:'circuit' as const,category:'bist' as const}:{}),headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
+ const market=documents.find(d=>d.market_data)?.market_data;
+ return repairKapShareWording({...value,...(circuit?{template:'circuit' as const,category:'bist' as const}:market?{template:market.kind,category:'bist' as const}:{}),headline:typeof value.headline==='string'?headlineWithEmoji(value.headline):value.headline,hashtags},documents);
 }

@@ -1,5 +1,5 @@
 export type Category = 'turkiye'|'central_banks'|'companies'|'technology'|'energy'|'global'|'data'|'bist'|'kap';
-export type Template = 'breaking'|'economic_data'|'company'|'global'|'info'|'circuit'|'kap'|'market'|'finance'|'news'|'institutional'|'akd'|'volume';
+export type Template = 'breaking'|'economic_data'|'company'|'global'|'info'|'circuit'|'kap'|'market'|'finance'|'news'|'institutional'|'akd'|'volume'|'broker_flow'|'custody';
 export type Status = 'pending'|'deferred'|'rejected'|'approved'|'needs_review'|'published';
 export interface Source {
   id:string; name:string; url:string; family:string; language:string; official:boolean;
@@ -10,11 +10,11 @@ export interface Source {
   method?:'rss'|'bridge_pdf'|'reference';
 }
 export interface Item {title:string;url:string;summary:string;published_at:string|null;}
-export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];index_tier?:30|100;language?:string;images?:string[];coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
+export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];index_tier?:30|100;language?:string;images?:string[];market_data?:{kind:'broker_flow'|'akd'|'custody';ticker?:string};coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface CardRow {label:string;value:string;}
-export interface CardData {ticker?:string;as_of?:string;buy?:CardRow[];sell?:CardRow[];metrics?:CardRow[];}
+export interface CardData {ticker?:string;as_of?:string;buy?:CardRow[];sell?:CardRow[];holdings?:CardRow[];metrics?:CardRow[];}
 export interface Draft {
   card_data?:CardData;
   headline:string;body:string;hashtags:string[];category:Category;importance:number;

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {localDatabase} from '../src/local-adapters';
-import {announceNews,requestNews,previewDuplicate,previewText} from '../src/news-inbox';
+import {announceNews,requestNews,refreshNewsRequests,newsProgressNote,previewDuplicate,previewText} from '../src/news-inbox';
 import {prepare} from '../src/pipeline';
 import {leaseJob} from '../src/bridge';
 import worker from '../src/worker';
@@ -48,4 +48,45 @@ test('callback cannot be requested by another user and legacy automatic jobs sta
  await env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at) VALUES('old','a','[]','x',?)").bind(Date.now()/1000).run();
  assert.equal(await leaseJob(env),null);
  await env.DB.prepare("UPDATE model_jobs SET kind='kap' WHERE id='old'").run();assert(await leaseJob(env));
+});
+test('requested news shows persistent stage changes on its existing card, without duplicate messages',async()=>{
+ const env=await fixture(),original=globalThis.fetch,calls:URLSearchParams[]=[];
+ globalThis.fetch=async(input,init)=>{assert.match(String(input),/editMessageText$/);calls.push(init!.body as URLSearchParams);return Response.json({ok:true,result:{message_id:100}});};
+ try{
+  await env.DB.prepare("INSERT INTO news_cards(id,article_id,state,message_id,created_at) VALUES('n','a','requested',100,1)").run();
+  await refreshNewsRequests(env);await refreshNewsRequests(env);assert.equal(calls.length,1);assert.match(calls[0].get('text')!,/tam metni okunuyor/);
+  await env.DB.prepare("INSERT INTO system_state VALUES('model_paused_until',?)").bind(String(Date.now()+60000)).run();
+  await refreshNewsRequests(env);await refreshNewsRequests(env);assert.equal(calls.length,2);assert.match(calls[1].get('text')!,/geçici olarak beklemede/);
+  await env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,state) VALUES('j','a','[]','x',?,'news','leased')").bind(Date.now()/1000).run();
+  await refreshNewsRequests(env);assert.equal(calls.length,3);assert.match(calls[2].get('text')!,/kaynak ve sayılar/);
+  assert(calls.every(c=>c.get('message_id')==='100'));
+ }finally{globalThis.fetch=original;}
+});
+test('progress edits respect Telegram throttling and a deleted preview cannot cause repeated edits',async()=>{
+ const env=await fixture(),original=globalThis.fetch;let calls=0;
+ globalThis.fetch=async()=>{calls++;return Response.json({ok:false,error_code:429,parameters:{retry_after:60}},{status:429});};
+ try{
+  await env.DB.prepare("INSERT INTO news_cards(id,article_id,state,message_id,created_at) VALUES('n','a','requested',100,1)").run();
+  await refreshNewsRequests(env);await refreshNewsRequests(env);assert.equal(calls,1);
+  await env.DB.prepare("DELETE FROM system_state WHERE key='news_progress:n'").run();
+  globalThis.fetch=async()=>{calls++;return Response.json({ok:false,error_code:400},{status:400});};
+  await refreshNewsRequests(env);await refreshNewsRequests(env);assert.equal(calls,2);
+  assert.equal((await env.DB.prepare('SELECT state FROM news_cards').first<{state:string}>())!.state,'requested');
+ }finally{globalThis.fetch=original;}
+ assert.match(newsProgressNote({status:'prepared',job_state:'complete',delivery_state:'sent'}),/hazırlandı/);
+});
+test('a throttled completion notice retries the same preview without replaying a finished model job',async()=>{
+ const env=await fixture(),original=globalThis.fetch;let calls=0;
+ globalThis.fetch=async()=>{calls++;return Response.json({ok:false,error_code:429,parameters:{retry_after:60}},{status:429});};
+ try{
+  await env.DB.prepare("INSERT INTO news_cards(id,article_id,state,message_id,created_at) VALUES('n','a','model_queued',100,1)").run();
+  await env.DB.prepare("INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,delivery_state,message_id) VALUES('d','e','f','{}','[]','v','pending',1,9999999999,'sent',900)").run();
+  await env.DB.prepare("UPDATE articles SET draft_id='d',status='prepared' WHERE id='a'").run();
+  await refreshNewsRequests(env);await refreshNewsRequests(env);assert.equal(calls,1);
+  assert.equal((await env.DB.prepare('SELECT state FROM news_cards').first<{state:string}>())!.state,'model_queued');
+  await env.DB.prepare("UPDATE system_state SET value='{}' WHERE key='news_progress:n'").run();
+  globalThis.fetch=async(_input,init)=>{calls++;const body=init!.body as URLSearchParams;assert.equal(body.get('message_id'),'100');assert.match(body.get('text')!,/hazırlandı/);return Response.json({ok:true,result:{message_id:100}});};
+  await refreshNewsRequests(env);assert.equal(calls,2);assert.equal((await env.DB.prepare('SELECT state FROM news_cards').first<{state:string}>())!.state,'complete');
+  assert.equal((await env.DB.prepare('SELECT COUNT(*) n FROM model_jobs').first<{n:number}>())!.n,0);
+ }finally{globalThis.fetch=original;}
 });

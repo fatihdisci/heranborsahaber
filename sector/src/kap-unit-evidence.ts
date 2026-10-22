@@ -124,6 +124,6 @@ export function repairKapShareWording(draft:Draft,documents:Document[]):Draft {
   return {...c,text,evidence};
  }):draft.claims;
  const card_data=draft.card_data&&typeof draft.card_data==='object'?{...draft.card_data,
-  ...(draft.card_data.buy?{buy:rows(draft.card_data.buy)}:{}),...(draft.card_data.sell?{sell:rows(draft.card_data.sell)}:{}),...(draft.card_data.metrics?{metrics:rows(draft.card_data.metrics)}:{})}:draft.card_data;
+  ...(draft.card_data.buy?{buy:rows(draft.card_data.buy)}:{}),...(draft.card_data.sell?{sell:rows(draft.card_data.sell)}:{}),...(draft.card_data.holdings?{holdings:rows(draft.card_data.holdings)}:{}),...(draft.card_data.metrics?{metrics:rows(draft.card_data.metrics)}:{})}:draft.card_data;
  return {...draft,headline:replace(draft.headline),body:replace(draft.body),card_headline:replace(draft.card_headline),card_body:replace(draft.card_body),...(card_data?{card_data}:{}),claims};
 }

@@ -13,7 +13,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
  const text=(s:string,x:number,y:number,size:number,color=fg,weight=400,anchor='start')=>`<text x="${x}" y="${y}" font-size="${size}" font-weight="${weight}" fill="${color}" text-anchor="${anchor}">${esc(s)}</text>`;
  const rule=(y:number)=>`<path d="M${left} ${y} H1004" stroke="${steel}" stroke-width="1"/>`;
  const block=(s:string,x:number,y:number,w:number,h:number,size:number=40,color=fg,min=26,weight=400,align?:'center')=>fit(s,{x,y,width:w,height:h,size,min,weight,color,align});
- const labels:{[key:string]:string}={circuit:'DEVRE KESİCİ',institutional:'KURUM ALIM / SATIM',akd:'HİSSE / AKD',volume:'İŞLEM HACMİ'};
+ const labels:{[key:string]:string}={circuit:'DEVRE KESİCİ',institutional:'KURUM ALIM / SATIM',akd:'HİSSE / AKD',volume:'İŞLEM HACMİ',broker_flow:'ARACI KURUM / NET İŞLEM',custody:'TAKAS / SAKLAMA'};
  const inverse=layout==='brief'||layout==='masthead';
  let art=layout==='frame'?rect(34,34,1012,1282,'none',steel):layout==='rail'?rect(0,0,38,1350,fg)+rect(38,0,6,1350,steel):'';
  if(inverse)art+=rect(0,0,1080,180,fg);
@@ -36,7 +36,17 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
   else art+=`<path d="${MARK_PATH}" transform="translate(380 500) scale(.75)" fill="${steel}" opacity=".20"/>`;
   let y=836;for(const row of data?.metrics?.slice(1,3)??[]){art+=rule(y-20)+text(row.label,left,y+16,27,steel)+text(row.value,1004,y+22,36,fg,700,'end');y+=110;}
   art+=rule(1110)+block(d.body,left,1150,width,150,32,fg,26);
- }else if(d.template==='akd'&&(data?.buy?.length||data?.sell?.length)){
+ }else if(d.template==='custody'){
+  art+=block(d.headline,left,268,width,155,61,fg,38,700,align);
+  if(separateTicker)art+=text(data!.ticker!,1004,455,32,steel,700,'end');
+  const hero=data?.metrics?.[0];
+  if(hero)art+=text(hero.label,left,500,26,steel,700)+block(hero.value,left,530,width,120,78,fg,44,700);
+  if(data?.holdings?.length){
+   art+=rect(left,710,width,440,fg)+text('SAKLAMA KURULUŞLARI',left+28,755,25,bg,700);
+   data.holdings.forEach((r,i)=>{const y=778+i*70;art+=block(r.label,left+28,y,width*.40,60,29,bg,20,700)+block(r.value,left+width*.45,y,width*.55-28,60,28,bg,18);});
+   art+=block(d.body,left,1190,width,110,29,fg,22);
+  }else art+=block(d.body,left,735,width,430,45,fg,28);
+ }else if(['akd','broker_flow'].includes(d.template)&&(data?.buy?.length||data?.sell?.length)){
   art+=block(d.headline,left,268,width,155,61,fg,38,700,align);
   if(separateTicker)art+=text(data.ticker!,1004,446,32,steel,700,'end');
   const table=(title:string,rows:CardRow[]|undefined,y:number,invert:boolean)=>{
@@ -45,7 +55,7 @@ export function marketCard(d:Pick<Draft,'headline'|'body'|'template'|'card_data'
    rows.forEach((row,i)=>{const top=y+69+i*46;svg+=block(row.label,left+28,top,width-360,46,30,ink,18,700)+block(row.value,1004-300,top,272,46,30,ink,18);});
    return svg;
   };
-  art+=table('ALICI KURUMLAR',data.buy,480,layout!=='masthead')+table('SATICI KURUMLAR',data.sell,836,layout==='masthead');
+  art+=table(d.template==='broker_flow'?'NET ALICI KURUMLAR':'ALICI KURUMLAR',data.buy,480,layout!=='masthead')+table(d.template==='broker_flow'?'NET SATICI KURUMLAR':'SATICI KURUMLAR',data.sell,836,layout==='masthead');
   art+=block(d.body,left,1190,width,105,30,fg,22);
  }else{
   art+=block(d.headline,left,268,width,192,61,fg,38,700,align);

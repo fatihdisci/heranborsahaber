@@ -46,7 +46,7 @@ def call(job,instructions,payload):
     AIAgent,credentials=runtime(job['profile'])
     agent=AIAgent(model=job['model'],provider='openai-codex',api_mode='codex_responses',api_key=credentials['api_key'],base_url=credentials['base_url'],
         enabled_toolsets=[],quiet_mode=True,skip_context_files=True,skip_memory=True,load_soul_identity=False,save_trajectories=False,
-        verbose_logging=False,max_iterations=1,max_tokens=8000,reasoning_config={'effort':'medium'},fallback_model=[],credential_pool=None,
+        verbose_logging=False,max_iterations=1,max_tokens=8000,reasoning_config={'effort':job['effort']},fallback_model=[],credential_pool=None,
         request_overrides={'max_output_tokens':8000})
     if agent.model!=job['model'] or agent.provider!='openai-codex' or getattr(agent,'tools',[]) or getattr(agent,'_fallback_chain',[]) or getattr(agent,'_credential_pool',None) or getattr(agent,'compression_enabled',True):raise RuntimeError('unsafe_agent_configuration')
     if hasattr(agent.client,'with_options'):agent.client=agent.client.with_options(max_retries=0)
@@ -89,7 +89,7 @@ def presentation_issues(draft,policy=None):
     if len(text.encode('utf-16-le'))//2>1024:issues.append('Başlık, gövde ve etiketleri kritik olguları koruyarak toplam 1024 UTF-16 karakter içine yeniden yaz. Metni kesme veya bölme.')
     policy=policy or {}
     required=policy.get('required_hashtags',[])
-    if any(t.casefold() not in [h.casefold() for h in draft['hashtags']] for t in required):issues.append('Etiketleri şu zorunlu etiketleri içerecek şekilde 2–3 adet olarak düzelt: '+' '.join(required))
+    if any(t.casefold() not in [h.casefold() for h in draft['hashtags']] for t in required):issues.append('Etiketleri yalnız hashtags dizisinde ve zorunlu hisse kodlarını atlamadan düzelt: '+' '.join(required))
     visible='\n'.join(str(draft.get(k,'')) for k in ['headline','body','card_headline','card_body']).lower().replace('ı','i')
     attribution=bool(re.search(r'(?:^|\n)\s*kaynak\s*:|(?:haberine|haberlerinde|aktardiğina|aktardigina)\s+göre',visible))
     for name in policy.get('publisher_names',[]):
@@ -115,7 +115,7 @@ def prepare_draft(draft,documents):
     return normalized
 
 def main(job):
-    if job.get('provider')!='openai-codex' or job.get('model')!='gpt-5.6-terra' or job.get('effort')!='medium' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
+    if job.get('provider')!='openai-codex' or job.get('model')!='gpt-6-luna' or job.get('effort')!='high' or job.get('allowed_tools')!=[] or job.get('deadline',0)<time.time():raise RuntimeError('job_route_invalid')
     instructions=job['prompt']+'\nYalnız aşağıdaki şemaya uyan JSON nesnesini döndür, başka çıktı yazma.\n'+json.dumps(job['schema'],ensure_ascii=False)
     draft=call(job,instructions,{'documents':job['documents'],'recent_events':job.get('existing_events',[]),'editor_request':job.get('edit_request'),'editorial_policy':job.get('editorial_policy',{}),'previous_validation_issues':job.get('previous_validation_issues',[])})
     draft=prepare_draft(draft,job['documents'])
@@ -132,7 +132,7 @@ def main(job):
         calls=4
         layout_issues=presentation_issues(draft,job.get('editorial_policy'))+deterministic_issues(draft,job['documents'])
         if layout_issues:audit={'supported':False,'issues':list(audit.get('issues',[]))+layout_issues}
-    return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':'medium','provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
+    return {'draft':draft,'audit':audit,'runtime':{'model':job['model'],'effort':job['effort'],'provider':'openai-codex','tool_count':0,'fallback_count':0,'calls':calls,'server_model':None}}
 
 if __name__=='__main__':
     try:

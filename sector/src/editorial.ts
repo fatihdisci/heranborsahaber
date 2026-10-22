@@ -1,8 +1,8 @@
 import {cardDataFields,validateCardData} from './card-data';
-import {styleIssues,editorialPolicy,headlineWithEmoji} from './style';
+import {styleIssues,editorialPolicy,headlineWithEmoji,normalizeHashtagPlacement} from './style';
 import type {Document,Draft,Category} from './types';
 export const MIN_DRAFT_IMPORTANCE=50;
-export const PROMPT_VERSION='endeks-editor-3-forwarded-market';
+export const PROMPT_VERSION='endeks-editor-4-single-hashtags';
 export const EDITOR_PROMPT=`ENDEKS HABER'in Borsa İstanbul ve finans haberleri editörüsün.
 Öncelik: önemli KAP açıklamaları; devre kesici ve piyasa gelişmeleri; temettü, sermaye işlemleri, geri alım ve pay işlemleri, bilançolar; halka arz, SPK ve Borsa İstanbul; TCMB/faiz/enflasyon/Türkiye ekonomisi; yatırımcıyı etkileyen Fed ve küresel finans; borsa bilgi ve istatistikleri. Dünya, enerji ve teknoloji haberini yatırımcı açısından somut önem taşıyorsa ele al.
 Devre kesicide template=circuit, category=bist kullan. Hisse kodu, işlem durumu ve yeniden başlama saati yalnız resmî belgede açıkça varsa yaz; sebep, fiyat, saat veya süre tahmin etme. Bir gruptaki farklı hisselerin saat/durumlarını karıştırma; bütün resmî bildirimleri kaynak kabul et. KAP şirket açıklamalarında template=kap, piyasa verilerinde market, makro finansta finance kullanabilirsin. Eski şablonlar da desteklenir.
@@ -30,7 +30,7 @@ birlikte en çok 1024 UTF-16 karakter olmalı. Bu bir tweet uzunluğu hedefi de�
 Sınıra yaklaşmayı hedefleme; haberin gerektirdiği kısa ve bütünlüklü metni yaz. Kesik cümle ve devam mesajı yok.
 Yayıncı adını tweet veya kart metnine atıf olarak ekleme: 'CNBC-e’nin haberine göre', 'Reuters’a göre', 'Kaynak: ...' yazma. Kaynak bağlantısı ayrı düğmededir.
 Bunu yaparken iddiayı kesin gerçeğe dönüştürme; 'iddia edildi', 'öne sürüldü', 'planlıyor', 'Musk açıkladı', 'şirket duyurdu' gibi olgunun statüsünü ve gerçek açıklama sahibini koru. Atfı çıkarınca kanıt zayıflıyorsa belirsizliği koru.
-Keşfedilebilirlik için konuya doğrudan bağlı, yaygın yazımlı 2–3 etiket kullan. #haber, #gündem, #keşfet, #viral veya ilgisiz trend etiketleri yok. Etiketleri yalnız en sonda yaz.
+Keşfedilebilirlik için konuya doğrudan bağlı, yaygın yazımlı 2–3 etiket kullan. #haber, #gündem, #keşfet, #viral veya ilgisiz trend etiketleri yok. Etiketleri yalnız hashtags JSON dizisinde ver. Başlık, body, card_headline ve card_body alanlarında hashtag kullanma; sistem hashtags dizisini metnin sonuna tek satır olarak ekler. Devre kesici gruplarında bütün doğrulanmış asıl hisse kodları #Borsa #BIST ile birlikte zorunludur; yalnız bu gruplarda 3 etiket sınırı aşılabilir. Kod yoksa #DevreKesici kullan; kod varken bununla kodları değiştirme.
 Fonlarla ilgili içeriklerde kullanıcının kategori etiketleri tam olarak #Fon #PBLK #Tasfiye olsun; bunlar diğer etiket kurallarından önceliklidir. Bu etiketlerden hareketle kaynakta olmayan tasfiye veya PBLK iddiası yazma.
 Fon dışındaki Borsa İstanbul ve BIST şirketi haberlerinde #Borsa #BIST kullan. Kaynakta doğrulanan tek asıl hisse kodu varsa üçüncü etiket tam bu kod olsun: örneğin #THYAO. Kurum/fon kısaltmasını hisse kodu sanma, şirket isminden kod tahmin etme. Birden fazla şirket veya kod yoksa üçüncü etiketi #Bilanço, #Temettü, #HalkaArz gibi ana gelişmeye göre seç.
 Yabancı borsa, teknoloji, enerji veya makro haberlerine sırf ekonomi haberi diye #BIST ekleme. Haberin asıl kuruluşunu ve konusunu seç: örneğin #Tesla #SpaceX veya #TCMB #Faiz.
@@ -158,7 +158,7 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
  const d=value as Draft;
  validateCardData(d.card_data,documents);
  if(d.source_notes!==undefined&&(!Array.isArray(d.source_notes)||d.source_notes.length>20||d.source_notes.some(n=>typeof n!=='string'||n.length>4000)))throw new Error('invalid_source_notes');
- if(typeof d.headline!=='string'||!d.headline.trim()||typeof d.body!=='string'||!Array.isArray(d.claims)||!d.claims.length||!Array.isArray(d.hashtags)||d.hashtags.length<2||d.hashtags.length>3||!Array.isArray(d.entities)||!d.entities.length||!Array.isArray(d.uncertainties)||!Number.isInteger(d.importance)||d.importance<0||d.importance>100||!d.event_key?.trim())throw new Error('incomplete_draft');
+ if(typeof d.headline!=='string'||!d.headline.trim()||typeof d.body!=='string'||!Array.isArray(d.claims)||!d.claims.length||!Array.isArray(d.hashtags)||d.hashtags.length<2||d.hashtags.length>Math.max(3,editorialPolicy(documents).required_hashtags.length)||!Array.isArray(d.entities)||!d.entities.length||!Array.isArray(d.uncertainties)||!Number.isInteger(d.importance)||d.importance<0||d.importance>100||!d.event_key?.trim())throw new Error('incomplete_draft');
  if(!['turkiye','central_banks','companies','technology','energy','global','data','bist','kap'].includes(d.category)||!['breaking','economic_data','company','global','info','circuit','kap','market','finance','news','institutional','akd','volume','broker_flow','custody'].includes(d.template))throw new Error('invalid_category');
  if(d.hashtags.some(t=>!/^#[\p{L}\p{N}_]{2,40}$/u.test(t)||/^#(?:haber|gündem)$/i.test(t)))throw new Error('generic_or_invalid_hashtags');
  if(new Set(d.hashtags.map(norm)).size!==d.hashtags.length)throw new Error('duplicate_hashtags');
@@ -190,4 +190,4 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
  if(d.body.length>20&&norm(d.body).startsWith(norm(d.headline.replace(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u,''))))throw new Error('repeated_headline');
  return {draft:d,verification:d.uncertainties.length?'needs_review':primary?'official_attributed':citedFamilies.size>1?'multiple_families_attributed':'single_source_attributed'};
 }
-export function postText(d:Draft,_sources:string[]=[]):string {return [headlineWithEmoji(d.headline),d.body,d.hashtags.join(' ')].filter(Boolean).join('\n\n');}
+export function postText(d:Draft,_sources:string[]=[]):string {const clean=normalizeHashtagPlacement(d);return [headlineWithEmoji(clean.headline),clean.body,clean.hashtags.join(' ')].filter(Boolean).join('\n\n');}

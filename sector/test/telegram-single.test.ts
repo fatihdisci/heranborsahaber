@@ -25,6 +25,16 @@ test('revision replaces the same photo message without sending another post',asy
  assert.equal(await sendDraft(env,'00000000-0000-4000-8000-000000000000',2,draft,docs,new Uint8Array(),'official',10,f),10);
  assert(method.endsWith('/editMessageMedia'));assert.equal(body!.get('message_id'),'10');assert.equal(JSON.parse(String(body!.get('media'))).caption.split('\n\n')[1],draft.body);
 });
+test('photo caption and copy button share one canonical hashtag line for legacy drafts',async()=>{
+ let form:FormData|undefined;
+ const f=(async(_url,init)=>{form=init!.body as FormData;return Response.json({ok:true,result:{message_id:10}});}) as typeof fetch;
+ const value={...draft,body:draft.body+'\n\n#Yatırım #Sanayi',hashtags:['#Yatırım','#yatırım','#Sanayi']};
+ await sendDraft(env,'00000000-0000-4000-8000-000000000000',1,value,docs,new Uint8Array([1,2]),'official',undefined,f);
+ const caption=String(form!.get('caption')),keys=JSON.parse(String(form!.get('reply_markup'))).inline_keyboard.flat();
+ assert.equal((caption.match(/#Yatırım/gi)??[]).length,1);
+ assert.equal(caption.split('\n\n').at(-1),'#Yatırım #Sanayi');
+ assert.equal(keys.find((k:{copy_text?:unknown})=>k.copy_text).copy_text.text,caption);
+});
 test('artwork contains no demo stamp, date, source list, handle, or extra category captions',()=>{
  const svg=cardSvg({headline:'Örnek Holding yeni tesis planlıyor',body:'İzin süreci devam ediyor.',template:'company'},['Gizli kaynak listesi'],'21.10.2026',true);
  assert(!/DENEME|KAYNAK|Gizli kaynak|21.10.2026|@endeks_haber|ŞİRKET HABERLERİ/.test(svg));assert(svg.includes('ENDEKS HABER'));

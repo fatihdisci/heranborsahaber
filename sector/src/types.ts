@@ -24,7 +24,7 @@ export interface Draft {
 export interface Env {
   DB:D1Database; MEDIA:R2Bucket;
   MODE:'dry_run'|'telegram_review';
-  ADMIN_TOKEN?:string; BRIDGE_TOKEN?:string; AI_MODEL:string; AI_EFFORT:'medium';
+  ADMIN_TOKEN?:string; BRIDGE_TOKEN?:string; AI_MODEL:string; AI_EFFORT:'high';
   TELEGRAM_BOT_TOKEN?:string; TELEGRAM_CHAT_ID?:string; TELEGRAM_USER_ID?:string;
   TELEGRAM_UPDATE_ID?:number;
   KAP_DELIVERY_CHECK?:(documents:Document[])=>'allow'|'suppress'|'hold';

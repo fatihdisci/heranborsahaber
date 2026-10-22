@@ -43,6 +43,43 @@ test('KAP empty fund fields and buyback budgets do not override company tags',()
 });
 
 import {repairDraftStyle} from '../src/style';
+import {postText,validateDraft} from '../src/editorial';
+const fact='Örnek Holding yeni tesis yatırımı planlıyor ve izin süreci devam ediyor.';
+const groundedDocument=doc({title:'Örnek Holding yatırım planını duyurdu',body:fact,passages:[{id:'p1',text:fact}]});
+const groundedDraft:Draft={headline:'📢 Örnek Holding yeni tesis planlıyor',body:'Yeni tesisin izin süreci henüz tamamlanmadı.',card_headline:'Örnek Holding yatırım planlıyor',card_body:'Yeni tesis için izin süreci sürüyor.',hashtags:['#Yatırım','#Sanayi'],category:'companies',importance:75,template:'company',claims:[{text:fact,evidence:[{document:0,passage:'p1',quote:fact}]}],entities:['Örnek Holding'],event_key:'ornek-yatirim',uncertainties:[]};
+test('model hashtag paragraphs are consolidated once across normalization, caption and copy text',()=>{
+ const d={...groundedDraft,body:groundedDraft.body+'\n\n#Yatırım #Sanayi\n#yatırım #Sanayi',hashtags:['#Yatırım','#yatırım','#Sanayi']};
+ const fixed=repairDraftStyle(d,[groundedDocument]);
+ assert.equal(fixed.body,groundedDraft.body);assert.deepEqual(fixed.hashtags,['#Yatırım','#Sanayi']);
+ assert.deepEqual(repairDraftStyle(fixed,[groundedDocument]),fixed);
+ assert.equal(postText(d),postText(fixed));
+ assert.equal((postText(d).match(/#Yatırım/gi)??[]).length,1);
+ assert.throws(()=>validateDraft({...d,hashtags:fixed.hashtags},[groundedDocument]),/misplaced_hashtags/);
+ assert.doesNotThrow(()=>validateDraft(fixed,[groundedDocument]));
+});
+test('inline ticker wording survives while trailing hashtag labels and duplicates are removed',()=>{
+ const d={headline:'📢 #THYAO sözleşme imzaladı',body:'#THYAO sözleşme imzaladı. #Borsa #BIST\n\nEtiketler: #Borsa #BIST #THYAO',hashtags:['#borsa','#BIST'],card_headline:'#THYAO sözleşmesi',card_body:'Süreç sürüyor.'} as Draft;
+ const fixed=repairDraftStyle(d,[doc({equity_codes:['THYAO']})]);
+ assert.equal(fixed.headline,'📢 THYAO sözleşme imzaladı');assert.equal(fixed.body,'THYAO sözleşme imzaladı.');assert.equal(fixed.card_headline,'THYAO sözleşmesi');
+ assert.deepEqual(fixed.hashtags,['#Borsa','#BIST','#THYAO']);assert.deepEqual(repairDraftStyle(fixed,[doc({equity_codes:['THYAO']})]),fixed);
+});
+test('source-backed circuit group tickers and alphanumeric codes are all preserved',()=>{
+ const docs=['DUNYH','AKSUE'].map(code=>doc({official:true,source_id:'kap',title:'Pay Bazında Devre Kesici Bildirimi',equity_codes:[code]}));
+ const expected=['#Borsa','#BIST','#DUNYH','#AKSUE'];
+ assert.deepEqual(editorialPolicy(docs).required_hashtags,expected);
+ const fixed=repairDraftStyle({...groundedDraft,hashtags:['#Borsa','#BIST','#DevreKesici','#FAKE']},docs);
+ assert.deepEqual(fixed.hashtags,expected);assert.deepEqual(styleIssues(fixed,docs),[]);
+ assert.deepEqual(editorialPolicy([doc({equity_codes:['sise','SISE','A1CAP','A2','XU1000']})]).verified_equity_codes,['SISE','A1CAP']);
+ assert.deepEqual(editorialPolicy([doc({body:'BIST: A1CAP açıklama yaptı.'})]).required_hashtags,['#Borsa','#BIST','#A1CAP']);
+});
+test('grouped circuit validation permits only source-mandated extra tags and preserves URL fragments',()=>{
+ const docs=['DUNYH','AKSUE'].map(code=>doc({...groundedDocument,official:true,source_id:'kap',title:'Pay Bazında Devre Kesici Bildirimi',equity_codes:[code]}));
+ const fixed=repairDraftStyle(groundedDraft,docs);
+ assert.doesNotThrow(()=>validateDraft(fixed,docs));
+ assert.throws(()=>validateDraft({...fixed,hashtags:[...fixed.hashtags,'#Fazla']},docs),/incomplete_draft/);
+ const link='https://example.org/news#section';
+ assert.equal(repairDraftStyle({...groundedDraft,body:link},[groundedDocument]).body,link);
+});
 test('KAP company attachments do not turn financial reports into fund stories',()=>{
  const docs=[doc({source_id:'kap',official:true,title:'Finansal Rapor',equity_codes:['KLGYO']}),doc({source_id:'kap_pdf',official:true,title:'Bilanço eki',body:'Şirket fon kaynaklarını ve yatırım fonlarını muhasebe dipnotunda açıkladı.'})];
  assert.deepEqual(editorialPolicy(docs).required_hashtags,['#Borsa','#BIST','#KLGYO']);

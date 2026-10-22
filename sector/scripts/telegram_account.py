@@ -97,6 +97,36 @@ async def query(client,db,root,value):
     result={'bot':bot,'command':command,'message_ids':[m.id for m in responses],'text':text,'images':images}
     db.execute("UPDATE requests SET state='complete',result=? WHERE key=?",(json.dumps(result,ensure_ascii=False),key));db.commit();return result
 
+def valid_credentials(cfg):
+    return (isinstance(cfg,dict) and type(cfg.get('api_id')) is int
+            and 1<=cfg['api_id']<=2147483647
+            and isinstance(cfg.get('api_hash'),str)
+            and re.fullmatch(r'[0-9a-fA-F]{32}',cfg['api_hash']) is not None)
+
+def load_credentials(config,setup=False):
+    cfg=None
+    if config.exists():
+        try:cfg=json.loads(config.read_text())
+        except (ValueError,UnicodeError):pass
+    if valid_credentials(cfg):return cfg
+    if not setup:
+        raise QueryError('bot_account_invalid' if config.exists() else 'bot_account_not_connected')
+    if config.exists():print('Kaydedilmiş API bilgileri geçersiz. Lütfen yeniden gir.')
+    print('API ID yazarken görünür. API hash güvenlik için görünmez; yalnızca bir kez yapıştırıp Enter tuşuna bas.')
+    while True:
+        api_id=input('App api_id: ').strip()
+        if not re.fullmatch(r'[0-9]{1,10}',api_id) or not 1<=int(api_id)<=2147483647:
+            print('Geçersiz API ID. Telefon numarası değil, API development tools sayfasındaki App api_id değerini gir.');continue
+        break
+    while True:
+        api_hash=getpass.getpass('App api_hash (gizli): ').strip()
+        if re.fullmatch(r'[0-9a-fA-F]{32}',api_hash):break
+        print('API hash 32 onaltılık karakter olmalı. Değeri yalnızca bir kez yapıştır.')
+    updated=dict(cfg) if isinstance(cfg,dict) else {}
+    updated.update(api_id=int(api_id),api_hash=api_hash)
+    private_json(config,updated)
+    return updated
+
 async def main(mode,root=ROOT):
     os.umask(0o077);root.mkdir(parents=True,exist_ok=True,mode=0o700)
     with (root/'account.lock').open('a') as lock:
@@ -106,14 +136,9 @@ async def main(mode,root=ROOT):
         if mode=='setup':
             if not sys.stdin.isatty():raise QueryError('bot_account_terminal_required')
             print('Telegram API ID ve API hash: my.telegram.org → API development tools. Bilgiler yalnız bu bilgisayarda saklanır.')
-            if not config.exists():
-                api_id=getpass.getpass('API ID: ').strip();api_hash=getpass.getpass('API hash: ').strip()
-                if not api_id.isdigit() or not re.fullmatch(r'[0-9a-fA-F]{32}',api_hash):raise QueryError('bot_account_invalid')
-                private_json(config,{'api_id':int(api_id),'api_hash':api_hash})
-        if not config.exists():raise QueryError('bot_account_not_connected')
+        cfg=load_credentials(config,setup=mode=='setup')
         from telethon import TelegramClient
         from telethon.errors import FloodWaitError
-        cfg=json.loads(config.read_text())
         client=TelegramClient(str(root/'account'),cfg['api_id'],cfg['api_hash'],request_retries=0,connection_retries=1,timeout=15,flood_sleep_threshold=0)
         db=open_journal(root)
         try:

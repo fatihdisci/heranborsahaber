@@ -48,3 +48,32 @@ class AccountQueries(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(m.QueryError,'rate_limited'):await m.query(client,self.db,self.root,self.value)
         client.get_entity.assert_not_awaited();client.send_message.assert_not_awaited()
 if __name__=='__main__':unittest.main()
+
+class AccountCredentials(unittest.TestCase):
+    def test_signed_int32_and_hash_validation(self):
+        for value in (0,-1,2147483648,999999999999999,True,'123',None):
+            self.assertFalse(m.valid_credentials({'api_id':value,'api_hash':'a'*32}))
+        for value in (1,2147483647):
+            self.assertTrue(m.valid_credentials({'api_id':value,'api_hash':'a'*32}))
+        for cfg in ([],None,{}, {'api_id':1,'api_hash':1}):self.assertFalse(m.valid_credentials(cfg))
+    def test_invalid_saved_id_prompts_again_and_preserves_account_binding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=pathlib.Path(directory)/'account.json'
+            path.write_text(json.dumps({'api_id':999999999999999,'api_hash':'a'*32,'user_id':42}))
+            with patch('builtins.input',side_effect=['999999999999999','123']),patch.object(m.getpass,'getpass',side_effect=['bad','b'*32]),patch('builtins.print'):
+                cfg=m.load_credentials(path,setup=True)
+            self.assertEqual(cfg,{'api_id':123,'api_hash':'b'*32,'user_id':42})
+            self.assertEqual(json.loads(path.read_text()),cfg)
+            self.assertEqual(path.stat().st_mode & 0o777,0o600)
+    def test_valid_saved_config_does_not_prompt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=pathlib.Path(directory)/'account.json';cfg={'api_id':123,'api_hash':'a'*32,'user_id':42}
+            path.write_text(json.dumps(cfg))
+            with patch('builtins.input') as prompt:self.assertEqual(m.load_credentials(path,setup=True),cfg)
+            prompt.assert_not_called()
+    def test_query_rejects_invalid_configuration_without_prompting(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=pathlib.Path(directory)/'account.json';path.write_text('{bad')
+            with patch('builtins.input') as prompt:
+                with self.assertRaisesRegex(m.QueryError,'bot_account_invalid'):m.load_credentials(path)
+            prompt.assert_not_called()

@@ -11,4 +11,9 @@ def main():
     if not python.exists():subprocess.run([sys.executable,'-m','venv',str(python.parent.parent)],check=True)
     subprocess.run([str(python),'-m','pip','install','--disable-pip-version-check','-r',str(app/'requirements-telegram.txt')],check=True)
     subprocess.run([str(python),str(app/'scripts/telegram_account.py'),'setup'],check=True)
-if __name__=='__main__':main()
+if __name__=='__main__':
+    try:main()
+    except subprocess.CalledProcessError:
+        raise SystemExit('Kurulum tamamlanamadı. Yukarıdaki hatayı kontrol edip bağlantı dosyasını yeniden açabilirsin.')
+    except (KeyboardInterrupt,EOFError):
+        raise SystemExit('Kurulum iptal edildi; yeniden açarak devam edebilirsin.')

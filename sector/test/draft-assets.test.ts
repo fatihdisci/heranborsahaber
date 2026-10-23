@@ -17,16 +17,15 @@ async function fixture(){
 async function press(env:Env,kind='text',update=1,user=1,revision=1,message=100){
  return worker.fetch(new Request('https://local/telegram/webhook',{method:'POST',headers:{'x-telegram-bot-api-secret-token':'test'},body:JSON.stringify({update_id:update,callback_query:{id:'callback'+update,data:`asset:${kind}:${id}:${revision}`,from:{id:user},message:{message_id:message,chat:{id:1,type:'private'}}}})}),env,{waitUntil:()=>{}} as unknown as ExecutionContext);
 }
-test('native copy preserves 256 characters; longer captions never truncate',()=>{
- assert.deepEqual(keyboard(id,1,docs,'a'.repeat(256)).inline_keyboard.flat().find(b=>b.text==='📋'),{text:'📋',copy_text:{text:'a'.repeat(256)}});
- const long=keyboard(id,2,docs,'a'.repeat(257)).inline_keyboard.flat().filter(b=>b.text==='📋');
- assert.equal('copy_text' in long[0],false);
- assert.equal(long.length,1);
- assert(!JSON.stringify(keyboard(id,2,docs,'a'.repeat(257))).includes('Görseli al'));
- assert.equal((long[0] as {callback_data:string}).callback_data,`asset:text:${id}:2`);
- for(const button of long)assert(Buffer.byteLength((button as {callback_data:string}).callback_data)<=64);
+test('draft keyboards omit text-copy for short and long captions while retaining other actions',()=>{
+ for(const length of [1,256,257,1024]){
+  const buttons=keyboard(id,2,docs,'a'.repeat(length),true).inline_keyboard.flat();
+  assert(!buttons.some(b=>b.text==='📋'||'copy_text' in b||('callback_data' in b&&b.callback_data?.startsWith('asset:text:'))));
+  for(const prefix of ['s:edit:','xpost:','pub:mark:','pub:stats:','asset:image:'])assert(buttons.some(b=>'callback_data' in b&&b.callback_data?.startsWith(prefix)),prefix);
+  assert.equal(buttons.find(b=>'url' in b)?.url,docs[0].url);
+ }
 });
-test('copy sends exact text with UTF-16 entity, without AI or duplicate delivery',async()=>{
+test('legacy text callback still sends exact text with UTF-16 entity, without AI or duplicate delivery',async()=>{
  const env=await fixture(),original=globalThis.fetch,calls:{url:string;body:URLSearchParams}[]=[];
  globalThis.fetch=async(url,init)=>{calls.push({url:String(url),body:init!.body as URLSearchParams});return Response.json({ok:true,result:{message_id:101}});};
  try{

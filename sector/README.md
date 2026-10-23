@@ -90,7 +90,7 @@ Bot, özel sohbetlerde Türkçe komut menüsünü servis açılışında Telegra
 MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
 Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
 
-Güncel kararlar: X'e zamanlanmış/otomatik yayın yok; kullanıcı yalnız Telegram'daki açık Paylaş düğmesiyle gönderir. Telegram'da tek fotoğraf + tweet açıklaması + Kaynağı aç, Tweet’i kopyala, Kartı yeniden tasarla ve Düzenle düğmeleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
+Güncel kararlar: X'e zamanlanmış/otomatik yayın yok; kullanıcı yalnız Telegram'daki açık Paylaş düğmesiyle gönderir. Telegram'da tek fotoğraf + tweet açıklaması + kaynak, düzenleme, tasarım, PNG/veri/kanıt ve yayın yardımcı düğmeleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
@@ -161,7 +161,7 @@ Tweet başlığı tek bir uygun emojiyle başlar (varsayılan 📢, gerçekten a
 
 ## Metin ve görseli alma
 
-Fotoğraflı taslaklarda “Tweet’i kopyala” bulunur. Telegram’ın CopyTextButton sınırı nedeniyle 256 karaktere kadar metin doğrudan panoya kopyalanır. Daha uzun tweetler kesilmez; tam metin, Telegram’ın kopyalama seçeneği bulunan biçimlendirilmiş metin mesajı olarak açılır. “Görseli al” düğmesi kaldırıldı; eski mesajlardaki düğmelerin uyumluluğu korunur. Bu ek mesajlar yalnız düğmeye basıldığında gönderilir, AI çağrısı yapılmaz. Yetki, kart kimliği ve sürüm doğrulanır; aynı Telegram update yeniden gelirse tekrar gönderilmez. Mevcut mesajlar topluca değiştirilmez; yeni ve düzenlenmiş taslaklarda düğmeler görünür.
+Fotoğraflı taslaklarda metin kopyalama (📋) düğmesi kaldırılmıştır. Metin, Telegram'ın kendi mesaj seçme/kopyalama işleviyle alınabilir. Orijinal PNG indirme (🖼) korunur. Eski mesajlardaki metin callback'lerinin sürüm/sahip/idempotency korumaları uyumluluk için sürer; yeni klavyeler bu callback'i üretmez. Düğmelerin tamamının açıklaması: [Telegram düğme rehberi](docs/telegram-buttons.md).
 
 ## Toparlanma ve güvenli güncelleme
 

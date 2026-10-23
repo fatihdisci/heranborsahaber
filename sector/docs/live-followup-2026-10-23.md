@@ -1,0 +1,7 @@
+# Controlled follow-up
+
+Real source dry-run fetched the İş Yatırım feed, discovered the article and full-size image, and ran native image OCR against an isolated in-memory database. All 54 rows were retained, transaction date 2026-10-22; publication 2026-10-23. The selected ten follow the production dated index snapshot. Null cells remain null. PNG/CSV and source/image/index hash evidence were saved outside Git. No production delivery state was changed. Real Telegram delivery and future new-report processing remain separate, unverified events.
+
+The existing Cloudflare panel project was updated from commit 82c871f; version 29724473-c810-4844-b95c-38d68cd2d1b6. Its local staged sync correctly refused activation after TLS failure. Node reports ERR_SSL_WRONG_VERSION_NUMBER; curl also fails, including IPv4 and a temporary independently resolved destination. Certificate checks were never disabled. Local panel remains on its previous release. Live UI/API verification is blocked on safe network access to the existing workers.dev endpoint.
+
+KAP review records remain intact: 17 number/unit, 3 semantic, 2 PDF page limit, 2 evidence size, 2 operation, 1 Hermes and 1 evidence read error. This backlog does not mean the collector is down. The health record now distinguishes content attention, current delivery errors and review reason counts. Runtime release and catalog version/count are visible through owner-only commands. No review approval, filter activation, scope change, replay, or X test post.

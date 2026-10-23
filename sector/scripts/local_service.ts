@@ -1,3 +1,5 @@
+import {COMPANY_CATALOG_VERSION,catalogEntities} from '../src/news-company-catalog';
+import {kapDeliveryHealth} from '../src/kap-health';
 import {pollBuybacks} from '../src/buyback-pipeline';
 import {readBuybackImage} from './buyback_reader';
 import {DatabaseSync} from 'node:sqlite';
@@ -105,7 +107,7 @@ async function kapLoop(){
  const path=directory+'/kap/kap.sqlite';let store:KapStore|undefined,consumer:KapDelivery|undefined;
  while(!stopping()){try{
   if(!store){await access(path);store=new KapStore(path);consumer=new KapDelivery(store,env,id=>kapDocuments(id,readPdf));const reports=new KapReports(store);env.KAP_REPORT=(kind,at,prefs)=>reports.build(kind,at,Date.now(),prefs);env.KAP_DELIVERY_CHECK=documents=>consumer!.deliveryDecision(documents);}
-  const result=await consumer!.run();await status('kap_delivery_health',{ok:!['uncertain','needs_review'].includes(result.state),at:new Date().toISOString(),...result});
+  const result=await consumer!.run();await status('kap_delivery_health',{...kapDeliveryHealth(result.state),review_pending:consumer?consumer.reviewSummary():[],at:new Date().toISOString(),...result});
  }catch(e){await status('kap_delivery_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}
  await pause(5_000);}
  delete env.KAP_DELIVERY_CHECK;store?.close();
@@ -131,6 +133,7 @@ async function telegramCommandsLoop(){
  }
 }
 try{await withServiceLock(lock,()=>unlink(lockPath),async()=>{
+ await status('runtime_identity',{release:process.env.SECTOR_RELEASE_ID??'unknown',catalog:{version:COMPANY_CATALOG_VERSION,companies:new Set(catalogEntities.map(c=>c.code)).size},at:new Date().toISOString()});
  await writeFile(directory+'/service-ready.json',JSON.stringify({pid:process.pid,release:process.env.SECTOR_RELEASE_ID??'',started_at:new Date().toISOString()}),{mode:0o600});
  await cleanupSourceArtifacts().catch(()=>0);lastArtifactCleanup=Date.now();
  if(!await awaitActivation(directory,process.env.SECTOR_RELEASE_ID,()=>stopping()))return;

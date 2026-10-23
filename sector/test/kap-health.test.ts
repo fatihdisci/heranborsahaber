@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {kapDeliveryHealth} from '../src/kap-health';
+test('retained content review remains visible without declaring delivery loop broken',()=>{assert.deepEqual(kapDeliveryHealth('needs_review'),{ok:true,attention:'content_review'});for(const state of ['idle','model_queued','budget_wait'])assert.equal(kapDeliveryHealth(state).ok,true);for(const state of ['uncertain','evidence_failed'])assert.equal(kapDeliveryHealth(state).ok,false);});

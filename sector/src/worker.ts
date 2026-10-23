@@ -39,7 +39,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
   if(await publicationMessage(env,message,Number(id)))return json({ok:true});
   const edit=await env.DB.prepare('SELECT * FROM edits WHERE user_id=? AND expires_at>?').bind(env.TELEGRAM_USER_ID!,Math.floor(Date.now()/1000)).first<{draft_id:string;revision:number;prompt_message_id:number}>();
   if(edit&&message.text&&message.reply_to_message?.message_id===edit.prompt_message_id) {
-   try {await enqueueEdit(env,edit.draft_id,edit.revision,message.text);await env.DB.prepare('DELETE FROM edits WHERE user_id=?').bind(env.TELEGRAM_USER_ID!).run();}
+   try {const state=await publicationState(env,edit.draft_id);if(state.published||state.api)throw Error('publication_locked');await enqueueEdit(env,edit.draft_id,edit.revision,message.text);await env.DB.prepare('DELETE FROM edits WHERE user_id=?').bind(env.TELEGRAM_USER_ID!).run();}
    catch(e) {await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:e instanceof Error&&e.message==='unsupported_output_limit'?OUTPUT_LIMIT_MESSAGE:'Düzenleme kaydedilemedi. Karttaki Düzenle düğmesinden tekrar deneyebilirsin.'}));}
   } else await queueManual(env,Number(id),message);
   return json({ok:true});
@@ -60,11 +60,14 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  // Revisionless legacy publication/copy controls cannot mutate current state.
  const legacy=cb.data?.match(/^pub:(?:mark|undo|defer|time|stats):([a-f0-9-]{36})$/)??cb.data?.match(/^asset:text:([a-f0-9-]{36}):\d+$/);
  if(legacy){const row=await env.DB.prepare("SELECT id FROM drafts WHERE id=? AND message_id=? AND delivery_state='sent'").bind(legacy[1],cb.message.message_id).first<{id:string}>();if(row)await refreshDraftMenu(env,row.id);await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:row?'Güncel menü açıldı.':'Güncel kartı kullan.'}));return json({ok:true});}
+ const oldApproval=cb.data?.match(/^s:(?:approve|reject|defer):([a-f0-9-]{36}):(\d{1,6})$/);
+ if(oldApproval){const row=await env.DB.prepare("SELECT id FROM drafts WHERE id=? AND revision=? AND message_id=? AND state='pending' AND delivery_state='sent' AND expires_at>?").bind(oldApproval[1],Number(oldApproval[2]),cb.message.message_id,Math.floor(Date.now()/1000)).first<{id:string}>();if(row)await refreshDraftMenu(env,row.id);await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:row?'Güncel menü açıldı.':'Bu eski düğme kullanılamıyor; güncel kartı kullan.'}));return json({ok:true});}
  const ed=await editorCallback(env,cb.data,cb.message.message_id);if(ed!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:ed}));return json({ok:true});}
  const newsroom=await newsroomCallback(env,cb.data,cb.message.message_id,Number(id));if(newsroom!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:newsroom.slice(0,190)}));return json({ok:true});}
  if(cb.data==='xcount'||cb.data?.startsWith('xpost:')){await requestX(env,cb.data,cb.message.message_id,cb.id);return json({ok:true});}
  if(cb.data?.startsWith('design:')){
   const parts=cb.data.split(':');const current=await env.DB.prepare("SELECT id FROM drafts WHERE id=? AND revision=? AND message_id=? AND delivery_state='sent' AND state='pending' AND expires_at>?").bind(parts[1],Number(parts[2]),cb.message.message_id,Math.floor(Date.now()/1000)).first();if(!current){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:'Güncel ve süresi geçmemiş kartı kullan.'}));return json({ok:true});}
+  const publication=await publicationState(env,parts[1]);if(publication.published||publication.api){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:'Yayınlanmış veya paylaşımı süren kartın tasarımı değiştirilemez.'}));return json({ok:true});}
   const answer=await requestRedesign(env,cb.data,cb.message.message_id,Number(id));
   await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});
   return json({ok:true});
@@ -86,6 +89,7 @@ async function webhook(request:Request,env:Env):Promise<Response> {
   if(!row||row.revision!==action.revision||row.message_id!==cb.message.message_id)throw new Error('stale_callback');
   const state=transition(row.state as Status,action.action,row.verification,row.expires_at<Math.floor(Date.now()/1000));
   if(action.action==='edit') {
+   const publication=await publicationState(env,row.id);if(publication.published||publication.api)throw Error('publication_locked');
    const prompt=await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Bu mesaja yanıt olarak istediğin düzenlemeyi yaz. Metin kaynakla yeniden denetlenecek.',reply_markup:JSON.stringify({force_reply:true,selective:true})}));
    await env.DB.prepare('INSERT INTO edits(user_id,draft_id,revision,expires_at,prompt_message_id) VALUES(?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET draft_id=excluded.draft_id,revision=excluded.revision,expires_at=excluded.expires_at,prompt_message_id=excluded.prompt_message_id').bind(env.TELEGRAM_USER_ID!,row.id,row.revision,Math.floor(Date.now()/1000)+900,Number(prompt.message_id)).run();
    answer='Düzenleme isteğini gönder.';

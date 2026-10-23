@@ -1,3 +1,4 @@
+import {publicationState} from './telegram-ui';
 import {refreshDraftMenu} from './card-menu';
 import type {Env,Draft,Document} from './types';
 import {telegram} from './telegram';import {enqueueEdit} from './bridge';
@@ -18,6 +19,7 @@ export async function editorCallback(env:Env,data:string,messageId:number):Promi
   await refreshDraftMenu(env,row.id,'layouts');return '';
  }
  if(m[1]==='correct'){
+  const publication=await publicationState(env,row.id);if(publication.published||publication.api)return 'Yayınlanmış veya paylaşımı süren kart düzeltilemez.';
   const p=await send(env,'Hücreyi bu mesaja yanıtlayarak düzelt: buy.0.value = 123 lot\nAlanlar: buy / sell / holdings / metrics, sıfırdan başlayan satır, label / value. Düzeltme kullanıcı beyanı olarak kaydedilecek ve mevcut denetimden geçecek.',{reply_markup:JSON.stringify({force_reply:true,selective:true})});
   await env.DB.prepare('INSERT OR REPLACE INTO editor_prompts VALUES(?,?,?,?,?,?)').bind(env.TELEGRAM_USER_ID!,row.id,row.revision,Number(p.message_id),'cell',now()+900).run();return 'Düzeltilecek hücreyi yanıtla.';
  }
@@ -36,6 +38,7 @@ export async function editorMessage(env:Env,m:any,update:number){
   const summary=JSON.stringify({health:health.map(h=>{let v:any={};try{v=JSON.parse(h.value);}catch{}return {key:h.key,...(typeof v==='number'?{until:v}:{ok:v.ok,at:v.at,code:v.code})};}),jobs,sources,deliveries,quotas,x_api:{used,limit:20}});if(summary.length<=3900)await send(env,summary);else{const file=new FormData();file.set('chat_id',env.TELEGRAM_CHAT_ID!);file.set('document',new Blob([summary],{type:'application/json'}),'endeks-durum.json');await telegram(env,'sendDocument',file);}return true;
  }
  const prompt=await env.DB.prepare('SELECT * FROM editor_prompts WHERE user_id=? AND message_id=? AND expires_at>?').bind(env.TELEGRAM_USER_ID!,m.reply_to_message?.message_id??0,now()).first<any>();if(!prompt)return false;
+ const publication=await publicationState(env,prompt.draft_id);if(publication.published||publication.api){await send(env,'Yayın durumu değişmiş; bu düzeltme uygulanmadı.');return true;}
  const match=/^(buy|sell|holdings|metrics)\.(\d+)\.(label|value)\s*=\s*(.{1,200})$/u.exec(m.text??'');
  if(!match){await send(env,'Biçim: buy.0.value = 123 lot');return true;}
  const row=await env.DB.prepare("SELECT content FROM drafts WHERE id=? AND revision=? AND state='pending' AND delivery_state='sent' AND expires_at>?").bind(prompt.draft_id,prompt.revision,now()).first<{content:string}>();

@@ -49,7 +49,7 @@ test('manual mark/undo and defer/ready affect only the manual ledger; API public
  }finally{f.restore();}
 });
 test('legacy revisionless publication and copy controls redirect safely; expired controls cannot revive a publication or redesign',async()=>{
- const e=await setup(),f=fake();try{await press(e,`pub:mark:${id}`,1);await press(e,`asset:text:${id}:1`,2);assert.equal((await e.DB.prepare('SELECT COUNT(*) n FROM publication_marks').first<any>()).n,0);assert(f.calls.every(c=>['editMessageReplyMarkup','answerCallbackQuery'].includes(c.method)));
+ const e=await setup(),f=fake();try{await press(e,`pub:mark:${id}`,1);await press(e,`asset:text:${id}:1`,2);for(const [i,action] of ['approve','reject','defer'].entries())await press(e,`s:${action}:${id}:1`,10+i);assert.equal((await e.DB.prepare('SELECT state FROM drafts').first<any>()).state,'pending');assert.equal((await e.DB.prepare('SELECT COUNT(*) n FROM publication_marks').first<any>()).n,0);assert(f.calls.every(c=>['editMessageReplyMarkup','answerCallbackQuery'].includes(c.method)));
  await e.DB.prepare('UPDATE drafts SET expires_at=1').run();await press(e,`dp:mark:${id}:1`,3);await press(e,`design:${id}:1`,4);await press(e,`xpost:${id}:1`,5);assert.equal((await e.DB.prepare('SELECT COUNT(*) n FROM card_redesigns').first<any>()).n,0);assert.equal((await e.DB.prepare('SELECT COUNT(*) n FROM x_posts').first<any>()).n,0);
  }finally{f.restore();}
 });
@@ -64,5 +64,10 @@ test('UI schema upgrades a populated previous schema without altering source, pu
 
 test('existing-card migration edits markup only, respects current revision/status and deduplicates message IDs',async()=>{
  const {menuPlan,refreshMenuItem}=await import('../src/menu-refresh'),e=await setup(),f=fake();try{const plan=await menuPlan(e);assert.equal(plan.length,2);for(const item of plan)assert(await refreshMenuItem(e,item));assert(f.calls.every(c=>c.method==='editMessageReplyMarkup'));assert.equal((await e.DB.prepare('SELECT COUNT(*) n FROM x_posts').first<any>()).n,0);const item=plan.find(i=>i.kind==='draft')!;await e.DB.prepare('UPDATE drafts SET revision=2').run();const before=f.calls.length;assert.equal(await refreshMenuItem(e,item),false);assert.equal(f.calls.length,before);assert.equal(JSON.parse((await e.DB.prepare('SELECT content FROM drafts').first<any>()).content).body,draft.body);
+ }finally{f.restore();}
+});
+
+test('published state also rejects old edit, cell and design controls even if the revision still matches',async()=>{
+ const e=await setup(),f=fake();try{await e.DB.prepare("INSERT INTO publication_marks VALUES(?,'published',?,?)").bind(id,now,now).run();for(const [i,data] of [`s:edit:${id}:1`,`ed:correct:${id}:1`,`design:${id}:1`].entries())await press(e,data,100+i);assert(!f.calls.some(c=>c.method==='sendMessage'));for(const table of ['edits','editor_prompts','card_redesigns','model_jobs','x_posts'])assert.equal((await e.DB.prepare('SELECT COUNT(*) n FROM '+table).first<any>()).n,0,table);
  }finally{f.restore();}
 });

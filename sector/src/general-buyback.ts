@@ -20,9 +20,10 @@ export function generalBuyback(_kind:string,records:ReportRecord[],indices:Indic
  const sorted=[...totals].sort((a,b)=>a[1].complete!==b[1].complete?a[1].complete?-1:1:a[1].cost===b[1].cost?a[0].localeCompare(b[0]):a[1].cost>b[1].cost?-1:1);
  const rows=sorted.map(([ticker,v])=>({ticker,lots:formatQuantity(v.lots.toString()),price:v.complete?decimal(v.cost,v.lots*1000000n,4):'—',amount:v.complete?decimal(v.cost,1000000000n,2):'—',urls:[...v.urls].join(' ')}));
  const missing=blocked.size+sorted.filter(([,v])=>!v.complete).length;
- const general={day,time,companies:rows.length,lots:formatQuantity([...totals.values()].reduce((a,v)=>a+v.lots,0n).toString()),amount:decimal([...totals.values()].filter(v=>v.complete).reduce((a,v)=>a+v.cost,0n),1000000000n,2),missing,rows};
+ const general={day,time,partial:/gecikme|eksik|kısmi/iu.test(coverage),companies:rows.length,lots:formatQuantity([...totals.values()].reduce((a,v)=>a+v.lots,0n).toString()),amount:decimal([...totals.values()].filter(v=>v.complete).reduce((a,v)=>a+v.cost,0n),1000000000n,2),missing,rows};
  const d=result.draft;d.headline='📢 Güncel pay geri alımları';d.card_headline='PAY GERİ ALIMLARI';
  d.body=`${day} saat ${time} itibarıyla kayıtlı işlemlerde ${rows.length} farklı hissede toplam ${general.lots} lot geri alım doğrulandı.\n\n${missing?'Verisi eksik şirketler var; tutar toplamı yalnız fiyatı doğrulanan satırları kapsar.':'Toplam işlem tutarı: '+general.amount+' TL.'}\n\n${coverage}\n\nTüm satırlar görselde ve CSV dosyasında. Yalnız KAP kayıtları esas alınmıştır; farklılık gösterebilir.`;
+ d.source_notes=[...(d.source_notes??[]),coverage,...(missing?['Eksik/kısmi geri alım verisi: '+missing+' kayıt/şirket; tutar toplamı yalnız fiyatı doğrulanan satırları kapsar.']:[])];
  d.card_data!.report!.general=general;d.claims=[{text:d.body,evidence:[{document:0,passage:'computed_report',quote:d.body}]}];result.documents[0].body=d.body;result.documents[0].passages=[{id:'computed_report',text:d.body}];return result;
 }
 export function generalCsv(g:NonNullable<NonNullable<import('./types').CardData['report']>['general']>){

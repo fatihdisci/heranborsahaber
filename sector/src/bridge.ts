@@ -1,3 +1,4 @@
+import {outputPreferences} from './output-preferences';
 import {chooseLayout,savedLayout} from './card-layout';
 import {previousModelIssues} from './model-recovery';
 import {withKapUnitEvidence} from './kap-unit-evidence';
@@ -48,14 +49,23 @@ export async function leaseJob(env:Env) {
 }
 export async function enqueueEdit(env:Env,id:string,revision:number,request:string):Promise<void> {
  if(!request.trim()||request.length>12_000)throw new Error('invalid_edit_request');
- const row=await env.DB.prepare("SELECT * FROM drafts WHERE id=? AND revision=? AND state='pending' AND expires_at>?").bind(id,revision,now()).first<{documents:string}>();if(!row)throw new Error('stale_edit');
+ const row=await env.DB.prepare("SELECT * FROM drafts WHERE id=? AND revision=? AND state='pending' AND expires_at>?").bind(id,revision,now()).first<{documents:string;content:string}>();if(!row)throw new Error('stale_edit');
  const article=await env.DB.prepare('SELECT * FROM articles WHERE draft_id=? ORDER BY first_seen LIMIT 1').bind(id).first<{id:string;source_id:string;url:string;title:string;summary:string;published_at:string}>();if(!article)throw new Error('edit_source_missing');
  const stored=JSON.parse(row.documents) as Document[];
  const localEvidence=stored[0]?.source_id==='kap'||stored[0]?.source_id==='manual-input';
  const source=(registry as Source[]).find(s=>s.id===article.source_id);
  if(!localEvidence&&!source)throw new Error('edit_source_missing');
- const documents=(localEvidence?stored:[await readDocument(article,source!)]).map(d=>selectMarketDocument(d,marketSelection(request)));
+ const previousPreferences=(JSON.parse(row.content) as Draft).output_preferences??stored.find(d=>d.output_preferences)?.output_preferences;
+ const preference=outputPreferences(request,previousPreferences)??previousPreferences;
+ const documents=(localEvidence?stored:[await readDocument(article,source!)]).map(d=>({...selectMarketDocument(d,preference?.side??marketSelection(request)),...(preference?{output_preferences:preference}:{})}));
  if(documents.some(d=>!d.body||!d.passages.length))throw new Error('edit_source_incomplete');
+ const corrections=(await env.DB.prepare("SELECT path,before_value,after_value FROM editor_corrections WHERE draft_id=? AND revision=? AND state='proposed'").bind(id,revision).all<{path:string;before_value:string;after_value:string}>()).results;
+ if(corrections.length){const original=await env.DB.prepare('SELECT content FROM drafts WHERE id=? AND revision=?').bind(id,revision).first<{content:string}>();const table=JSON.parse(original!.content).card_data;
+  for(const c of corrections){const [side,index,field]=c.path.split('.');if(!table?.[side]?.[Number(index)])throw Error('correction_cell_missing');table[side][Number(index)][field]=c.after_value;}
+  const priorMarket=documents.find(d=>d.market_data)?.market_data;
+  if(priorMarket)for(const d of documents)if(d.market_data){d.passages.push({id:'original_market_snapshot',text:JSON.stringify(d.market_data)});delete d.market_data;}
+  const effectiveMarket=priorMarket?{...priorMarket,...(priorMarket.kind==='institutional'?{rows:(['buy','sell'] as const).flatMap(side=>(table?.[side]??[]).map((r:any,i:number)=>({side,symbol:r.label,volume:r.value,rank:i+1})))}:{})}:undefined;
+  const body=corrections.map(c=>`${c.path}: ${c.before_value} → ${c.after_value}`).join('\n');documents.push({source_id:'editor-correction',source_name:'Editör düzeltmesi (kullanıcı beyanı)',family:'owner-declaration',official:false,url:`https://local.sector/editor/${id}/${revision}`,title:'Hedefli hücre düzeltmeleri',editor_corrections:corrections,market_data:effectiveMarket,equity_codes:effectiveMarket?.kind==='institutional'?effectiveMarket.rows?.map(r=>r.symbol).filter(c=>/^[A-Z][A-Z0-9]{3,4}$/.test(c)):undefined,body,passages:[{id:'owner_correction',text:body}],published_at:null});}
  const input=JSON.stringify(documents);
  await env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,draft_id,expected_revision,edit_request) VALUES(?,?,?,?,?,'edit',?,?,?)").bind(crypto.randomUUID(),article.id,input,await sha256(input),now(),id,revision,request).run();
 }
@@ -91,6 +101,7 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
   const result=await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending'").bind(JSON.stringify(draft),JSON.stringify(documents),checked.verification,revision,media,job.draft_id,job.expected_revision),
    env.DB.prepare("UPDATE model_jobs SET state='complete',error=NULL,documents='[]',result_draft=? WHERE id=?").bind(job.draft_id,job.id),
+   env.DB.prepare("UPDATE editor_corrections SET state='applied' WHERE draft_id=? AND revision=? AND state='proposed'").bind(job.draft_id,job.expected_revision),
    env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+job.draft_id,theme),
    env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_layout:draft:'+job.draft_id,layout)
   ]);

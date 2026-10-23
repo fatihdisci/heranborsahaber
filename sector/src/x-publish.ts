@@ -1,3 +1,4 @@
+import {preparePublication,snapshotStatement} from './publication-snapshot';
 import {refreshPublicationCard,publicationSummary} from './publication-assistant';
 import {postText} from './editorial';
 import {telegram} from './telegram';
@@ -53,6 +54,7 @@ export async function publishX(env:Env,api:XTransport,clock=Date.now){
   const identity=await api.identity();if(identity.username.toLowerCase()!=='endeks_haber')throw Error('x_wrong_account');
   const object=await env.MEDIA.get(row.media_key);if(!object)throw Error('x_image_missing');
   const bytes=new Uint8Array(await object.arrayBuffer());if(bytes.length>5000000||bytes[0]!==137||bytes[1]!==80)throw Error('x_image_invalid');
+  const snapshot=await preparePublication(env,row.draft_id,row.revision);
   const mediaId=await api.upload(bytes);
   const latest=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string}>();
   if(!latest||!xDraftEligible(latest,row.revision,row.media_key,clock())||xDay(clock())!==row.day)throw Error('x_stale_draft');
@@ -62,7 +64,8 @@ export async function publishX(env:Env,api:XTransport,clock=Date.now){
    .bind(clock(),row.id,xDay(clock()),Math.floor(clock()/1000)).run();
   if(!final.meta.changes)throw Error('x_stale_draft');posting=true;
   const remote=await api.post(row.content,mediaId);
-  await env.DB.prepare("UPDATE x_posts SET state='sent',remote_id=?,finished_at=? WHERE id=?").bind(remote,clock(),row.id).run();
+  const finished=clock();
+  await env.DB.batch([env.DB.prepare("UPDATE x_posts SET state='sent',remote_id=?,finished_at=? WHERE id=?").bind(remote,finished,row.id),snapshotStatement(env,row.draft_id,'api',finished,snapshot,'https://x.com/endeks_haber/status/'+remote)]);
  }catch(e){
   const uncertain=posting&&!(e instanceof XHttpError&&[400,401,402,403,404,413,422,429].includes(e.status));
   const error=e instanceof XHttpError?e.message:e instanceof Error&&/^x_[a-z_]+$/.test(e.message)?e.message:'x_request_failed';

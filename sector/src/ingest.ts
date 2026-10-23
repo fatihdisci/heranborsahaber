@@ -1,3 +1,5 @@
+import {selectMarketDocument} from './market-input';
+import {outputPreferences} from './output-preferences';
 import {retryManualModel} from './model-recovery';
 import type {Document,Env} from './types';
 import {sha256} from './utils/text';
@@ -5,6 +7,8 @@ import {sha256} from './utils/text';
 export async function enqueueEvidence(env:Env,documents:Document[],kind:'kap'|'manual',editorRequest=''):Promise<string> {
  if(!documents.length||documents.some(d=>!d.body?.trim()||!d.passages?.length||d.coverage&&!d.coverage.complete))throw Error('incomplete_source_evidence');
  if(editorRequest.length>12000||kind!=='manual'&&editorRequest)throw Error('invalid_editor_request');
+ const preference=kind==='manual'?outputPreferences(editorRequest):undefined;
+ if(preference)documents=documents.map(d=>({...selectMarketDocument(d,preference.side),output_preferences:preference}));
  const input=JSON.stringify(documents);if(input.length>3_500_000)throw Error('source_evidence_limit');
  const doc=documents[0],recordUrl=doc.url+(editorRequest?(doc.url.includes('#')?'&':'#')+'endeks-editor='+await sha256(editorRequest):''),id=await sha256(recordUrl),time=Math.floor(Date.now()/1000),jobId=await sha256('evidence:'+id);
  await env.DB.batch([

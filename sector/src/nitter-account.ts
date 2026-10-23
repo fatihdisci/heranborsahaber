@@ -49,11 +49,11 @@ export function buildAccountReport(day:string,posts:AccountPost[],health:{ok:boo
  const times=own.map(p=>new Date(p.at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}));
  const gaps=own.slice(1).map((p,i)=>(Date.parse(p.at)-Date.parse(own[i].at))/60_000);
  const fmt=(n:number)=>n<60?`${Math.round(n)} dk`:`${Math.floor(n/60)} sa ${Math.round(n%60)} dk`;
- const lines=[`📊 Günlük X paylaşım raporu · ${new Date(`${day}T12:00:00+03:00`).toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'long',year:'numeric'})}`];
+ const lines=[`📊 X paylaşım raporu · 23.00 itibarıyla · ${new Date(`${day}T12:00:00+03:00`).toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul',day:'numeric',month:'long',year:'numeric'})}`];
  if(!health.ok)lines.push('⚠️ Nitter akışına rapor anında erişilemedi; sayı eksik olabilir.');
  lines.push(`Görülen özgün gönderi: ${own.length}${posts.length!==own.length?` · retweet: ${posts.length-own.length}`:''}`);
  if(times.length)lines.push(`Saatler: ${times.join(' · ')}`);
- if(gaps.length){const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length;const sorted=[...gaps].sort((a,b)=>a-b);const median=sorted[Math.floor(sorted.length/2)];
+ if(gaps.length){const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length;const sorted=[...gaps].sort((a,b)=>a-b);const mid=Math.floor(sorted.length/2),median=sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2;
   lines.push(`Aralıklar: ${gaps.map(fmt).join(' · ')}`);
   lines.push(`Analiz: ortalama ${fmt(avg)}, medyan ${fmt(median)}, en kısa ${fmt(Math.min(...gaps))}, en uzun ${fmt(Math.max(...gaps))}.`);
  }else if(!own.length)lines.push('Gönderi bulunamadı; kaynak erişimi doğrulanmadan bu sonuç kesin sıfır kabul edilmemelidir.');

@@ -1,15 +1,18 @@
-import {savedLayout,nextLayout,type CardLayout} from './card-layout';
+import {savedLayout,nextLayout,isCardLayout,type CardLayout} from './card-layout';
 import {savedTheme,legacyTheme} from './card-theme';
 import {draftCard} from './card';
 import type {Draft,Env} from './types';
 const now=()=>Math.floor(Date.now()/1000);
 export async function requestRedesign(env:Env,data:string,messageId:number,updateId:number):Promise<string>{
- const match=/^design:([a-f0-9-]{36}):(\d+)$/.exec(data);if(!match)return 'Bu kart kullanılamıyor.';
- const row=await env.DB.prepare("SELECT id,revision,delivery_state FROM drafts WHERE id=? AND revision=? AND message_id=? AND state='pending'").bind(match[1],Number(match[2]),messageId).first<{id:string;revision:number;delivery_state:string}>();
+ const match=/^design:([a-f0-9-]{36}):(\d+)(?::([a-z]+))?$/.exec(data);if(!match)return 'Bu kart kullanılamıyor.';
+ const row=await env.DB.prepare("SELECT id,revision,delivery_state,content,expires_at FROM drafts WHERE id=? AND revision=? AND message_id=? AND state='pending'").bind(match[1],Number(match[2]),messageId).first<{id:string;revision:number;delivery_state:string;content:string;expires_at:number}>();
  if(!row||row.delivery_state!=='sent')return 'Kart güncellenmiş veya hazırlanıyor. Güncel karttan tekrar deneyebilirsin.';
+ const draft=JSON.parse(row.content) as Draft;if(draft.template==='circuit'||draft.card_data?.report)return 'Bu şablon sabit düzen kullanır.';
+ if(match[3]&&!isCardLayout(match[3]))return 'Geçersiz düzen.';
  const busy=await env.DB.prepare("SELECT id FROM model_jobs WHERE draft_id=? AND state IN ('queued','leased','retry_pending') UNION ALL SELECT CAST(update_id AS TEXT) id FROM card_redesigns WHERE draft_id=? AND state IN ('queued','rendering') LIMIT 1").bind(row.id,row.id).first();
  if(busy)return 'Kartın düzenlemesi zaten sırada.';
- const layout=nextLayout(await savedLayout(env,'draft:'+row.id)??'editorial');
+ const current=await savedLayout(env,'draft:'+row.id)??'editorial',layout=match[3] as CardLayout??nextLayout(current);
+ if(layout===current)return 'Bu düzen zaten seçili.';
  await env.DB.prepare('INSERT OR IGNORE INTO card_redesigns(update_id,draft_id,revision,message_id,layout,created_at) VALUES(?,?,?,?,?,?)').bind(updateId,row.id,row.revision,messageId,layout,now()).run();
  return 'Kart başka bir tasarımla yenileniyor. Tweet metni aynı kalacak.';
 }

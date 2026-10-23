@@ -1,3 +1,4 @@
+import {preparePublication,snapshotStatement} from './publication-snapshot';
 import {publicationAdvice,dailyAdvice,cadence,publicationPlan} from './publication-policy';
 export {cadence} from './publication-policy';
 import type {Env} from './types';
@@ -16,7 +17,7 @@ export async function refreshPublicationCard(env:Env,id:string){
  const mark=await env.DB.prepare('SELECT state FROM publication_marks WHERE draft_id=?').bind(id).first<{state:string}>();
  const api=await env.DB.prepare("SELECT state FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain') LIMIT 1").bind(id).first<{state:string}>();
  const published=api?.state==='sent'||mark?.state==='published';
- const m=keyboard(id,r.revision,JSON.parse(r.documents),postText(JSON.parse(r.content)),env.X_PUBLISH_ENABLED==='true'&&!published&&!api);
+ const m=keyboard(id,r.revision,JSON.parse(r.documents),postText(JSON.parse(r.content)),env.X_PUBLISH_ENABLED==='true'&&!published&&!api,JSON.parse(r.content));
  if(published){m.inline_keyboard=m.inline_keyboard.map(row=>row.filter(b=>!('callback_data'in b&&(b.callback_data?.startsWith('pub:mark:')||b.callback_data?.startsWith('pub:defer:'))))).filter(row=>row.length);m.inline_keyboard.push([{text:'☑️',callback_data:'pub:stats:'+id},...(api?[]:[{text:'🕒',callback_data:'pub:time:'+id},{text:'↩️',callback_data:'pub:undo:'+id}])]);}
  if(JSON.parse(r.content).card_data?.report?.general)m.inline_keyboard.push([{text:'📄',callback_data:`asset:csv:${id}:${r.revision}`},{text:'🖼',callback_data:`asset:image:${id}:${r.revision}`}]);
  if(mark?.state==='deferred'&&!published)m.inline_keyboard.push([{text:'▶️',callback_data:'pub:undo:'+id}]);
@@ -35,20 +36,26 @@ export async function publicationAction(env:Env,action:string,id:string,update:n
   if(action==='defer'&&await env.DB.prepare("SELECT 1 FROM publication_marks WHERE draft_id=? AND state='published'").bind(id).first())return 'Yayımlanmış içerik ertelenemez. Hatalı işaret için geri al düğmesini kullan.';
   const existing=await env.DB.prepare("SELECT 1 FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain')").bind(id).first();
   if(existing)return 'API yayını mevcut veya sonucu bekleniyor. Manuel işaret değişmedi.';
+  const prior=await env.DB.prepare("SELECT published_at FROM publication_marks WHERE draft_id=? AND state='published'").bind(id).first<{published_at:number}>();
+  const snapshot=action==='mark'?await preparePublication(env,id):null;
   await env.DB.batch([
    env.DB.prepare(`INSERT INTO publication_marks(draft_id,state,published_at,updated_at) SELECT ?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM publication_actions WHERE update_id=?) AND NOT EXISTS(SELECT 1 FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain')) ON CONFLICT(draft_id) DO UPDATE SET state=excluded.state,published_at=CASE WHEN publication_marks.state='published' AND excluded.state='published' THEN publication_marks.published_at ELSE excluded.published_at END,updated_at=excluded.updated_at WHERE NOT (publication_marks.state='published' AND excluded.state='deferred')`).bind(id,action==='mark'?'published':action==='defer'?'deferred':'ready',action==='mark'?now:null,now,update,id),
-   env.DB.prepare('INSERT OR IGNORE INTO publication_actions VALUES(?,?)').bind(update,now)
+   env.DB.prepare('INSERT OR IGNORE INTO publication_actions VALUES(?,?)').bind(update,now),
+   ...(snapshot?[snapshotStatement(env,id,'manual',prior?.published_at??now,snapshot)]:[])
   ]);
  }
  await refreshPublicationCard(env,id);
  const s=await publicationSummary(env,now);return `${action==='mark'?'✅ ':action==='undo'?'↩️ ':action==='defer'?'⏸ ':''}${s.total} yayın (${s.manual} elle/${s.api} API), bütçe ${s.reserved}/20. Son ${s.last?new Date(s.last).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'}):'—'}. ${cadence(action==='mark'?before.last:s.last,now)} ${dailyAdvice(s.total,now)}`;
 }
 export async function publicationMessage(env:Env,m:any,update:number){
+ const link=/^\/yayinurl ([a-f0-9-]{36}) (https:\/\/x\.com\/endeks_haber\/status\/\d+)$/i.exec(m.text??'');
+ if(link){const row=await env.DB.prepare("SELECT id FROM publication_snapshots WHERE draft_id=? AND method='manual' ORDER BY published_at DESC LIMIT 1").bind(link[1]).first<{id:string}>();if(row)await env.DB.prepare('UPDATE publication_snapshots SET remote_url=? WHERE id=?').bind(link[2],row.id).run();await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:row?'X bağlantısı kullanıcı beyanı olarak kaydedildi. API teyidi değildir.':'Önce içeriği paylaşıldı işaretle.'}));return true;}
+
  if(m.text==='/yayinplani'||m.text==='/yayınplanı'){await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:publicationPlan}));return true;}
  if(m.text==='/yayinraporu'||m.text==='/yayınraporu'){
   const {publicationCsv}=await import('./publication-report');const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);
   form.set('document',new Blob([await publicationCsv(env)],{type:'text/csv;charset=utf-8'}),'endeks-yayin-raporu.csv');
-  form.set('caption','Son 28 günün kayıtlı yayınları. Manuel X bağlantısı ve performans alanları bilinmiyorsa boş; sıfır değildir. Başlık/kategori/şablon mevcut kartı yansıtır. Gerçek yayın verisiyle eşleştir; acil/rutin ve deney grubunu elle belirt.');
+  form.set('caption','Son 28 günün kayıtlı yayınları. Manuel X bağlantısı ve performans alanları bilinmiyorsa boş; sıfır değildir. Başlık/kategori/şablon yayın anındaki kaydı yansıtır; eski kaydın anlık görüntüsü yoksa alan boş bırakılır. Gerçek yayın verisiyle eşleştir; acil/rutin ve deney grubunu elle belirt.');
   await telegram(env,'sendDocument',form);return true;
  }
 
@@ -59,7 +66,8 @@ export async function publicationMessage(env:Env,m:any,update:number){
  const v=m.text?.trim().match(/^(?:(\d{4}-\d{2}-\d{2}) )?(\d{2}):(\d{2})$/);const date=v?.[1]??new Date(Date.now()+10800000).toISOString().slice(0,10);const at=v?Date.parse(`${date}T${v[2]}:${v[3]}:00+03:00`):NaN;
  let text='Geçerli, gelecekte olmayan bir İstanbul tarihi ve saati yaz.';
  if(Number.isFinite(at)&&at<=Date.now()&&new Date(at+10800000).toISOString().slice(0,10)===date){
-  const r=await env.DB.prepare("UPDATE publication_marks SET published_at=?,updated_at=? WHERE draft_id=? AND state='published' AND NOT EXISTS(SELECT 1 FROM x_posts WHERE draft_id=? AND state='sent')").bind(at,Date.now(),edit.draft_id,edit.draft_id).run();text=r.meta.changes?'Manuel yayın saati güncellendi.':'Önce manuel paylaşıldı işaretle. API yayın saati değiştirilemez.';
+  const previous=await env.DB.prepare("SELECT published_at FROM publication_marks WHERE draft_id=? AND state='published'").bind(edit.draft_id).first<{published_at:number}>();
+  const result=await env.DB.batch([env.DB.prepare("UPDATE publication_marks SET published_at=?,updated_at=? WHERE draft_id=? AND state='published' AND NOT EXISTS(SELECT 1 FROM x_posts WHERE draft_id=? AND state='sent')").bind(at,Date.now(),edit.draft_id,edit.draft_id),env.DB.prepare("UPDATE publication_snapshots SET published_at=? WHERE draft_id=? AND method='manual' AND published_at=? AND EXISTS(SELECT 1 FROM publication_marks WHERE draft_id=? AND published_at=?)").bind(at,edit.draft_id,previous?.published_at??-1,edit.draft_id,at)]);const r=result[0];text=r.meta.changes?'Manuel yayın saati güncellendi.':'Önce manuel paylaşıldı işaretle. API yayın saati değiştirilemez.';
 
  }
  await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text}));if(Number.isFinite(at)&&at<=Date.now()&&new Date(at+10800000).toISOString().slice(0,10)===date)await env.DB.prepare('DELETE FROM publication_time_edits WHERE user_id=?').bind(env.TELEGRAM_USER_ID!).run();return true;

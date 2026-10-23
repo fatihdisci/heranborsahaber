@@ -31,7 +31,7 @@ export async function sendDraftAsset(env:Env,data:string,messageId:number,update
    if(!object)throw new Error('draft_media_missing');
    const png=await object.arrayBuffer();
    const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);
-   form.set('document',new Blob([png],{type:'image/png'}),'sector-haber.png');
+   form.set('document',new Blob([png],{type:'image/png'}),'endeks-haber.png');
    form.set('disable_content_type_detection','true');
    await telegram(env,'sendDocument',form);
   }

@@ -1,9 +1,11 @@
+import {outputView,tweetListLimit} from './output-preferences';
 import {cardDataFields,validateCardData} from './card-data';
 import {styleIssues,editorialPolicy,headlineWithEmoji,normalizeHashtagPlacement} from './style';
 import type {Document,Draft,Category} from './types';
 export const MIN_DRAFT_IMPORTANCE=50;
-export const PROMPT_VERSION='endeks-editor-13-owner-instructions';
+export const PROMPT_VERSION='endeks-editor-14-output-scope';
 export const EDITOR_PROMPT=`ENDEKS HABER'in Borsa İstanbul ve finans haberleri editörüsün.
+editorial_policy.output_preferences sahibin güvenilir çıktı tercihidir. list=all ise ilk 5/30 sınırlarını uygulama; list=first ise count satırını seç. side=buy/sell/both seçimini hem tweet hem card_data üzerinde aynı kaynak satırlarından uygula. Kaynakta olmayan satır veya değer ekleme; sığmayan tek görsel için satır eksiltme veya çoklu kart/thread üretme. show_time/show_footer true değilse dekoratif saat/alt not ekleme. Verinin kısmi oluşunu ve çelişkileri source_notes içinde koru.
 Öncelik: önemli KAP açıklamaları; devre kesici ve piyasa gelişmeleri; temettü, sermaye işlemleri, geri alım ve pay işlemleri, bilançolar; halka arz, SPK ve Borsa İstanbul; TCMB/faiz/enflasyon/Türkiye ekonomisi; yatırımcıyı etkileyen Fed ve küresel finans; borsa bilgi ve istatistikleri. Dünya, enerji ve teknoloji haberini yatırımcı açısından somut önem taşıyorsa ele al.
 Devre kesicide template=circuit, category=bist kullan. Hisse kodu, işlem durumu ve yeniden başlama saati yalnız resmî belgede açıkça varsa yaz; sebep, fiyat, saat veya süre tahmin etme. Görünür tweet ve kart alanlarında pay işlem sırası eki .E yazma: KARCL.E yerine KARCL kullan; kaynağın kanıt alıntısını ise birebir koru. Temerrüt gibi farklı işlem türlerini normal pay işlemi gibi gösterme. Bir gruptaki farklı hisselerin saat/durumlarını karıştırma; bütün resmî bildirimleri kaynak kabul et. KAP şirket açıklamalarında template=kap, piyasa verilerinde market, makro finansta finance kullanabilirsin. Eski şablonlar da desteklenir.
 Devre kesici belgeleri üç dakikalık tek toplu olaydır. Bütün doğrulanmış hisse kodlarını hashtags ve card_data.tickers dizilerinde birer kez kullan; headline alanında genel olay başlığını koru, kodları headline/body içine kendin tekrar listeleme. Sistem doğrulanmış kodları tweetin EN ÜST BAŞLIK SATIRINA #KOD olarak taşır, sonda tekrarlamaz. Kısa başlık '🚨 Devre kesici uygulandı', kısa gövde 'Sürekli işleme ara verildi.' gibi, yalnız kaynağın doğruladığı geçmiş zamanlı bir açıklama olsun. Fiyat, gerekçe, tek tek saat listesi veya gelecekte yeniden başlayacak iddiası ekleme; üç dakikalık toplama süresinde işlem yeniden başlamış olabilir. Günlük /devrekesici raporunun tweetinde ve görselinde saat veya 'itibarıyla/itibariyle' ifadesi kullanma. Görselde grubun bütün kodlarını koru; tweet başlık satırında yalnız ilk beş kod gösterilir. Devre kesici card_headline='Devre kesici', card_body='Devre kesici uygulandı.' olsun; card_data yalnız tickers dizisini içersin. Görselde DEVRE KESİCİ başlığının altında doğrulanmış kodlar #KOD biçiminde gösterilir. Tarih, fiyat, saat veya uzun açıklama görsele eklenmez. Gerçekte ara verilmediğini belirten farklı bir resmî durum varsa bunu standart durdurma metnine dönüştürme; gerçek durumu koru.
@@ -164,12 +166,14 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
  if(!value||typeof value!=='object')throw new Error('invalid_draft');
  const d=value as Draft;
  validateCardData(d.card_data,documents);
+ for(const document of documents)for(const c of document.editor_corrections??[]){const [side,index,field]=c.path.split('.');const actual=(d.card_data as any)?.[side]?.[Number(index)]?.[field];if(actual!==c.after_value)throw Error('editor_correction_not_applied');}
  const selectedMarket=documents.find(x=>x.market_data?.focus==='buy'||x.market_data?.focus==='sell')?.market_data;
  if(selectedMarket?.focus==='buy'&&d.card_data?.sell?.length||selectedMarket?.focus==='sell'&&d.card_data?.buy?.length)throw Error('market_focus_mismatch');
  const institution=documents.find(x=>x.market_data?.kind==='institutional')?.market_data;
  if(institution){
   for(const side of ['buy','sell'] as const)if(institution.focus!==(side==='buy'?'sell':'buy')&&institution.rows?.some(r=>r.side===side)&&!d.card_data?.[side]?.length)throw Error('market_selected_rows_missing');
   const rows=documents.filter(x=>x.market_data?.kind==='institutional'&&x.market_data.broker?.toUpperCase()===institution.broker?.toUpperCase()).flatMap(x=>x.market_data?.rows??[]);
+  if(d.output_preferences){for(const side of ['buy','sell'] as const){const p=d.output_preferences,chosen=p.side&&p.side!=='both'&&p.side!==side?[]:rows.filter(r=>r.side===side).slice(0,p.list==='all'?Infinity:p.count);const actual=d.card_data?.[side]??[];if(chosen.length!==actual.length||chosen.some((r,i)=>r.symbol!==actual[i]?.label))throw Error('selected_row_coverage_mismatch');}}
   for(const side of ['buy','sell'] as const)for(const row of d.card_data?.[side]??[]){
    const matches=rows.filter(r=>r.side===side&&r.symbol===row.label);
    if(!matches.length)throw Error('market_side_mismatch');
@@ -212,13 +216,15 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
  return {draft:d,verification:d.uncertainties.length?'needs_review':primary?'official_attributed':citedFamilies.size>1?'multiple_families_attributed':'single_source_attributed'};
 }
 export function postText(d:Draft,_sources:string[]=[]):string {
+ d=outputView(d);
+ const listLimit=tweetListLimit(d,5);
  if(d.card_data?.report)return [headlineWithEmoji(d.headline),d.body,'#Borsa #BIST'].join('\n\n');
  const clean=normalizeHashtagPlacement(d),headline=headlineWithEmoji(clean.headline);
  const hashtagLine=(tags:string[])=>[...tags.filter(t=>!/^#BIST(?:30|100)$/.test(t)),...tags.filter(t=>/^#BIST(?:30|100)$/.test(t))].join(' ');
  if(clean.template==='institutional'){
   const groups=(['buy','sell'] as const).map(side=>{
    const rows=clean.card_data?.[side]??[];
-   const codes=[...new Set(rows.map(r=>r.label).filter(c=>/^[A-Z][A-Z0-9]{3,4}$/.test(c)))].slice(0,5);
+   const codes=[...new Set(rows.map(r=>r.label).filter(c=>/^[A-Z][A-Z0-9]{3,4}$/.test(c)))].slice(0,listLimit);
    return codes.length?(side==='buy'?'Alınanlar: ':'Satılanlar: ')+codes.map(c=>'#'+c).join(' '):'';
   }).filter(Boolean);
   if(groups.length){
@@ -227,7 +233,7 @@ export function postText(d:Draft,_sources:string[]=[]):string {
   }
  }
  const allCodes=clean.template==='circuit'?clean.card_data?.tickers??[]:['akd','custody'].includes(clean.template)&&clean.card_data?.ticker?[clean.card_data.ticker]:[];
- const codes=allCodes.slice(0,5);
+ const codes=allCodes.slice(0,listLimit);
  if(!codes.length){
   const stockTags=clean.hashtags.filter(t=>/^#[A-Z][A-Z0-9]{3,4}$/.test(t)&&t!=='#BIST');
   const tagCodes=stockTags.map(t=>t.slice(1));
@@ -235,7 +241,7 @@ export function postText(d:Draft,_sources:string[]=[]):string {
   const text=[tag(headline),tag(clean.body)].filter(Boolean).join('\n\n');
   const used=new Set(text.match(/#[A-Z][A-Z0-9]{3,4}/g)??[]);
   const remaining=clean.hashtags.filter(t=>!used.has(t));
-  return [text,hashtagLine(remaining.filter(t=>!stockTags.includes(t)).concat(stockTags.filter(t=>!used.has(t)).slice(0,used.size?0:5)))].filter(Boolean).join('\n\n');
+  return [text,hashtagLine(remaining.filter(t=>!stockTags.includes(t)).concat(stockTags.filter(t=>!used.has(t)).slice(0,d.output_preferences?.list?listLimit:used.size?0:5)))].filter(Boolean).join('\n\n');
  }
  const leading=/^((?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\uFE0F?)\s+/u.exec(headline);
  let title=(leading?headline.slice(leading[0].length):headline).trim();

@@ -51,18 +51,18 @@ export function sourceKeyboard(docs:Document[]) {
  for(const value of urls){const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)throw new Error('source_url_invalid');}
  return [[{text:'🔗',url:urls[0]}]];
 }
-export function keyboard(id:string,revision:number,docs:Document[],caption:string,publish=false) {
+export function keyboard(id:string,revision:number,docs:Document[],caption:string,publish=false,draft?:Draft) {
  // Telegram's native clipboard button accepts at most 256 characters. Never
  // truncate a post to fit it; longer posts use a copyable preformatted message.
  const copy=caption.length<=256?{text:'📋',copy_text:{text:caption}}:{text:'📋',callback_data:`asset:text:${id}:${revision}`};
- return {inline_keyboard:[[...sourceKeyboard(docs)[0],copy,{text:'✏️',callback_data:callback('edit',id,revision)},{text:'🎨',callback_data:`design:${id}:${revision}`}],[...(publish?[{text:'🚀',callback_data:`xpost:${id}:${revision}`}]:[]),{text:'✅',callback_data:`pub:mark:${id}`},{text:'⏸',callback_data:`pub:defer:${id}`},{text:'📊',callback_data:`pub:stats:${id}`}]]};
+ return {inline_keyboard:[[...sourceKeyboard(docs)[0],copy,{text:'✏️',callback_data:callback('edit',id,revision)},...(draft?.template==='circuit'||draft?.card_data?.report?[]:[{text:'🎨',callback_data:`ed:layout:${id}:${revision}`}])],[...(publish?[{text:'🚀',callback_data:`xpost:${id}:${revision}`}]:[]),{text:'✅',callback_data:`pub:mark:${id}`},{text:'⏸',callback_data:`pub:defer:${id}`},{text:'📊',callback_data:`pub:stats:${id}`}],[{text:'🖼',callback_data:`asset:image:${id}:${revision}`},{text:'🧾',callback_data:`ed:evidence:${id}:${revision}`},...(draft?.card_data?[{text:'🔎',callback_data:`ed:data:${id}:${revision}`}]:[]),...(!draft?.card_data?.report&&['buy','sell','holdings','metrics'].some(k=>(draft?.card_data as any)?.[k]?.length)?[{text:'🔧',callback_data:`ed:correct:${id}:${revision}`}]:[])]]};
 }
 export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
  if(env.MODE!=='telegram_review')throw new Error('telegram_dry_run');
  const caption=postText(draft);
  // Fail before uploading anything; never produce an orphan photo or split post.
  if(caption.length>1024)throw new Error('telegram_caption_too_long');
- const markup=keyboard(id,revision,docs,caption,env.X_PUBLISH_ENABLED==='true');
+ const markup=keyboard(id,revision,docs,caption,env.X_PUBLISH_ENABLED==='true',draft);
  if(draft.card_data?.report?.general)markup.inline_keyboard.push([{text:'📄',callback_data:`asset:csv:${id}:${revision}`},{text:'🖼',callback_data:`asset:image:${id}:${revision}`}]);
  const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'endeks-haber.png');
  form.set('reply_markup',JSON.stringify(markup));

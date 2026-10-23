@@ -1,0 +1,30 @@
+# Haber filtresi: sürümlü hazırlık incelemesi
+
+Bu belge canlı etkinleştirme talimatı veya onayı değildir. Bu çalışma sırasında hiçbir üretim hazırlık kaydı yazılmadı. Aktif mod isteği tek başına yeterli değildir; etkili mod `newsPreferences()` tarafından hesaplanır.
+
+## Salt okunur inceleme aracı
+
+Sahip erişimli `/golgerapor`, güncel kural sürümünü, şirket/kapsam/etiket örneklemi hash'lerini, inceleme adaylarını ve son insan etiketlerine göre gerçek hata sayılarını verir. Uzun rapor dosya olarak gelir. Rapor üretmek onay kaydı oluşturmaz. `/haberfiltre` istenen/etkili modu, seçkinin yapılandırmasını, gerçek gönderim durumunu ve eksik hazırlık nedenlerini ayrı gösterir. Gölge modda otomatik seçki gönderimi kapalıdır; sahibin `/secki` isteği otomatik etkinleştirme değildir.
+
+Gerçek inceleme için:
+
+1. `entities` içindeki ad–kod eşleşmelerini KAP veya Borsa İstanbul şirket sayfalarıyla tek tek doğrula. Ad benzerliği/iştirak ilişkisi yeterli değildir. Her kod için resmî HTTPS bağlantısını ve gerçek kontrol zamanını kaydet.
+2. Takip listesi, endeks kapsamı ve seçki saatlerini gözden geçir. Boş takip listesi de bilinçli olarak incelenmelidir. Kaynak güvenilirliği rota doğruluğu anlamına gelmez.
+3. `/golgerapor` adaylarını kaynaklarıyla incele; `/aday <kimlik> instant|digest|archive` ile beklenen rotayı etiketle. Karar/beklenti, iddia/yalanlama, yeni dönem bilançosu, endeks dışı şirket, şirket adı içermeyen makro olay ve kopyaları örnekleme dahil et. Eski filtreye takılan adayları da incele.
+4. En az 12 gerçek etiket, üç beklenen rota ve `legacy_eligible=0/1` gruplarının ikisi gerekir. Bu yalnız asgari kabul tabanıdır; 12 etiket bütün trafiğin hatasız olduğunu kanıtlamaz. Kritik kaçırma, önemli haberi arşivleme ve yanlış kritik sayıları sıfır olmalı; yoksa kuralları düzeltip etiketlerle yeniden karşılaştır. Etiket yoksa doğruluk ölçülmüş sayılmaz.
+5. Raporun güncel `hashes.entities`, `hashes.scope`, `hashes.sample` değerlerini ve gerçek sonuçları insan gözden geçirir. Sonrasında ayrıca yetkilendirilmiş bir geçiş çalışmasında aşağıdaki şemaya uygun kayıt oluşturulabilir. Bu teslim kaydı üretmez ve otomatik onaylayıcı içermez.
+
+## Hazırlık kaydı sözleşmesi
+
+`system_state.news_filter_readiness` JSON'u `NewsReadinessRecord` tipindedir (`src/news-readiness.ts`). Gerekli alanlar:
+
+- `version`: `NEWS_READINESS_VERSION` (şu anda 1), `rule_version`: rapordaki güncel kural sürümü.
+- `entity_review`: `hash` rapordaki şirket hash'i; `reviewer` sahip Telegram kimliği; `reviewed_at` gerçek inceleme zamanı (epoch milisaniye); `sources` her kod için `{code,url,checked_at}`. Resmî bağlantı yalnız referanstır; gerçek insan kaynak kontrolünün yerine geçmez.
+- `scope_review`: aynı reviewer/zaman alanları, `hash` rapordaki kapsam hash'i.
+- `evaluation_review`: aynı reviewer/zaman alanları, `hash` rapordaki etiketli örneklem hash'i ve gerçek insan kabulünden sonra `accepted=true`.
+
+Gelecek tarihli inceleme, başka inceleyici, eski sürüm, değişmiş sözlük/takip kapsamı/seçki ayarları, değişmiş veya eksik etiket örneklemi geçerli sayılmaz. Sürekli yeni ve etiketsiz aday gelmesi mevcut etiket örneklemini değiştirmez. Etiket, karar veya incelenmiş aday metni değişirse örneklem hash'i değişir; tekrar inceleme gerekir. Sahip onayı da ayrıca `approved_by_owner=true` olmalıdır.
+
+Seçki kapalıysa belirsiz fakat önemli şirket haberleri yalnız seçkiye düşüp görünmez kalabilir. Bu sürüm seçki kapalı veya saatsizken aktif moda geçişi engeller; haberleri sessizce arşive atmaz. Geçerli `activated_at` olmadan da geçiş olmaz. Hazırlık yoksa etkili mod gölgedir; eski bildirim filtresi sürer. Seçkiyi açmadan aktif filtre kullanmak için ileride açıkça tasarlanıp incelenmiş başka bir görünür teslim yolu gerekir.
+
+Onaylı geçişte önizleme başlangıcı ve `activated_at` gerçek geçiş anına ayarlanmalı; eski arşiv Telegram'a boşaltılmamalıdır. Geri dönüş `mode=shadow`, ayrı seçki kapalı ve önizleme başlangıcı dönüş anına alınarak yapılır; kaynaklar, teslim makbuzları ve uncertain kayıtları silinmez veya tekrar oynatılmaz. Bunlar bu çalışma sırasında uygulanmadı.

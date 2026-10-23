@@ -1,3 +1,4 @@
+import {recordNewsCandidate,newsPreferences} from './news-routing';
 import {retryDraftDelivery,deliveryTarget} from './delivery-recovery';
 import {topicScore} from './editorial';
 import type {Source} from './types';
@@ -14,7 +15,7 @@ export function previewDuplicate(a:string,b:string):boolean {
  const subject=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('tr-TR').replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(' ').slice(0,2).join(' ');
  return subject(a)===subject(b)&&numbers(a)===numbers(b)&&titleSimilarity(a,b)>=.9;
 }
-function markup(id:string,url:string){return {inline_keyboard:[[{text:'🔗',url}],[{text:'✨',callback_data:'news:'+id}]]};}
+function markup(id:string,url:string){return {inline_keyboard:[[{text:'🔗',url}],[{text:'✨',callback_data:'news:'+id},{text:'ℹ️',callback_data:'nf:reason:'+id}],[{text:'👎',callback_data:'nf:irrelevant:'+id},{text:'🔁',callback_data:'nf:repeat:'+id},{text:'🕓',callback_data:'nf:digest:'+id}]]};}
 type ProgressCard={id:string;message_id:number;title:string;summary:string;url:string;config:string;status:string;job_state:string|null;delivery_state:string|null};
 export function newsProgressNote(row:Pick<ProgressCard,'status'|'job_state'|'delivery_state'>,paused=false):string {
  if(row.delivery_state==='sent')return 'Tweet ve görsel hazırlandı.';
@@ -70,13 +71,30 @@ export async function announceNews(env:Env):Promise<void> {
  await env.DB.prepare("UPDATE news_cards SET state='uncertain' WHERE state='sending' AND next_try<?").bind(time).run();
  const cutoff=(await env.DB.prepare("SELECT value FROM system_state WHERE key='news_preview_since'").first<{value:string}>())?.value??new Date(Date.now()-300_000).toISOString();
  // Already displayed stories and uncertain sends are never replayed after restart.
- const rows=await env.DB.prepare(`SELECT a.*,s.config,c.id AS card_id,c.state AS card_state FROM articles a JOIN sources s ON s.id=a.source_id LEFT JOIN news_cards c ON c.article_id=a.id WHERE s.enabled=1 AND a.status='queued' AND a.published_at>=? AND (c.id IS NULL OR (c.state='waiting' AND c.next_try<=?)) ORDER BY (julianday(a.published_at)*1440+COALESCE(json_extract(s.config,'$.editorial_priority'),50)/10) DESC LIMIT 3`).bind(cutoff,time).all<{id:string;title:string;summary:string;url:string;published_at:string;config:string;card_id:string|null}>();
+ const prefs=await newsPreferences(env);
+ const unevaluated=(await env.DB.prepare("SELECT a.*,s.config FROM articles a JOIN sources s ON s.id=a.source_id LEFT JOIN news_candidates n ON n.article_id=a.id WHERE n.id IS NULL AND a.status='queued' AND s.enabled=1 AND s.id!='kap' AND NOT EXISTS(SELECT 1 FROM model_jobs j WHERE j.article_id=a.id AND j.kind IN ('manual','kap','edit')) ORDER BY a.first_seen ASC,a.id LIMIT 150").all<any>()).results;
+ for(const a of unevaluated){const source=JSON.parse(a.config) as Source;await recordNewsCandidate(env,a,source,topicScore(a.title,a.summary,source.official).score>=(source.minimum_score??60),Date.now(),prefs);}
+ // Two priority slots keep urgent developments ahead; a third, age-reserved slot
+ // guarantees progress for eligible stories waiting >=10 minutes under sustained arrivals.
+ // Eligibility and send-state exclusions are applied before either LIMIT.
+ const rows=await env.DB.prepare(`WITH eligible AS (
+ SELECT a.*,s.config,c.id AS card_id,c.state AS card_state,
+ COALESCE(n.first_seen,a.first_seen*1000) AS queue_at,
+ ${prefs.mode==='active'?"CASE WHEN json_extract(n.confidence,'$.event') IN ('rate','macro_data','regulation','halt') OR json_extract(n.confidence,'$.stage')='denied' THEN 100 ELSE 0 END + COALESCE(json_extract(n.confidence,'$.priority'),0)":'0'} AS priority,
+ COALESCE(json_extract(s.config,'$.editorial_priority'),50) AS source_priority
+ FROM articles a JOIN sources s ON s.id=a.source_id LEFT JOIN news_cards c ON c.article_id=a.id LEFT JOIN news_candidates n ON n.article_id=a.id
+ WHERE (n.id IS NULL OR (${prefs.mode==='active'?"n.eligible=1 AND n.route='instant'":'n.legacy_eligible=1'})) AND s.enabled=1 AND a.status='queued' AND a.published_at>=? AND (c.id IS NULL OR (c.state='waiting' AND c.next_try<=?))
+ ), oldest AS (SELECT id FROM eligible WHERE queue_at<=? ORDER BY queue_at ASC,id LIMIT 1),
+ priority_slots AS (SELECT id FROM eligible WHERE id NOT IN (SELECT id FROM oldest) ORDER BY priority DESC,(julianday(published_at)*1440+source_priority/10) DESC,id LIMIT (SELECT CASE WHEN EXISTS(SELECT 1 FROM oldest) THEN 2 ELSE 3 END))
+ SELECT * FROM eligible WHERE id IN (SELECT id FROM oldest) OR id IN (SELECT id FROM priority_slots)
+ ORDER BY CASE WHEN id IN (SELECT id FROM oldest) THEN 1 ELSE 0 END ASC,priority DESC,(julianday(published_at)*1440+source_priority/10) DESC,id LIMIT 3`).bind(cutoff,time,Date.now()-600000).all<{id:string;title:string;summary:string;url:string;published_at:string;config:string;card_id:string|null}>();
  for(const a of rows.results??[]){
-  const source=JSON.parse(a.config) as Source;if(topicScore(a.title,a.summary,source.official).score<(source.minimum_score??60))continue;
+  const source=JSON.parse(a.config) as Source;if(prefs.mode!=='active'&&topicScore(a.title,a.summary,source.official).score<(source.minimum_score??60))continue;
   const id=a.card_id??crypto.randomUUID();
   if(!a.card_id){
    const existing=await env.DB.prepare("SELECT c.id,a.title FROM news_cards c JOIN articles a ON a.id=c.article_id WHERE c.state!='duplicate' AND ABS(julianday(a.published_at)-julianday(?))<0.25").bind(a.published_at).all<{id:string;title:string}>();
-   const parent=(existing.results??[]).find(r=>previewDuplicate(a.title,r.title));
+   const grouped=prefs.mode==='active'?await env.DB.prepare("SELECT c.id FROM news_cards c JOIN news_candidates n ON n.article_id=c.article_id WHERE n.event_group=(SELECT event_group FROM news_candidates WHERE article_id=?) AND c.state!='duplicate' LIMIT 1").bind(a.id).first<{id:string}>():null;
+   const parent=prefs.mode==='active'?grouped:(existing.results??[]).find(r=>previewDuplicate(a.title,r.title));
    const inserted=await env.DB.prepare("INSERT OR IGNORE INTO news_cards(id,article_id,state,created_at,parent_id) VALUES(?,?,?,?,?)").bind(id,a.id,parent?'duplicate':'waiting',time,parent?.id??null).run();
    if(!inserted.meta.changes||parent)continue;
   }

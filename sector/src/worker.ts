@@ -1,3 +1,6 @@
+import {OUTPUT_LIMIT_MESSAGE} from './output-preferences';
+import {editorMessage,editorCallback} from './editor-tools';
+import {newsroomMessage,newsroomCallback} from './newsroom';
 import {publicationAction,publicationMessage} from './publication-assistant';
 import {requestX,xEnabled} from './x-publish';
 import {requestRedesign} from './card-redesign';
@@ -29,16 +32,20 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  env={...env,TELEGRAM_UPDATE_ID:Number(id)};
  const message=update.message as InputMessage|undefined;
  if(message?.chat&&message.from&&isOwner(env,String(message.from.id),String(message.chat.id),message.chat.type)) {
+  if(await editorMessage(env,message,Number(id)))return json({ok:true});
+  if(await newsroomMessage(env,message))return json({ok:true});
   if(await publicationMessage(env,message,Number(id)))return json({ok:true});
   const edit=await env.DB.prepare('SELECT * FROM edits WHERE user_id=? AND expires_at>?').bind(env.TELEGRAM_USER_ID!,Math.floor(Date.now()/1000)).first<{draft_id:string;revision:number;prompt_message_id:number}>();
   if(edit&&message.text&&message.reply_to_message?.message_id===edit.prompt_message_id) {
    try {await enqueueEdit(env,edit.draft_id,edit.revision,message.text);await env.DB.prepare('DELETE FROM edits WHERE user_id=?').bind(env.TELEGRAM_USER_ID!).run();}
-   catch {await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:'Düzenleme kaydedilemedi. Karttaki Düzenle düğmesinden tekrar deneyebilirsin.'}));}
+   catch(e) {await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:e instanceof Error&&e.message==='unsupported_output_limit'?OUTPUT_LIMIT_MESSAGE:'Düzenleme kaydedilemedi. Karttaki Düzenle düğmesinden tekrar deneyebilirsin.'}));}
   } else await queueManual(env,Number(id),message);
   return json({ok:true});
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;
  if(!cb||!cb.message||!isOwner(env,String(cb.from?.id),String(cb.message.chat?.id),cb.message.chat?.type))return json({ok:true});
+ const ed=await editorCallback(env,cb.data,cb.message.message_id);if(ed!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:ed}));return json({ok:true});}
+ const newsroom=await newsroomCallback(env,cb.data,cb.message.message_id,Number(id));if(newsroom!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:newsroom.slice(0,190)}));return json({ok:true});}
  const pub=cb.data?.match(/^pub:(mark|undo|defer|time|stats):([a-f0-9-]{36})$/);
  if(pub){const text=await publicationAction(env,pub[1],pub[2],Number(id),cb.message.message_id);await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:text.slice(0,200),show_alert:'true'}));return json({ok:true});}
  if(cb.data==='xcount'||cb.data?.startsWith('xpost:')){await requestX(env,cb.data,cb.message.message_id,cb.id);return json({ok:true});}

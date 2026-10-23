@@ -1,3 +1,4 @@
+import {OUTPUT_LIMIT_MESSAGE,outputPreferences} from './output-preferences';
 import {splitManualText} from './manual-instructions';
 import {botQuery,BOT_QUERY_HELP} from './bot-query';
 import {ensureManualStatus} from './manual-status';
@@ -8,8 +9,9 @@ export interface InputMessage {message_id:number;date?:number;text?:string;capti
 export async function queueManual(env:Env,updateId:number,m:InputMessage):Promise<boolean> {
  if(!m.from||!m.chat||!isOwner(env,String(m.from.id),String(m.chat.id),m.chat.type)||!Number.isSafeInteger(m.message_id)||!Number.isSafeInteger(updateId))return false;
  let text=(m.text??m.caption??'').trim();const focus=marketSelection(text);
- if(/^\/(devrekesici|genelgerial[ıi]m|gerial[ıi]m)(?:@[a-zA-Z0-9_]+)?$/iu.test(text)&&!m.forward_origin){
-  const input=JSON.stringify({report:text.toLocaleLowerCase('tr-TR').startsWith('/devre')?'circuit':text.toLocaleLowerCase('tr-TR').startsWith('/genel')?'general_buyback':'buyback',at:(m.date??Math.floor(Date.now()/1000))*1000,text:''});
+ if(/^\/(devrekesici|genelgerial[ıi]m|gerial[ıi]m)(?:@[a-zA-Z0-9_]+)?(?:\s+.+)?$/iu.test(text)&&!m.forward_origin){
+  let preferences;try{preferences=outputPreferences(text);}catch(e){if(!(e instanceof Error)||e.message!=='unsupported_output_limit')throw e;if(env.MODE==='telegram_review')await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:OUTPUT_LIMIT_MESSAGE}));return true;}
+  const input=JSON.stringify({report:text.toLocaleLowerCase('tr-TR').startsWith('/devre')?'circuit':text.toLocaleLowerCase('tr-TR').startsWith('/genel')?'general_buyback':'buyback',at:(m.date??Math.floor(Date.now()/1000))*1000,text:'',preferences});
   const r=await env.DB.prepare('INSERT OR IGNORE INTO manual_requests(update_id,message_id,kind,input,created_at) VALUES(?,?,?,?,?)').bind(updateId,m.message_id,'kap_report',input,Math.floor(Date.now()/1000)).run();
   if(r.meta.changes)await ensureManualStatus(env,updateId,m.message_id,'Komut saatine kadar kaydedilmiş KAP bildirimlerini sayıp raporunu hazırlıyorum.');
   return true;

@@ -1,3 +1,5 @@
+import {scheduledSelection} from './newsroom';
+import {recordNewsCandidate,newsPreferences} from './news-routing';
 import {deliveryTarget} from './delivery-recovery';
 import {announceNews,refreshNewsRequests} from './news-inbox';
 import registry from '../sources.json';
@@ -36,9 +38,13 @@ export async function poll(env:Env):Promise<void> {
    if(feed.status===304){await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0,last_error=NULL WHERE id=?').bind(time+source.poll_seconds,row.id).run();return;}
    const items=parseFeed(feed.text,source),dated=items.filter(i=>i.published_at&&Date.parse(i.published_at)<=Date.now()+5*60_000);
    const newest=Math.max(0,...dated.map(i=>Date.parse(i.published_at!)));
-   if(!newest||Date.now()-newest>source.fresh_hours*3600_000)throw new Error('stale_or_undated_feed');
-   const selected=dated.filter(i=>Date.now()-Date.parse(i.published_at!)<24*3600_000&&(!cutoff||i.published_at!>=cutoff)&&topicScore(i.title,i.summary,source.official).score>=(source.minimum_score??60));
-   const inserts=await Promise.all(selected.slice(0,25).map(async i=>env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').bind(await sha256(i.url),source.id,i.url,i.title,i.summary,i.published_at!,time)));
+   // A valid feed with no recent story is not a transport failure. Metadata is still archived.
+   const prefs=await newsPreferences(env);
+   const legacy=(i:typeof items[number])=>!!i.published_at&&Date.now()-Date.parse(i.published_at)<24*3600_000&&(!cutoff||i.published_at>=cutoff)&&topicScore(i.title,i.summary,source.official).score>=(source.minimum_score??60);
+   const decisions=new Map<string,Awaited<ReturnType<typeof recordNewsCandidate>>>();
+   for(const i of items.slice(0,150))decisions.set(i.url,await recordNewsCandidate(env,i,source,legacy(i),Date.now(),prefs));
+   const selected=prefs.mode==='active'?items.filter(i=>decisions.get(i.url)?.decision.route==='instant'&&decisions.get(i.url)?.decision.eligible&&!!i.published_at&&(!cutoff||i.published_at>=cutoff)):dated.filter(i=>Date.now()-Date.parse(i.published_at!)<24*3600_000&&(!cutoff||i.published_at!>=cutoff)&&topicScore(i.title,i.summary,source.official).score>=(source.minimum_score??60));
+   const inserts=await Promise.all(selected.slice(0,25).map(async original=>{const i=prefs.mode==='active'?decisions.get(original.url)!.item:original;return env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen) VALUES(?,?,?,?,?,?,?)').bind(await sha256(i.url),source.id,i.url,i.title,i.summary,i.published_at!,time);}));
    if(inserts.length)await env.DB.batch(inserts);
    await env.DB.prepare('UPDATE sources SET next_poll=?,lease_until=0,etag=?,modified=?,failures=0,last_ok=?,last_error=NULL,last_count=? WHERE id=?').bind(time+source.poll_seconds,feed.headers.get('etag'),feed.headers.get('last-modified'),time,items.length,row.id).run();
   } catch(e) {
@@ -129,7 +135,7 @@ export async function tick(env:Env):Promise<void> {
  const time=now();
  const lease=await env.DB.prepare("INSERT INTO system_state(key,value) VALUES('tick_lease',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE CAST(value AS INTEGER)<?").bind(String(time+300),time).run();
  if(!lease.meta.changes)return;
- try {await seed(env);await poll(env);await announceNews(env);await refreshNewsRequests(env);await prepare(env);await deliver(env);}
+ try {await seed(env);await poll(env);await announceNews(env);await scheduledSelection(env);await refreshNewsRequests(env);await prepare(env);await deliver(env);}
  finally {await env.DB.prepare("UPDATE system_state SET value='0' WHERE key='tick_lease'").run();}
  await env.DB.batch([
   env.DB.prepare('DELETE FROM edits WHERE expires_at<?').bind(now()),
@@ -137,6 +143,7 @@ export async function tick(env:Env):Promise<void> {
   env.DB.prepare("UPDATE drafts SET delivery_state='uncertain',lease_until=0 WHERE delivery_state='sending' AND lease_until<?").bind(now()),
   env.DB.prepare("INSERT INTO system_state(key,value) VALUES('last_tick',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(new Date().toISOString())]);
  await cleanupRawDocuments(env);
+ await env.DB.prepare('DELETE FROM news_candidates WHERE expires_at<?').bind(Date.now()).run();
 }
 export async function cleanupRawDocuments(env:Env,time=now()):Promise<void>{
  await env.DB.batch([

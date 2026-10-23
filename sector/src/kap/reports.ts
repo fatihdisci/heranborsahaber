@@ -1,3 +1,4 @@
+import type {OutputPreferences} from '../output-preferences';
 import {normalize,type Disclosure,type Indices,type fullText} from './parser';
 import type {Document,Draft} from '../types';
 export const istanbulDay=(at:number)=>new Date(at+10800000).toISOString().slice(0,10);
@@ -31,7 +32,8 @@ export function purchases(page:ReturnType<typeof fullText>):Purchase[]{
  if(!found)throw Error('kap_report_table_missing');return out;
 }
 export interface ReportRecord {disclosure:Disclosure;purchases?:Purchase[];error?:string;}
-export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:Indices|null,at:number,coverage:string):{draft:Draft;documents:Document[]}{
+export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:Indices|null,at:number,coverage:string,preferences?:OutputPreferences):{draft:Draft;documents:Document[]}{
+ const limit=(n:number)=>preferences?.list==='all'?Infinity:preferences?.count??n;
  const day=istanbulDay(at),time=new Date(at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit'});
  const relevant=records.filter(r=>istanbulDay(Date.parse(r.disclosure.publishedAt))===day&&Date.parse(r.disclosure.publishedAt)<=at&&(kind==='circuit'?normalize(r.disclosure.title+' '+r.disclosure.summary).includes('DEVRE KESICI'):/PAYLARIN GERI ALINMASINA/.test(normalize(r.disclosure.title))));
  const unique=[...new Map(relevant.map(r=>[r.disclosure.id,r])).values()];
@@ -46,8 +48,8 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
   const fresh=indices&&indices.bist50?.length===50&&Math.abs(at-Date.parse(indices.checkedAt))<36*3600000;
   const tier=(c:string)=>fresh?(indices!.bist30.includes(c)?30:indices!.bist50?.includes(c)?50:indices!.bist100.includes(c)?100:999):999;
   const sorted=[...counts].sort((a,b)=>tier(a[0])-tier(b[0])||b[1]-a[1]||a[0].localeCompare(b[0]));
-  for(const t of [30,50,100]){const members=sorted.filter(([c])=>tier(c)===t);if(members.length)parts.push(`BIST ${t}${t>30?' (önceki gruplar hariç)':''}: `+members.slice(0,5).map(([c,n])=>`#${c} (${n})`).join(', ')+(members.length>5?` ve ${members.length-5} hisse`:'')+'.');}
-  const repeats=sorted.filter(([,n])=>n>1);if(repeats.length)parts.push('Tekrarlayanlar: '+repeats.slice(0,8).map(([c,n])=>`#${c} ${n} kez`).join(', ')+(repeats.length>8?` ve ${repeats.length-8} hisse`:'')+'.');
+  for(const t of [30,50,100]){const members=sorted.filter(([c])=>tier(c)===t);if(members.length)parts.push(`BIST ${t}${t>30?' (önceki gruplar hariç)':''}: `+members.slice(0,limit(5)).map(([c,n])=>`#${c} (${n})`).join(', ')+(members.length>limit(5)?` ve ${members.length-5} hisse`:'')+'.');}
+  const repeats=sorted.filter(([,n])=>n>1);if(repeats.length)parts.push('Tekrarlayanlar: '+repeats.slice(0,limit(8)).map(([c,n])=>`#${c} ${n} kez`).join(', ')+(repeats.length>limit(8)?` ve ${repeats.length-8} hisse`:'')+'.');
   for(const [c,n] of sorted)rows.push({label:'#'+c,value:`${n} bildirim${tier(c)<999?' · BIST '+tier(c):''}`});
   if(!fresh)parts.push('Güncel endeks üyeliği doğrulanamadığından endeks ayrımı gösterilmedi.');
  }else{
@@ -66,16 +68,16 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
   const ranked=[...sums].filter(([,n])=>n>0n).sort((a,b)=>a[1]===b[1]?a[0].localeCompare(b[0]):a[1]>b[1]?-1:1);
   heading=failed?'Pay geri alım raporu (kısmi)':`Pay geri alım raporu: ${ranked.length} hisse`;
   parts.push(`${day} saat ${time} itibarıyla ${unique.length} KAP bildirimi kaydedildi. Düzeltmeler sonrası ${current.length} kayıt; bugüne ait doğrulanmış alım bulunan ${ranked.length} hisse.`);
-  for(const [c,n] of ranked.slice(0,10)){rows.push({label:'#'+c,value:formatQuantity(n.toString())+' lot'});parts.push(`#${c}: ${formatQuantity(n.toString())} lot`);}
+  for(const [c,n] of ranked.slice(0,limit(10))){rows.push({label:'#'+c,value:formatQuantity(n.toString())+' lot'});parts.push(`#${c}: ${formatQuantity(n.toString())} lot`);}
   if(failed)parts.push(`${failed} bildirimin işlem miktarı henüz doğrulanamadı; sıralama eksiktir.`);
   footer='Yalnızca KAP’ta yer alan pay geri alımı bildirimleri esas alınmıştır. Farklılık gösterebilir.';
  }
  if(coverage)parts.push(coverage);
  let body=parts.join('\n\n');
- if(body.length>850){const kept=[parts[0]];for(const part of parts.slice(1,-1))if(kept.join('\n\n').length+part.length<650)kept.push(part);kept.push('Ayrıntılı hisse dağılımı görseldedir.',parts.at(-1)!);body=kept.join('\n\n');}
+ if(!preferences&&body.length>850){const kept=[parts[0]];for(const part of parts.slice(1,-1))if(kept.join('\n\n').length+part.length<650)kept.push(part);kept.push('Ayrıntılı hisse dağılımı görseldedir.',parts.at(-1)!);body=kept.join('\n\n');}
  const title='📢 '+heading;
  const source='https://www.kap.org.tr/tr/bildirim-sorgu';
  const doc:Document={source_id:'kap-daily-report',source_name:'KAP günlük kayıt raporu',family:'kap-report',official:true,url:source+'#'+kind+'-'+at,title:heading,body,passages:[{id:'computed_report',text:body}],published_at:new Date(at).toISOString(),primary_urls:current.map(r=>r.disclosure.url),language:'tr'};
- const draft:Draft={headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+' • '+time+' itibarıyla',card_data:{report:{rows,footer}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
+ const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+(preferences?.show_time?' • '+time+' itibarıyla':''),card_data:{report:{rows,footer}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
  return {draft,documents:[doc]};
 }

@@ -20,6 +20,8 @@ export async function eventIdentity(draft:Draft,documents:Document[]):Promise<st
 }
 export function sameEvent(a:Draft,b:Draft):boolean {
  if(marketView(a)!==marketView(b))return false;
+ const facts=(d:Draft)=>{const text=normalized(d.headline+' '+d.body);return JSON.stringify([[...new Set(text.match(/\b\d+(?: [0-9]+)*\b/g)??[])].sort(),/yalan|reddet/.test(text),/iptal/.test(text),/beklen|tahmin|iddia|olabilir/.test(text),/ihale/.test(text),/sozlesme|sözleşme|anlasma|anlaşma/.test(text)]);};
+ if(facts(a)!==facts(b))return false;
  const subjects=a.entities.map(normalized),other=b.entities.map(normalized);
  if(!subjects.some(x=>other.includes(x)))return false;
  return normalized(a.event_key)===normalized(b.event_key)||titleSimilarity(a.headline,b.headline)>.72;

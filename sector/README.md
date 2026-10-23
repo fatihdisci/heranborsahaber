@@ -232,7 +232,7 @@ Editör botuna doğrudan metin, görsel veya PDF gönderilebilir; haber bağlant
 
 Raporlar model çağrısı yapmaz; normal taslak/Telegram teslimat ve manuel X paylaşım kayıtlarını kullanır. KAP veritabanındaki `report_buybacks` tablosuna her bildirimin işlem satırları arka planda birer birer kaydedilir. Yeniden başlatmada başarıyla okunan kayıtlar tekrar indirilmez. Başarısız okumalar sınırlı tekrar edilir. Program karar tarihi ve işlem satırları bulunamayan/PDF-only kayıtlar tahmini miktarla sıralanmaz; rapor kısmi olarak işaretlenir. Sonraki program tablosu öncekinin yerine geçer; geçmiş satırlar ve program toplamı tekrar toplanmaz. Düzeltme bağlantıları korunur. Yalnız doğrulanmış borsada işlem gören pay tablosunun nominal TL miktarı işlem birimine dönüştürülür; ISKUR ve belirsiz birimler dahil edilmez.
 
-Raporlar tüm piyasanın eksiksiz sayımı iddiasında bulunmaz; toplayıcı kapsamı, gecikme ve başarısız okumalar belirtilir. Yoğun devre kesici günlerinde kart en çok 30 hisse gösterir ve kalan sayıyı belirtir; toplam sayım tüm kayıtları içerir. Geri dönüşte önceki uygulama sürümü etkinleştirilebilir; eklenen önbellek tablosu silinmek zorunda değildir.
+Raporlar tüm piyasanın eksiksiz sayımı iddiasında bulunmaz; toplayıcı kapsamı, gecikme ve başarısız okumalar belirtilir. Tek günlük devre kesici rapor kartının güvenli kapasitesi 30 satırdır. Kapasite aşımında açık hata verilir; kalan hisseler sessizce kesilmez. Toplam sayım tüm kayıtları içerir. Geri dönüşte önceki uygulama sürümü etkinleştirilebilir; eklenen önbellek tablosu silinmek zorunda değildir.
 
 Genel manuel görsellerde OCR yardımcıdır: görüntü, mevcut Hermes gpt-6-luna/medium üzerinden etiket–değer ilişkileriyle okunur ve ayrı görsel kontrolünden geçer. Doğrulanan görsel olgular tweetin sayı/kanıt kontrollerine aktarılır; asıl görüntü üretim ve denetim adımlarında korunur. Yapılandırılmış AKD tabloları mevcut deterministik okuyucuyu ve görsel denetimi kullanır. Görselde bulunmayan tarih/birim veya grafikten hassas fiyat türetilmez.
 
@@ -254,3 +254,26 @@ Nitter aynaları üçüncü taraf ve kesintiye açık olduğundan kayıtlar gün
 ChatGPT için indirilebilir çevrimdışı kart ve prompt paketi: [`exports/ENDEKS-HABER-ChatGPT.zip`](exports/ENDEKS-HABER-ChatGPT.zip). Kaynak paketi aynı dizindeki `exports/ENDEKS-HABER-ChatGPT/` klasöründe ve `scripts/export_chatgpt_kit.ts` ile yeniden üretilebilir.
 
 KAP tweetlerinde güncel resmî KAP endeks listesinden doğrulanan BIST 30 hisselerine `#BIST30 #BIST100`, yalnız BIST 100 hisselerine `#BIST100` eklenir. Diğer hisselere endeks etiketi eklenmez. Üyelik bildirimin asıl hisse kodlarıyla eşleştirilir; PDF içindeki ilgisiz şirketlerden veya model tahmininden çıkarılmaz. Liste günlük yenilenir; doğrulaması 36 saatten eskiyse endeks etiketi üretilmez.
+
+
+### Editör iş akışı ve gölge haber filtresi
+Yeni RSS filtresi varsayılan `shadow` modundadır. Mevcut bildirim akışı değişmez; KAP kapsamı ile sahibin doğrudan link/metin/PDF/görsel ve açık üretim istekleri bu otomatik filtreye tabi değildir. İzinli RSS başlık/özet/link/tarih metaverisi puandan önce `news_candidates` içinde 7 gün saklanır. Tam metin arşivi açılmaz. Rota, nedenler, eşleşme güveni, kural sürümü ve eski filtre uygunluğu kaydedilir. Aynı olay kopyaları gruplanır; dönem/tutar/karar aşaması ve aynı URL'deki içerik değişimi ayrı sürüm olarak korunur.
+
+- `/arsiv sözcük`: yedi günlük aday metaverisinde arama (ilk 20 sonuç).
+- `/haberfiltre`: gölge/aktif durum ve rota dağılımı; ayar değiştirmez.
+- `/golgerapor`: eski filtre altındaki adaylar dahil rota/inceleme karşılaştırması ve önizleme gecikmesi.
+- `/aday <aday_id> instant|digest|archive`: insan inceleme etiketi; otomatik kural veya rota değiştirmez.
+- `/olay <yeni_aday_id> <önceki_aday_id>`: açık olay ilişkisi; haber bastırmaz ve bağımsız teyit yaratmaz.
+- `/secki`: acil olmayan adaylardan açık istekle içerik üretimi. Otomatik seçki varsayılan kapalıdır; önerilen saatler İstanbul 12:30 / 18:30.
+- `/durum`: son tarama/üretim/teslimat sağlıkları, bekleyen ve belirsiz işler, kota/bekleme; yeni haber olmaması kaynak arızası sayılmaz.
+- `/yayinurl <taslak_id> https://x.com/endeks_haber/status/<id>`: manuel yayın beyanına isteğe bağlı bağlantı; API teyidi değildir.
+
+Kartlarda orijinal PNG, kanıt ve uygun tablo veri görünümü bulunur. Hedefli düzeltme `buy.0.value = 123 lot` gibi satır/alan yolu ile yapılır; ilk sürüm `buy/sell/holdings/metrics` altında `label/value` alanlarını destekler. Önce/sonra farkı saklanır, kaynak değiştirilmez, kullanıcı düzeltmesi ayrı ve resmî olmayan kanıt olarak mevcut denetime girer. Tweet ve kart denetimden sonra birlikte yenilenir. Sabit rapor/devre kesici kartlarına düzen değiştirme düğmesi sunulmaz.
+
+`output_preferences` ortak kapsam sözleşmesidir: `list=all|first`, `count`, `side=buy|sell|both`, `show_time`, `show_footer`. Açık tüm-liste isteği tweetin eski beşli kesmelerine önceliklidir. Şablon kapasitesi yetmiyorsa satır atılmaz, otomatik thread/çoklu kart açılmaz. Kısmi veri ve çelişkiler editör görünümünde korunur. Genel geri alımın ilk-N altküme toplamlarını yeniden hesaplamak henüz desteklenmez; bunun için açık hata verilir. İlk-10 geri alım ürünü mevcut varsayılanını korur.
+
+Yayın kaydı artık revision, metin, kaynak bağlantıları ve PNG hash'inin değişmez görüntüsünü saklar. Manuel kayıt kullanıcı beyanıdır; API makbuzu ve Nitter dış gözlemi ayrı tutulur. Eski kaydın anlık görüntüsü yoksa CSV alanları bugünkü taslaktan doldurulmaz. Nitter raporu **23.00 itibarıyla** etiketlidir; tam takvim günü iddiası değildir. Gözlem kesintisi yayımlanmadı kanıtı sayılmaz.
+
+Etkinleştirme, geri dönüş, geçiş testi ve kalan kararlar: [editör iş akışı inceleme raporu](docs/editor-workflow-review.md). Bu geliştirme push/deploy yapmadan inceleme için hazırlanmıştır.
+
+Editör iş akışının takip düzeltmeleri, ayrı Python/OCR/build sonuçları ve güncel ZIP hash’i: [takip incelemesi](docs/editor-workflow-followup.md). Aktif filtreye geçişin sürümlü insan incelemesi şartları: [hazırlık kontrolü](docs/news-filter-readiness.md). Bu dosyalar etkinleştirme yapmaz.

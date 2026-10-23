@@ -21,5 +21,5 @@ export function xClient(keys:XKeys,fetcher:typeof fetch=fetch):XTransport{
  }
  return {identity:async()=>{const d=await call('/2/users/me','GET');if(!d.username)throw Error('x_response_invalid');return {id:d.id!,username:d.username};},
  upload:async bytes=>{const form=new FormData();form.set('media',new Blob([bytes as BlobPart],{type:'image/png'}),'endeks.png');form.set('media_category','tweet_image');return (await call('/2/media/upload','POST',form)).id!;},
- post:async(text,mediaId)=>(await call('/2/tweets','POST',JSON.stringify({text,media:{media_ids:[mediaId]}}))).id!};
+ post:async(text,mediaId)=>(await call('/2/tweets','POST',JSON.stringify({text,media:{media_ids:Array.isArray(mediaId)?mediaId:[mediaId]}}))).id!};
 }

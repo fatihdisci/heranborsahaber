@@ -1,3 +1,4 @@
+import {readMedia} from './media-set';
 import {buybackCsv} from './is-buyback';
 import {generalCsv} from './general-buyback';
 import {postText} from './editorial';
@@ -28,13 +29,9 @@ export async function sendDraftAsset(env:Env,data:string,messageId:number,update
    const report=JSON.parse(row.content).card_data?.report,g=report?.general,b=report?.buyback;if(!g&&!b)throw Error('report_missing');
    const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('document',new Blob([b?buybackCsv(b):generalCsv(g)],{type:'text/csv;charset=utf-8'}),'endeks-genel-gerialim-'+(b?.day??g.day)+'.csv');await telegram(env,'sendDocument',form);
   }else{
-   const object=row.media_key?await env.MEDIA.get(row.media_key):null;
-   if(!object)throw new Error('draft_media_missing');
-   const png=await object.arrayBuffer();
-   const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);
-   form.set('document',new Blob([png],{type:'image/png'}),'endeks-haber.png');
-   form.set('disable_content_type_detection','true');
-   await telegram(env,'sendDocument',form);
+   if(!row.media_key)throw Error('draft_media_missing');const {images}=await readMedia(env,row.media_key,row.content);
+   for(let i=0;i<images.length;i++){const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('document',new Blob([images[i] as BlobPart],{type:'image/png'}),images.length===1?'endeks-haber.png':`endeks-haber-${i+1}.png`);form.set('disable_content_type_detection','true');await telegram(env,'sendDocument',form);}
+
   }
  }catch{
   // A timeout may follow successful delivery. Do not automatically duplicate

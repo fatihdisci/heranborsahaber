@@ -1,3 +1,4 @@
+import twitter from 'twitter-text';
 import type {OutputPreferences} from '../output-preferences';
 import {normalize,type Disclosure,type Indices,type fullText} from './parser';
 import type {Document,Draft} from '../types';
@@ -74,10 +75,12 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
  }
  if(coverage)parts.push(coverage);
  let body=parts.join('\n\n');
- if(!preferences&&body.length>850){const kept=[parts[0]];for(const part of parts.slice(1,-1))if(kept.join('\n\n').length+part.length<650)kept.push(part);kept.push('Ayrıntılı hisse dağılımı görseldedir.',parts.at(-1)!);body=kept.join('\n\n');}
+ if(kind==='circuit'&&preferences?.list)body=parts[0]+'\n\n'+rows.slice(0,preferences.list==='all'?Infinity:preferences.count??5).map(r=>r.label+' ('+r.value.split(' ')[0]+')').join(' ');
  const title='📢 '+heading;
  const source='https://www.kap.org.tr/tr/bildirim-sorgu';
  const doc:Document={source_id:'kap-daily-report',source_name:'KAP günlük kayıt raporu',family:'kap-report',official:true,url:source+'#'+kind+'-'+at,title:heading,body,passages:[{id:'computed_report',text:body}],published_at:new Date(at).toISOString(),primary_urls:current.map(r=>r.disclosure.url),language:'tr'};
- const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+(preferences?.show_time?' • '+time+' itibarıyla':''),card_data:{report:{rows,footer}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
+ const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+(preferences?.show_time?' • '+time+' itibarıyla':''),card_data:{report:{rows,footer,...(kind==='circuit'?{events:current.map(r=>({id:r.disclosure.id,tickers:[...r.disclosure.subjectCodes],published_at:r.disclosure.publishedAt}))}:{})}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
+ if(!preferences?.list&&!twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n')).valid){draft.body=kind==='circuit'?parts[0]+'\n\n'+rows.slice(0,5).map(r=>r.label).join(' '):`${rows.length} hissede pay geri alımı bildirimi.\n\n`+rows.map(r=>rows.length<6?r.label+': '+r.value:r.label).join(' ');}
+ if(!twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n')).valid)throw Error('tweet_capacity_exceeded');
  return {draft,documents:[doc]};
 }

@@ -4,7 +4,7 @@ import {spawn} from 'node:child_process';
 import {homedir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {png} from './render_local';
-import {draftCard} from '../src/card';
+import {draftCards} from '../src/card-pages';
 import {sha256} from '../src/utils/text';
 import {acceptHermes} from '../src/ai';
 import type {Draft,Document} from '../src/types';
@@ -32,8 +32,9 @@ async function run():Promise<void> {
  });
  const result=JSON.parse(output) as {draft:Draft;audit:unknown;runtime:unknown};
  const documents=job.documents as Document[];acceptHermes(result.draft,result.audit,documents);
- const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true,job.card_theme==='navy'||job.card_theme==='paper'?job.card_theme:undefined,isCardLayout(job.card_layout)?job.card_layout:undefined);
- await api('/api/bridge/result',{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
+ const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svgs=draftCards(result.draft,job.card_theme==='navy'||job.card_theme==='paper'?job.card_theme:undefined,isCardLayout(job.card_layout)?job.card_layout:undefined);
+ const cards=[];for(const svg of svgs)cards.push({svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
+ await api('/api/bridge/result',{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,cards});
 }
 const lockPath=configPath+'.lock';let lock;
 try{lock=await open(lockPath,'wx',0o600);await lock.writeFile(String(process.pid));}

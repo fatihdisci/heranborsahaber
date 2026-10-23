@@ -1,3 +1,4 @@
+import {sendAlbum} from './telegram-album';
 import {draftKeyboard,publicationState,type PublicationState} from './telegram-ui';
 import {sha256} from './utils/text';
 import {postText} from './editorial';
@@ -37,7 +38,7 @@ export async function telegram(env:Env,method:string,body:URLSearchParams|FormDa
     else throw new TelegramError(code,wait,code===429?'retryable':code>=400&&code<500?'permanent':repeatable?'retryable':'uncertain');
    }else result=data.result;
   }catch(e){if(e instanceof TelegramError)throw e;throw new TelegramError(0,60,repeatable?'retryable':'uncertain');}
-  if(effect)await env.DB.prepare("UPDATE telegram_effects SET state='sent',result=?,error_code=NULL,updated_at=? WHERE id=?").bind(JSON.stringify(result?.message_id?{message_id:result.message_id}:{}),time,effect).run();
+  if(effect)await env.DB.prepare("UPDATE telegram_effects SET state='sent',result=?,error_code=NULL,updated_at=? WHERE id=?").bind(JSON.stringify(Array.isArray(result)?result.map(m=>({message_id:m.message_id})):result?.message_id?{message_id:result.message_id}:{}),time,effect).run();
   return result;
  }catch(e){
   const failure=e instanceof TelegramError?e:new TelegramError(0,60,repeatable?'retryable':'uncertain');
@@ -54,8 +55,10 @@ export function sourceKeyboard(docs:Document[]) {
 export function keyboard(id:string,revision:number,docs:Document[],_caption:string,publish=false,draft?:Draft,state:PublicationState={}) {
  return draftKeyboard(id,revision,docs,publish,draft,state);
 }
-export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
+export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array|Uint8Array[],_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
  if(env.MODE!=='telegram_review')throw new Error('telegram_dry_run');
+ if(Array.isArray(png))return sendAlbum(env,id,revision,draft,docs,png,existingMessageId,fetcher);
+ if(existingMessageId&&env.DB){const control=await env.DB.prepare('SELECT value FROM system_state WHERE key=?').bind('telegram_control:'+id).first<{value:string}>();if(Number(control?.value)===existingMessageId){try{await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(existingMessageId),reply_markup:JSON.stringify({inline_keyboard:[]})}),fetcher);}catch(e){if(!(e instanceof TelegramError&&e.code===400))throw e;}existingMessageId=undefined;}}
  const caption=postText(draft);
  // Fail before uploading anything; never produce an orphan photo or split post.
  if(caption.length>1024)throw new Error('telegram_caption_too_long');

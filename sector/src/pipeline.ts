@@ -1,3 +1,4 @@
+import {readMedia} from './media-set';
 import {scheduledSelection} from './newsroom';
 import {recordNewsCandidate,newsPreferences} from './news-routing';
 import {deliveryTarget} from './delivery-recovery';
@@ -108,7 +109,7 @@ export async function deliver(env:Env):Promise<void> {
  const row=await env.DB.prepare("SELECT * FROM drafts WHERE state='pending' AND delivery_state='waiting' AND next_delivery<=? AND expires_at>? AND lease_until<? AND NOT EXISTS (SELECT 1 FROM model_jobs j WHERE j.result_draft=drafts.id AND j.kind='initial' AND NOT EXISTS (SELECT 1 FROM news_cards c WHERE c.article_id=j.article_id AND c.state IN ('requested','model_queued'))) ORDER BY created_at LIMIT 1").bind(time,time,time).first<DraftRow>();if(!row)return;
  const lock=await env.DB.prepare("UPDATE drafts SET lease_until=?,delivery_state='sending',delivery_attempts=delivery_attempts+1 WHERE id=? AND lease_until<? AND delivery_state='waiting'").bind(time+120,row.id,time).run();if(!lock.meta.changes)return;
  try {
-  const object=row.media_key?await env.MEDIA.get(row.media_key):null;if(!object)throw new Error('draft_media_missing');
+  if(!row.media_key)throw Error('draft_media_missing');const {images}=await readMedia(env,row.media_key,row.content);
   const target=await deliveryTarget(env,row.id,row.message_id);
   if(target)await env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_target:'+row.id,String(target)).run();
   const automaticKap=await env.DB.prepare("SELECT 1 FROM model_jobs WHERE result_draft=? AND kind='kap' LIMIT 1").bind(row.id).first();
@@ -119,16 +120,18 @@ export async function deliver(env:Env):Promise<void> {
     return;
    }
   }
-  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),new Uint8Array(await object.arrayBuffer()),row.verification,target);
+  const current=await env.DB.prepare("SELECT 1 FROM drafts WHERE id=? AND revision=? AND media_key=? AND content=? AND state='pending' AND delivery_state='sending' AND expires_at>?").bind(row.id,row.revision,row.media_key,row.content,now()).first();if(!current)return;
+  const message=await sendDraft(env,row.id,row.revision,JSON.parse(row.content),JSON.parse(row.documents),images.length>1?images:images[0],row.verification,target);
   await env.DB.batch([
-   env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=?").bind(time,message,row.id),
-   env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind('telegram_photo:'+row.id,String(message))]);
+   env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state='sent',delivered_at=?,message_id=? WHERE id=? AND revision=? AND delivery_state='sending'").bind(time,message,row.id,row.revision),
+   env.DB.prepare("INSERT INTO system_state(key,value) SELECT ?,? WHERE EXISTS(SELECT 1 FROM drafts WHERE id=? AND revision=? AND message_id=?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind('telegram_photo:'+row.id,String(message),row.id,row.revision,message),
+   ...(images.length>1?[env.DB.prepare("INSERT INTO system_state(key,value) SELECT ?,? WHERE EXISTS(SELECT 1 FROM drafts WHERE id=? AND revision=? AND message_id=?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind('telegram_control:'+row.id,String(message),row.id,row.revision,message)]:[])]);
  } catch(e) {
   // Retrying an ambiguous timeout can duplicate a card already accepted by
   // Telegram. Only an explicit API rejection is eligible for an automatic retry.
   const attempts=await env.DB.prepare('SELECT delivery_attempts FROM drafts WHERE id=?').bind(row.id).first<{delivery_attempts:number}>();
   const retry=e instanceof TelegramError&&e.code===429&&(attempts?.delivery_attempts??3)<3;
-  await env.DB.prepare('UPDATE drafts SET lease_until=0,delivery_state=?,next_delivery=? WHERE id=?').bind(retry?'waiting':e instanceof TelegramError&&e.code>=400&&e.code<500?'failed':'uncertain',time+(e instanceof TelegramError?e.retryAfter:300),row.id).run();
+  await env.DB.prepare("UPDATE drafts SET lease_until=0,delivery_state=?,next_delivery=? WHERE id=? AND revision=? AND delivery_state='sending'").bind(retry?'waiting':e instanceof TelegramError&&e.code>=400&&e.code<500?'failed':'uncertain',time+(e instanceof TelegramError?e.retryAfter:300),row.id,row.revision).run();
  }
 }
 export async function tick(env:Env):Promise<void> {

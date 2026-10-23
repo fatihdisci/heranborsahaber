@@ -17,7 +17,8 @@ test('structured figures share numeric, entity and ticker validation with the tw
  assert.throws(()=>validateDraft({...base,card_data:{...data,ticker:'ZZZZ'}},[doc]),/unsupported_card_ticker/);
  assert.throws(()=>validateDraft({...base,card_data:{...data,buy:[{label:'Uydurma Kurum',value:'1.250.000 adet'}]}},[doc]),/unsupported_card_entity/);
  assert(numericIssues({...base,card_data:{...data,as_of:'23 Ekim 2026'}},[doc]).some(x=>x.includes('card_data.as_of')));
- assert.throws(()=>validateDraft({...base,card_data:{buy:Array(6).fill(data.buy![0])}},[doc]),/invalid_card_data/);
+ assert.doesNotThrow(()=>validateDraft({...base,card_data:{buy:Array(6).fill(data.buy![0])}},[doc]));
+ assert.throws(()=>validateDraft({...base,card_data:{buy:Array(21).fill(data.buy![0])}},[doc]),/multi_card_capacity/);
  assert.doesNotThrow(()=>validateDraft(base,[doc]));
  assert(documentScore({...doc,equity_codes:undefined}).score>=80);
  assert(documentScore({...doc,source_id:'cnbce'},true).score>=80);

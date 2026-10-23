@@ -1,0 +1,146 @@
+[
+  {
+    "sample": "geri-alim-54",
+    "page": 1,
+    "pages": 1,
+    "source_rows": 54,
+    "origin": "offline source fixture; not a production report",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/geri-alim-54-1.png",
+    "sha256": "1128d981a292e3c80a5ac00da4c5a71d2ed8d10f4b3a312a295bdb740c641790"
+  },
+  {
+    "sample": "devre-kesici-60",
+    "page": 1,
+    "pages": 4,
+    "source_rows": 60,
+    "origin": "synthetic daily event fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-60-1.png",
+    "sha256": "d9274cca8d8e4188d832cdfa9878971a95327522596d3d9fa7953ec376248f50"
+  },
+  {
+    "sample": "devre-kesici-60",
+    "page": 2,
+    "pages": 4,
+    "source_rows": 60,
+    "origin": "synthetic daily event fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-60-2.png",
+    "sha256": "180cc8bbd49d128d0763d51d4eae6c58710ada9f4aeb58e2bbb778cd766fe5bb"
+  },
+  {
+    "sample": "devre-kesici-60",
+    "page": 3,
+    "pages": 4,
+    "source_rows": 60,
+    "origin": "synthetic daily event fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-60-3.png",
+    "sha256": "0b5ce883e7fec5fc11da51d8ef3b49b4c8d3d51741554835979b62efe903105b"
+  },
+  {
+    "sample": "devre-kesici-60",
+    "page": 4,
+    "pages": 4,
+    "source_rows": 60,
+    "origin": "synthetic daily event fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-60-4.png",
+    "sha256": "3fbded56155eb815b456b26046ee2bc23512fb7ece334d7829167d6377d9660d"
+  },
+  {
+    "sample": "devre-kesici-grup-120",
+    "page": 1,
+    "pages": 4,
+    "source_rows": 120,
+    "origin": "synthetic ticker fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-grup-120-1.png",
+    "sha256": "e3a259950f41bd27c3045a0c16785a2af8bf8c64d3b82c5fff459c2e6b15bda9"
+  },
+  {
+    "sample": "devre-kesici-grup-120",
+    "page": 2,
+    "pages": 4,
+    "source_rows": 120,
+    "origin": "synthetic ticker fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-grup-120-2.png",
+    "sha256": "7a676b848b1cb10c88b34fe63c0016a3331acce37f8edaf258ab37d688dd8203"
+  },
+  {
+    "sample": "devre-kesici-grup-120",
+    "page": 3,
+    "pages": 4,
+    "source_rows": 120,
+    "origin": "synthetic ticker fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-grup-120-3.png",
+    "sha256": "77a7e16385ad86111de57fddfd9e1f6e55cd10b916a0d7f10e6e3d754338e35a"
+  },
+  {
+    "sample": "devre-kesici-grup-120",
+    "page": 4,
+    "pages": 4,
+    "source_rows": 120,
+    "origin": "synthetic ticker fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/devre-kesici-grup-120-4.png",
+    "sha256": "d8d6e374137d37216f18df5c8eb64ffa6b7dd89c6df768b6edbc23e12b5262ad"
+  },
+  {
+    "sample": "akd-17",
+    "page": 1,
+    "pages": 4,
+    "source_rows": 34,
+    "origin": "synthetic numeric fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/akd-17-1.png",
+    "sha256": "0e017f23a921e80ef35eda4afae7718e85c29bdb9eaad3a70ce795997d990633"
+  },
+  {
+    "sample": "akd-17",
+    "page": 2,
+    "pages": 4,
+    "source_rows": 34,
+    "origin": "synthetic numeric fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/akd-17-2.png",
+    "sha256": "7790cd02a9e319b88db3fd47694f246b9f8063b7aeba0a9387374396fdc169de"
+  },
+  {
+    "sample": "akd-17",
+    "page": 3,
+    "pages": 4,
+    "source_rows": 34,
+    "origin": "synthetic numeric fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/akd-17-3.png",
+    "sha256": "3646ca4cd10db1f032f826e01047e0bd99c89aabdef2d075fed78db3d05b9f09"
+  },
+  {
+    "sample": "akd-17",
+    "page": 4,
+    "pages": 4,
+    "source_rows": 34,
+    "origin": "synthetic numeric fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/akd-17-4.png",
+    "sha256": "0bee35b1222fce1be23624d4862c07fea7c3593d570121bd9c16121b5efe2072"
+  },
+  {
+    "sample": "takas-14",
+    "page": 1,
+    "pages": 3,
+    "source_rows": 14,
+    "origin": "synthetic custody fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/takas-14-1.png",
+    "sha256": "3a53ccbb84388b9465a897e966cce139ddb677b263babb400a20283ca6cbce8d"
+  },
+  {
+    "sample": "takas-14",
+    "page": 2,
+    "pages": 3,
+    "source_rows": 14,
+    "origin": "synthetic custody fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/takas-14-2.png",
+    "sha256": "ae7ade764f2f307e47fdb5d0a71939c3ac954c9cf7760ebd705051ef0d29f794"
+  },
+  {
+    "sample": "takas-14",
+    "page": 3,
+    "pages": 3,
+    "source_rows": 14,
+    "origin": "synthetic custody fixture",
+    "file": "/Users/fatihdisci/Documents/Codex/2026-10-06/pro/sector-haber/sector/reports/multi-card-preview/takas-14-3.png",
+    "sha256": "88d3e3b17ab5d845087c9397055c759bb366d5001cd3d2d5062ca43530df8d45"
+  }
+]

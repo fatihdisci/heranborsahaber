@@ -13,7 +13,7 @@ Aktif sistem Mac mini’de, ayrı `com.sectorhaber.news` servisi altında çalı
 
 ## Akış
 
-`RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → Telegram başlık/özet → sahibin oluştur düğmesi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → PNG kart → tek fotoğraflı Telegram mesajı`
+`RSS / resmî PDF → kaynak ve tarih kontrolü → önem filtresi → Telegram başlık/özet → sahibin oluştur düğmesi → ortak tam metin okuyucu → olay adayları → Hermes yazım → bağımsız Hermes kaynak denetimi → kesin sayı/birim/kanıt kontrolleri → 1–4 PNG → tek fotoğraf veya albüm + tek Telegram kontrol mesajı`
 
 Haber kartı, oluşturma istendiğinde aynı mesaj üzerinde okuma, sıra/bekleme,
 hazırlama ve teslimat durumlarını gösterir. Durum değişmedikçe Telegram'a tekrar
@@ -90,7 +90,7 @@ Bot, özel sohbetlerde Türkçe komut menüsünü servis açılışında Telegra
 MacBook'ta kurulum scriptlerini veya `local_service.ts` dosyasını çalıştırmak ikinci bir bot tüketicisi başlatabilir. Geliştirme için aşağıdaki kurulum komutlarından yalnız bağımlılık, kontrol, test ve build adımlarını kullan; canlı kurulum Mac mini'de yapılır.
 Gizli bilgiler, Hermes oturumu, canlı SQLite veritabanları ve medya Git ile taşınmaz. Mevcut canlı servislere erişim olmadan dağıtım yapılmış gibi raporlanmamalıdır.
 
-Güncel kararlar: X'e zamanlanmış/otomatik yayın yok; kullanıcı yalnız Telegram'daki açık Paylaş düğmesiyle gönderir. Telegram'da tek fotoğraf + tweet açıklaması + kaynak, düzenleme, tasarım, PNG/veri/kanıt ve yayın yardımcı düğmeleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
+Güncel kararlar: X'e zamanlanmış/otomatik yayın yok; kullanıcı yalnız Telegram'daki açık Paylaş düğmesiyle gönderir. Telegram'da tek kart veya 1–4 görsellik albüm ile tek tweet/kontrol mesajı; kaynak, düzenleme, tasarım, PNG/veri/kanıt ve yayın yardımcı işlemleri; model `gpt-6-luna` / `medium`, mevcut Hermes ChatGPT oturumu; kodla üretilen 1080×1350 lacivert/gri kartlar. Ana Hermes gateway'i ve diğer projeler değiştirilmez.
 
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
@@ -147,7 +147,7 @@ Haber teslimatı kaynak taramasından ayrı 10 saniyelik döngüde çalışır. 
 
 ## Haberler: önce önizleme, sonra istek üzerine üretim
 
-RSS ve SPK haberleri önce kaynak adı, başlık ve kaynak özetiyle Telegram'a gelir. Bu aşamada model çağrısı, görsel üretimi ve AI bütçe rezervasyonu yapılmaz. `Tweet ve görsel oluştur` düğmesi yalnız kayıtlı sahibin özel sohbetinde çalışır. Basıldığında tam kaynak okunur; aynı kanıt/denetim ve tek fotoğraflı taslak akışı çalışır. Tekrarlanan tıklamalar aynı işi kullanır. Çok benzer başlıklar 6 saatlik pencerede ilk iki sözcük ve rakamlar eşleşiyorsa kota harcamadan gruplanır; farklı rakamlı gelişmeler korunur. Anlamı aynı fakat başlığı farklı haberler yine gelebilir; otomatik model harcaması yapmazlar.
+RSS ve SPK haberleri önce kaynak adı, başlık ve kaynak özetiyle Telegram'a gelir. Bu aşamada model çağrısı, görsel üretimi ve AI bütçe rezervasyonu yapılmaz. `Tweet ve görsel oluştur` düğmesi yalnız kayıtlı sahibin özel sohbetinde çalışır. Basıldığında tam kaynak okunur; aynı kanıt/denetim ve ortak tek/çoklu kart taslak akışı çalışır. Tekrarlanan tıklamalar aynı işi kullanır. Çok benzer başlıklar 6 saatlik pencerede ilk iki sözcük ve rakamlar eşleşiyorsa kota harcamadan gruplanır; farklı rakamlı gelişmeler korunur. Anlamı aynı fakat başlığı farklı haberler yine gelebilir; otomatik model harcaması yapmazlar.
 
 KAP'ın otomatik belge/PDF okuma ve üretim akışı ile sahibin doğrudan gönderdiği haberler değişmez. Eski otomatik haber işlerinin bekleyenleri geçişte silinmeden duraklatılır. Yeni kurulumda önceki bütün haberleri bildirim olarak yığmamak için önizleme başlangıcı ayrıca saklanır. İstekler ayrı 5 saniyelik döngüde hazırlanır. Geçici Telegram belirsizlikleri otomatik yeniden gönderilmez.
 
@@ -270,7 +270,7 @@ Yeni RSS filtresi varsayılan `shadow` modundadır. Mevcut bildirim akışı de�
 
 Kartlarda orijinal PNG, kanıt ve uygun tablo veri görünümü bulunur. Hedefli düzeltme `buy.0.value = 123 lot` gibi satır/alan yolu ile yapılır; ilk sürüm `buy/sell/holdings/metrics` altında `label/value` alanlarını destekler. Önce/sonra farkı saklanır, kaynak değiştirilmez, kullanıcı düzeltmesi ayrı ve resmî olmayan kanıt olarak mevcut denetime girer. Tweet ve kart denetimden sonra birlikte yenilenir. Sabit rapor/devre kesici kartlarına düzen değiştirme düğmesi sunulmaz.
 
-`output_preferences` ortak kapsam sözleşmesidir: `list=all|first`, `count`, `side=buy|sell|both`, `show_time`, `show_footer`. Açık tüm-liste isteği tweetin eski beşli kesmelerine önceliklidir. Şablon kapasitesi yetmiyorsa satır atılmaz, otomatik thread/çoklu kart açılmaz. Kısmi veri ve çelişkiler editör görünümünde korunur. Genel geri alımın ilk-N altküme toplamlarını yeniden hesaplamak henüz desteklenmez; bunun için açık hata verilir. İlk-10 geri alım ürünü mevcut varsayılanını korur.
+`output_preferences` ortak kapsam sözleşmesidir: `list=all|first`, `count`, `side=buy|sell|both`, `show_time`, `show_footer`. Açık tüm-liste isteği tweetin eski beşli kesmelerine önceliklidir. Şablon kapasitesi yetmiyorsa satır atılmaz, en çok dört okunaklı kart kullanılır; dört kart da yetmiyorsa açık hata verilir ve otomatik thread açılmaz. Kısmi veri ve çelişkiler editör görünümünde korunur. Genel geri alımın ilk-N altküme toplamlarını yeniden hesaplamak henüz desteklenmez; bunun için açık hata verilir. İlk-10 geri alım ürünü mevcut varsayılanını korur.
 
 Yayın kaydı artık revision, metin, kaynak bağlantıları ve PNG hash'inin değişmez görüntüsünü saklar. Manuel kayıt kullanıcı beyanıdır; API makbuzu ve Nitter dış gözlemi ayrı tutulur. Eski kaydın anlık görüntüsü yoksa CSV alanları bugünkü taslaktan doldurulmaz. Nitter raporu **23.00 itibarıyla** etiketlidir; tam takvim günü iddiası değildir. Gözlem kesintisi yayımlanmadı kanıtı sayılmaz.
 

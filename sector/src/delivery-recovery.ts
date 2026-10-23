@@ -15,6 +15,7 @@ export async function retryDraftDelivery(env:Env,id:string,confirmedRevision?:nu
  if(row.state!=='pending'||row.expires_at<=Date.now()/1000||row.delivery_attempts>=3)return 'blocked';
  if(['waiting','sending'].includes(row.delivery_state))return 'queued';
  if(!['uncertain','failed'].includes(row.delivery_state))return 'blocked';
+ for(const part of ['album','control']){const journal=await env.DB.prepare('SELECT value FROM system_state WHERE key=?').bind(`telegram_bundle:${id}:${row.revision}:${part}`).first<{value:string}>();const state=journal?JSON.parse(journal.value).state:null;if(['sending','uncertain'].includes(state))return 'blocked';}
  const target=await deliveryTarget(env,id,row.message_id);
  if(row.delivery_state==='uncertain'&&!target&&confirmedRevision!==row.revision)return 'confirm';
  const result=await env.DB.prepare("UPDATE drafts SET delivery_state='waiting',lease_until=0,next_delivery=0 WHERE id=? AND revision=? AND state='pending' AND delivery_state=? AND delivery_attempts<3").bind(id,row.revision,row.delivery_state).run();

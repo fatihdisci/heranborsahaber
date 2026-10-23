@@ -1,3 +1,5 @@
+import {readMedia,bytesHash} from './media-set';
+import twitter from 'twitter-text';
 import {preparePublication,snapshotStatement} from './publication-snapshot';
 import {refreshPublicationCard,publicationSummary} from './publication-assistant';
 import {postText} from './editorial';
@@ -21,6 +23,7 @@ export async function requestX(env:Env,data:string,messageId:number,callbackId:s
   const match=data.match(/^xpost:([a-f\d-]{36}):(\d{1,6})$/);
   const row=match?await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(match[1]).first<DraftRow&{delivery_state:string}>():null;
   if(!row||row.message_id!==messageId||!xDraftEligible(row,Number(match![2]),row.media_key))text='Kart güncellenmiş, süresi dolmuş veya paylaşılabilir değil. Güncel kartı kullan.';
+  else if(!twitter.parseTweet(postText(JSON.parse(row.content))).valid)text='Tweet metni X sınırını aşıyor. Hiçbir hisse kodu çıkarılmadı. Kısa özet veya daraltılmış kapsam seçerek metni düzenle; otomatik thread oluşturulmaz.';
   else {
    const result=await env.DB.prepare(`INSERT OR IGNORE INTO x_posts(id,draft_id,revision,day,state,content,media_key,created_at,update_id)
     SELECT ?,?,?,?,'queued',?,?,?,? WHERE
@@ -37,7 +40,7 @@ export async function requestX(env:Env,data:string,messageId:number,callbackId:s
  }
  await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:callbackId,text,show_alert:'true'})).catch(()=>{});
 }
-export interface XTransport {identity():Promise<{id:string;username:string}>;upload(png:Uint8Array):Promise<string>;post(text:string,mediaId:string):Promise<string>;}
+export interface XTransport {identity():Promise<{id:string;username:string}>;upload(png:Uint8Array):Promise<string>;post(text:string,mediaId:string|string[]):Promise<string>;}
 export class XHttpError extends Error {constructor(public status:number){super('x_http_'+status);}}
 // Must be called by a separate consumer. An interrupted POST is never replayed.
 export async function publishX(env:Env,api:XTransport,clock=Date.now){
@@ -49,21 +52,22 @@ export async function publishX(env:Env,api:XTransport,clock=Date.now){
  const claimed=await env.DB.prepare("UPDATE x_posts SET state='uploading',started_at=? WHERE id=? AND state='queued'").bind(clock(),row.id).run();if(!claimed.meta.changes)return;
  let posting=false;
  try{
-  const draft=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string}>();
+  const draft=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification,content FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string;content:string}>();
   if(!draft||!xDraftEligible(draft,row.revision,row.media_key,clock()))throw Error('x_stale_draft');
   const identity=await api.identity();if(identity.username.toLowerCase()!=='endeks_haber')throw Error('x_wrong_account');
-  const object=await env.MEDIA.get(row.media_key);if(!object)throw Error('x_image_missing');
-  const bytes=new Uint8Array(await object.arrayBuffer());if(bytes.length>5000000||bytes[0]!==137||bytes[1]!==80)throw Error('x_image_invalid');
-  const snapshot=await preparePublication(env,row.draft_id,row.revision);
-  const mediaId=await api.upload(bytes);
-  const latest=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string}>();
+  if(postText(JSON.parse(draft.content))!==row.content||!twitter.parseTweet(row.content).valid)throw Error('x_text_capacity_or_revision');
+  const {images}=await readMedia(env,row.media_key,draft.content);
+  if(images.some(b=>b.length>5000000||b[0]!==137||b[1]!==80))throw Error('x_image_invalid');
+  const hashes=await Promise.all(images.map(bytesHash)),snapshot=await preparePublication(env,row.draft_id,row.revision),mediaIds:string[]=[];
+  for(const image of images){const mediaId=await api.upload(image);if(!/^\d+$/.test(mediaId)||mediaIds.includes(mediaId))throw Error('x_media_response_invalid');mediaIds.push(mediaId);}
+  const latest=await env.DB.prepare('SELECT revision,state,expires_at,media_key,delivery_state,verification,content FROM drafts WHERE id=?').bind(row.draft_id).first<{revision:number;state:string;expires_at:number;media_key:string;delivery_state:string;verification:string;content:string}>();
   if(!latest||!xDraftEligible(latest,row.revision,row.media_key,clock())||xDay(clock())!==row.day)throw Error('x_stale_draft');
-  if(!await env.MEDIA.get(latest.media_key!))throw Error('x_image_missing');
+  if(latest.content!==draft.content)throw Error('x_stale_draft');const finalMedia=await readMedia(env,latest.media_key!,latest.content);if(JSON.stringify(await Promise.all(finalMedia.images.map(bytesHash)))!==JSON.stringify(hashes))throw Error('x_image_changed');
   const final=await env.DB.prepare(`UPDATE x_posts SET state='posting',started_at=? WHERE id=? AND state='uploading' AND day=? AND EXISTS(
    SELECT 1 FROM drafts d WHERE d.id=x_posts.draft_id AND d.revision=x_posts.revision AND d.state='pending' AND d.expires_at>? AND d.media_key=x_posts.media_key AND d.delivery_state='sent' AND d.verification!='needs_review')`)
    .bind(clock(),row.id,xDay(clock()),Math.floor(clock()/1000)).run();
   if(!final.meta.changes)throw Error('x_stale_draft');posting=true;
-  const remote=await api.post(row.content,mediaId);
+  const remote=await api.post(row.content,mediaIds.length===1?mediaIds[0]:mediaIds);
   const finished=clock();
   await env.DB.batch([env.DB.prepare("UPDATE x_posts SET state='sent',remote_id=?,finished_at=? WHERE id=?").bind(remote,finished,row.id),snapshotStatement(env,row.draft_id,'api',finished,snapshot,'https://x.com/endeks_haber/status/'+remote)]);
  }catch(e){

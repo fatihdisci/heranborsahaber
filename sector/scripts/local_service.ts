@@ -32,7 +32,7 @@ import {createShutdownController,withServiceLock} from './service-lifecycle';
 import {pdfRoot} from './pdf_reader';
 import {isAbsolute,resolve} from 'node:path';
 import {runManual} from './manual_reader';
-import {draftCard} from '../src/card';
+import {draftCards} from '../src/card-pages';
 import {sha256} from '../src/utils/text';
 import {acceptHermes} from '../src/ai';
 import {png} from './render_local';
@@ -78,8 +78,9 @@ async function modelLoop(){while(!stopping()){let job:Awaited<ReturnType<typeof 
   await writeFile(directory+'/last-model-result.json',JSON.stringify({job_id:job.id,result}),{mode:0o600});
   await recordModelReview(env,job.id,result.audit);
   const documents=job.documents as Document[];result.draft=acceptHermes(result.draft,result.audit,documents).draft;
-  const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svg=draftCard(result.draft,documents.map(d=>d.source_name),date,true,job.card_theme,job.card_layout);
-  const delivered=await submitJob(env,{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
+  const date=new Date().toLocaleDateString('tr-TR',{timeZone:'Europe/Istanbul'}),svgs=draftCards(result.draft,job.card_theme==='navy'||job.card_theme==='paper'?job.card_theme:undefined,job.card_layout);
+ const cards=[];for(const svg of svgs)cards.push({svg_hash:await sha256(svg),png_base64:Buffer.from(await png(svg)).toString('base64')});
+  const delivered=await submitJob(env,{id:job.id,lease_token:job.lease_token,input_hash:job.input_hash,...result,card_date:date,cards});
   await deliver(env);await status('model_health',{ok:true,at:new Date().toISOString(),draft_id:delivered.id,duration_ms:Date.now()-started});
  }catch(e){if(job)await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error=? WHERE id=? AND state='leased'").bind(errorCode(e),job.id).run();await status('model_health',{ok:false,at:new Date().toISOString(),code:errorCode(e),duration_ms:Date.now()-started});if(e instanceof Error&&['quota_paused','hermes_auth_unavailable'].includes(e.message))await status('model_paused_until',Date.now()+3600_000);await pause(e instanceof Error&&['quota_paused','hermes_auth_unavailable','subscription_turn_failed','hermes_job_failed'].includes(e.message)?60_000:2_000);}
 }}

@@ -8,7 +8,8 @@ import {marketSelection,selectMarketDocument} from './market-input';
 import {DRAFT_SCHEMA,EDITOR_PROMPT,documentScore,MIN_DRAFT_IMPORTANCE} from './editorial';
 import {AUDIT_PROMPT,acceptHermes} from './ai';
 import {eventIdentity,sameEvent} from './dedupe';
-import {draftCard} from './card';
+import {draftCards} from './card-pages';
+import {storeMedia,revisionMediaKey} from './media-set';
 import {sha256} from './utils/text';
 import type {Env,Document,Draft} from './types';
 import {readDocument} from './article';
@@ -69,11 +70,11 @@ export async function enqueueEdit(env:Env,id:string,revision:number,request:stri
  const input=JSON.stringify(documents);
  await env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,input_hash,created_at,kind,draft_id,expected_revision,edit_request) VALUES(?,?,?,?,?,'edit',?,?,?)").bind(crypto.randomUUID(),article.id,input,await sha256(input),now(),id,revision,request).run();
 }
-export function pngBytes(base64:unknown):Uint8Array {
+export function pngBytes(base64:unknown,width=1080,height=1350):Uint8Array {
  if(typeof base64!=='string'||base64.length>6_000_000)throw new Error('invalid_card_image');
  const b=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
  const signature=[137,80,78,71,13,10,26,10];if(!signature.every((n,i)=>b[i]===n)||b.length<1000)throw new Error('invalid_png');
- const view=new DataView(b.buffer);if(view.getUint32(16)!==1080||view.getUint32(20)!==1350)throw new Error('invalid_card_dimensions');
+ const view=new DataView(b.buffer);if(view.getUint32(16)!==width||view.getUint32(20)!==height||width>4096||height>4096||width*height>16_000_000)throw new Error('invalid_card_dimensions');
  return b;
 }
 export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{id:string;duplicate:boolean}> {
@@ -90,16 +91,17 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
  const existingCard=job.kind==='edit'?await env.DB.prepare('SELECT content FROM drafts WHERE id=?').bind(job.draft_id).first<{content:string}>():null;
  const theme=existingCard?(await savedTheme(env,'draft:'+job.draft_id)??legacyTheme((JSON.parse(existingCard.content) as Draft).template)):(await savedTheme(env,job.article_id)??legacyTheme(draft.template));
  const layout=await savedLayout(env,job.kind==='edit'?'draft:'+job.draft_id:job.article_id)??'editorial';
- const svg=draftCard(draft,documents.map(d=>d.source_name),String(input.card_date),true,theme,layout);
- if(input.svg_hash!==await sha256(svg))throw new Error('card_content_mismatch');
- const image=pngBytes(input.png_base64),time=now();
+ const svgs=draftCards(draft,theme,layout),cards=Array.isArray(input.cards)?input.cards as {svg_hash:string;png_base64:string}[]:[{svg_hash:input.svg_hash,png_base64:input.png_base64}];
+ if(cards.length!==svgs.length)throw Error('card_content_mismatch');const images:Uint8Array[]=[];
+ for(let i=0;i<svgs.length;i++){if(cards[i].svg_hash!==await sha256(svgs[i]))throw Error('card_content_mismatch');const dims=/width="(\d+)" height="(\d+)"/.exec(svgs[i])!;images.push(pngBytes(cards[i].png_base64,Number(dims[1]),Number(dims[2])));}
+ const time=now();
  if(job.kind==='edit') {
   const current=await env.DB.prepare("SELECT revision FROM drafts WHERE id=? AND state='pending'").bind(job.draft_id).first<{revision:number}>();
   if(!current||current.revision!==job.expected_revision)throw new Error('stale_edit');
-  const revision=current.revision+1,media=`drafts/${job.draft_id}/${revision}.png`;
-  await env.MEDIA.put(media,image,{httpMetadata:{contentType:'image/png'}});
+  const revision=current.revision+1,media=await revisionMediaKey(job.draft_id!,revision,job.id);
+  await storeMedia(env,media,draft,images);
   const result=await env.DB.batch([
-   env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending'").bind(JSON.stringify(draft),JSON.stringify(documents),checked.verification,revision,media,job.draft_id,job.expected_revision),
+   env.DB.prepare("UPDATE drafts SET content=?,documents=?,verification=?,revision=?,delivery_state='waiting',message_id=NULL,media_key=? WHERE id=? AND revision=? AND state='pending' AND expires_at>?").bind(JSON.stringify(draft),JSON.stringify(documents),checked.verification,revision,media,job.draft_id,job.expected_revision,time),
    env.DB.prepare("UPDATE model_jobs SET state='complete',error=NULL,documents='[]',result_draft=? WHERE id=?").bind(job.draft_id,job.id),
    env.DB.prepare("UPDATE editor_corrections SET state='applied' WHERE draft_id=? AND revision=? AND state='proposed'").bind(job.draft_id,job.expected_revision),
    env.DB.prepare('INSERT OR IGNORE INTO system_state(key,value) VALUES(?,?)').bind('card_theme:draft:'+job.draft_id,theme),
@@ -114,7 +116,7 @@ export async function submitJob(env:Env,input:Record<string,unknown>):Promise<{i
   env.DB.prepare("UPDATE model_jobs SET state='complete',error=NULL,documents='[]',result_draft=? WHERE id=?").bind(duplicate.id,job.id),
   env.DB.prepare("UPDATE articles SET status='duplicate',draft_id=?,document=NULL,document_expires=? WHERE id=?").bind(duplicate.id,time,job.article_id)]);return {id:duplicate.id,duplicate:true};}
  const id=crypto.randomUUID(),key=job.kind==='manual'&&job.edit_request?await sha256('manual-editor:'+job.article_id):documents[0].source_id==='kap'?await sha256(documents[0].url):await eventIdentity(draft,documents),media=`drafts/${id}/1.png`;
- await env.MEDIA.put(media,image,{httpMetadata:{contentType:'image/png'}});
+ await storeMedia(env,media,draft,images);
  const cited=documents[0].source_id==='kap'||documents[0].source_id==='manual-input'?documents:documents.map((d,i)=>({...d,body:'',passages:d.passages.filter(p=>draft.claims.some(c=>c.evidence.some(e=>e.document===i&&e.passage===p.id)))}));
  try {await env.DB.batch([
   env.DB.prepare('INSERT INTO drafts(id,event_key,fingerprint,content,documents,verification,state,created_at,expires_at,media_key) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id,key,await sha256(draft.headline+'\n'+draft.body),JSON.stringify(draft),JSON.stringify(cited),checked.verification,checked.verification==='needs_review'||job.kind==='initial'&&draft.importance<MIN_DRAFT_IMPORTANCE?'needs_review':'pending',time,time+24*3600,media),

@@ -4,7 +4,7 @@ Ekteki ZIP bizim gerçek çalışan kart motorumuzu, yazı tiplerini, marka dosy
 
 TESLİM
 1. Doğrudan kopyalanabilir Türkçe tweet metni.
-2. Aynı içeriği taşıyan 1080×1350 PNG görsel; indirilebilir dosya olarak ver.
+2. Seçilen bütün satırları taşıyan okunaklı 1–4 PNG; normal kartlar 1080×1350, geniş geri alım tabloları motorun ölçülerinde. Dosyaları indirilebilir ver.
 Açıklama, denetim raporu, teknik not, “işte tweetiniz”, kaynak adı veya kaynak linkini tweet/görselin içine ekleme. Kaynak anlamını, iddianın sahibini ve belirsizliklerini koru. Eksik olan temel bilgi varsa bunu kısa biçimde ayrıca belirt; sayı veya olgu uydurma.
 
 TWEET
@@ -36,10 +36,12 @@ Bu motor çevrimdışı çalışır; npm kurulumu, bot tokenı veya hesap giriş
 
 Ortak çıktı tercihi (önceki varsayılanları açık kullanıcı isteğinde geçersiz kılar):
 JSON'a output_preferences eklenebilir: {"list":"all","side":"both","show_time":false,"show_footer":false}. İlk N için list="first", count=N. Sadece alış/satış için side="buy"/"sell". Tek seçilmiş kaynak satırı kümesini hem tweet hem kartta kullan. Kullanıcı tümünü istediğinde beş/otuz sınırı uygulama. Bilerek ilk 10 olarak tanımlanan ürünün varsayılanı korunur; açık tüm-liste isteği önceliklidir. Kaynakta eksik hücreyi tahmin etme.
-Kapasite hatası (örneğin report_card_capacity_exceeded) çıktığında satır atlama, “diğer” ile geçiştirme veya fontu okunmaz küçültme. Tek görselin kapasitesinin yetmediğini kullanıcıya bildir; kendiliğinden thread/çoklu kart açma. Saat ve alt not yalnız istenirse; veri eksikliği ve kaynak çelişkileri editör açıklamasında korunur, görselde teknik kapsam sayacı basılmaz.
+Kapasite hatası (örneğin report_card_capacity_exceeded) çıktığında satır atlama, “diğer” ile geçiştirme veya fontu okunmaz küçültme. Ortak motorun dört kart kapasitesi de yetmiyorsa kullanıcıya açıkça bildir; kendiliğinden thread açma. Saat ve alt not yalnız istenirse; veri eksikliği ve kaynak çelişkileri editör açıklamasında korunur, görselde teknik kapsam sayacı basılmaz.
 
 Çıktı tercihleri alan bazında güncellenir: belirtilmeyen list/count/side/show_time/show_footer/presentation önceki değerini korur. Saat, alt not veya yalnız alış/satış isteği listeyi “tümü”ne dönüştürmez. İlk N için yalnız 1–999 arasında tam sayı desteklenir; 1000 gibi destek dışı değeri 100'e kısaltma, açık hata ver. Alan belirtilmemişse mevcut ürün varsayılanını koru. Genel geri alım kartında show_footer=false isteğe bağlı dipnotları gizler; kısmi toplam ve eksik hücre işaretleri korunur. Eksik/kısmi veri ayrıntıları editör kaynak notlarında kalmalıdır.
 
 İş Yatırım günlük pay geri alımı tablosu: card_data.report.buyback alanında day (ISO işlem tarihi), row_count, reader ve rows yer alır. Her satır ticker, day (GG.AA.YYYY), nominal, price, amount, raw alanlarını taşır. Kaynağın nominal miktarını lot/adet olarak yeniden adlandırma. Fiyat ve toplam tutar boşsa null / — koru; çarpımla toplam üretme. Görsel bütün satırları içerir; tweet en fazla 10 farklı hisse içerir ve görseli filtrelemez. Tarihli doğrulanmış BIST30 → BIST100 → diğer sırası, grup içinde nominal miktar azalan ve kod artan kullanılır. Üyelik bilinmiyorsa tahmin edilmez. Görselde yalnız büyük PAY GERİ ALIMLARI başlığı, işlem tarihi ve sütunlu tablo; kaynak, saat, dipnot yoktur. Okunabilir kapasite aşımında hata ver; satır atma. Paket kaynaktan veri çekmez, verilen tabloyu render eder.
 
 Hisse kodlarını tweetin görünen metninde her zaman #KOD biçiminde yaz; doğrulanmamış kısaltmaları hisse kodu sanma. Devre kesicide kodlar yalnız en üstteki hashtag listesinde birer kez bulunur; başlıkta veya gövdede hashtagli/hashtagsiz tekrar listeleme. Alt metinde yalnız resmî işlem durumunu anlat. Kodların .E işlem sırası ekini görünür tweete taşıma. Kaynak alıntılarını değiştirme.
+
+ÇOKLU KART: Ortak cardSvgs/draftCards üreticisi aynı değişmez veriyi okunaklı 1–4 PNG olarak böler. Başlıkları küçültme; satırları kesme. render.mjs birden fazla kartta kart-1.png, kart-2.png vb. üretir. Bütün görseller tek tweetin ekidir; Telegram’da tek albüm ve tek kontrol mesajı kullanılır. Tweet kısa özet olabilir; görseller seçilen bütün satırları taşır. Açık tüm-hisseler-tweette isteği X metin sınırını aşarsa sessiz kesme yapma: kısa özet/kapsam daraltma için editöre açık uyarı ver. Dört karta sığmayan veri için de açık kapasite uyarısı ver; kendiliğinden thread oluşturma. Geri alımın endeks öncelikli en çok 10 hisse tweet kuralı korunur.

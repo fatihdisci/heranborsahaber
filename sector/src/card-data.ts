@@ -20,7 +20,8 @@ export function validateCardData(value:unknown,documents:Document[]):void {
  for(const key of ['ticker','broker','as_of'] as const)if(data[key]!==undefined&&(typeof data[key]!=='string'||!data[key]!.trim()||data[key]!.length>(key==='broker'?80:64)))throw Error('invalid_card_data');
  for(const key of ['buy','sell','holdings','metrics'] as const){
   const rows=data[key];if(rows===undefined)continue;
-  if(!Array.isArray(rows)||!rows.length||rows.length>(key==='metrics'?3:(key==='buy'||key==='sell')&&documents.some(d=>d.market_data?.kind==='institutional')?10:5)||rows.some((r:CardRow)=>!r||Object.keys(r).some(k=>!['label','value'].includes(k))||typeof r.label!=='string'||!r.label.trim()||r.label.length>60||typeof r.value!=='string'||!r.value.trim()||r.value.length>64))throw Error('invalid_card_data');
+  if(Array.isArray(rows)&&rows.length>(key==='metrics'?3:(key==='buy'||key==='sell')&&documents.some(d=>d.market_data?.kind==='institutional')?40:20))throw Error('multi_card_capacity_exceeded');
+  if(!Array.isArray(rows)||!rows.length||rows.some((r:CardRow)=>!r||Object.keys(r).some(k=>!['label','value'].includes(k))||typeof r.label!=='string'||!r.label.trim()||r.label.length>60||typeof r.value!=='string'||!r.value.trim()||r.value.length>64))throw Error('invalid_card_data');
  }
  if(!cardDataFields(data).length)throw Error('invalid_card_data');
  if(data.broker&&!documents.some(d=>d.market_data?.broker?.toUpperCase()===data.broker!.toUpperCase()))throw Error('unsupported_card_broker');

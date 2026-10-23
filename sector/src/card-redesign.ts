@@ -1,6 +1,6 @@
 import {savedLayout,nextLayout,isCardLayout,type CardLayout} from './card-layout';
 import {savedTheme,legacyTheme} from './card-theme';
-import {draftCard} from './card';
+import {renderMedia,revisionMediaKey} from './media-set';
 import type {Draft,Env} from './types';
 const now=()=>Math.floor(Date.now()/1000);
 export async function requestRedesign(env:Env,data:string,messageId:number,updateId:number):Promise<string>{
@@ -24,8 +24,8 @@ export async function redesignOne(env:Env,render:(svg:string)=>Promise<Uint8Arra
  try{
   const row=await env.DB.prepare("SELECT content,documents,revision FROM drafts WHERE id=? AND revision=? AND message_id=? AND delivery_state='sent' AND state='pending'").bind(job.draft_id,job.revision,job.message_id).first<{content:string;documents:string;revision:number}>();if(!row)throw Error('stale_card');
   const d=JSON.parse(row.content) as Draft,theme=await savedTheme(env,'draft:'+job.draft_id)??legacyTheme(d.template);
-  const svg=draftCard(d,[],'',false,theme,job.layout),bytes=await render(svg),revision=row.revision+1,media=`drafts/${job.draft_id}/design-${job.update_id}.png`;
-  await env.MEDIA.put(media,bytes,{httpMetadata:{contentType:'image/png'}});
+  const revision=row.revision+1,media=await revisionMediaKey(job.draft_id,revision,String(job.update_id));
+  await renderMedia(env,media,d,render,theme,job.layout);
   // Keep old media for recovery. Content/evidence never change in a redesign.
   const result=await env.DB.batch([
    env.DB.prepare("UPDATE drafts SET revision=?,media_key=?,delivery_state='waiting',next_delivery=0,expires_at=MAX(expires_at,?) WHERE id=? AND revision=? AND delivery_state='sent' AND state='pending'").bind(revision,media,time+86400,job.draft_id,row.revision),

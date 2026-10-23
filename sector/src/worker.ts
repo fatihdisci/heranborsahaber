@@ -120,7 +120,7 @@ export default {
   try {
    if(request.method==='POST'&&url.pathname==='/api/bridge/lease')return json(await leaseJob(env));
    if(request.method==='POST'&&url.pathname==='/api/bridge/official'){await seed(env);return json(await ingestOfficial(env,await body(request,500_000)));}
-   if(request.method==='POST'&&url.pathname==='/api/bridge/result') {const result=await submitJob(env,await body(request,7_000_000));ctx.waitUntil(deliver(env));return json(result);}
+   if(request.method==='POST'&&url.pathname==='/api/bridge/result') {const result=await submitJob(env,await body(request,25_000_000));ctx.waitUntil(deliver(env));return json(result);}
    if(request.method==='POST'&&url.pathname==='/api/tick'){ctx.waitUntil(tick(env));return json({queued:true});}
    if(request.method==='GET'&&url.pathname==='/api/sources'){await seed(env);return json((await env.DB.prepare('SELECT id,enabled,next_poll,failures,last_ok,last_error,last_count FROM sources').all()).results);}
    const source=url.pathname.match(/^\/api\/sources\/([a-z0-9-]+)$/);

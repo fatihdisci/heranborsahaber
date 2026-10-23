@@ -54,6 +54,8 @@ class Installer:
         app=self.release/'app';app.mkdir(parents=True,mode=0o700)
         for name in ['src','scripts','assets','migrations','test']:
             shutil.copytree(self.source/name,app/name,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+        # UI regression tests need public assets; never copy panel credentials/config.
+        shutil.copytree(self.source/'miniapp/public',app/'miniapp/public')
         for name in ['sources.json','package.json','package-lock.json','tsconfig.json','requirements-pdf.txt','requirements-telegram.txt','wrangler.toml']:
             shutil.copy2(self.source/name,app/name)
         # Install scripts are disabled, just as in CI. All checks precede bootout.

@@ -1,3 +1,4 @@
+import {buybackCsv} from './is-buyback';
 import {generalCsv} from './general-buyback';
 import {postText} from './editorial';
 import {telegram} from './telegram';
@@ -24,8 +25,8 @@ export async function sendDraftAsset(env:Env,data:string,messageId:number,update
    // parsing: punctuation, tags and emojis remain byte-for-byte intact.
    await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,entities:JSON.stringify([{type:'pre',offset:0,length:text.length}]),link_preview_options:JSON.stringify({is_disabled:true})}));
   }else if(match[1]==='csv'){
-   const g=JSON.parse(row.content).card_data?.report?.general;if(!g)throw Error('report_missing');
-   const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('document',new Blob([generalCsv(g)],{type:'text/csv;charset=utf-8'}),'endeks-genel-gerialim-'+g.day+'.csv');await telegram(env,'sendDocument',form);
+   const report=JSON.parse(row.content).card_data?.report,g=report?.general,b=report?.buyback;if(!g&&!b)throw Error('report_missing');
+   const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('document',new Blob([b?buybackCsv(b):generalCsv(g)],{type:'text/csv;charset=utf-8'}),'endeks-genel-gerialim-'+(b?.day??g.day)+'.csv');await telegram(env,'sendDocument',form);
   }else{
    const object=row.media_key?await env.MEDIA.get(row.media_key):null;
    if(!object)throw new Error('draft_media_missing');

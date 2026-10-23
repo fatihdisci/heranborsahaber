@@ -1,0 +1,68 @@
+[
+  {
+    "title": "BofA: Hisse senetleri ve dolarda düşüş Kasım ortasına kadar sürebilir",
+    "summary": "Bank of America (BofA) stratejisti Michael Hartnett, yapay zeka yatırımlarına ilişkin endişeler ve ABD ara seçimleri nedeniyle küresel piyasalarda riskten kaçış eğiliminin kasım ayının ortasına kadar ...",
+    "url": "https://www.foreks.com/haber/detay/6adb36b758b1b941c208fd95/PICNEWS/tr/bofa-hisse-senetleri-ve-dolarda-dusus-kasim-ortasina-kadar-surebilir-23-10-26",
+    "published_at": "2026-10-23T10:28:07.000Z",
+    "evaluated_at": 1792756061077,
+    "route": "archive",
+    "reasons": "[\"general_technology\"]",
+    "confidence": "{\"entity\":\"unresolved\",\"event_confidence\":\"low\",\"evidence\":\"metadata_only\",\"priority\":0,\"codes\":[],\"event\":\"other\",\"stage\":\"unresolved\",\"periods\":[],\"numbers\":[]}",
+    "rule_version": "investor-v1"
+  },
+  {
+    "title": "ASELSAN'dan 442,5 milyon dolarlık ihracat anlaşması",
+    "summary": "ASELSAN Elektronik Sanayi ve Ticaret AŞ (ASELS), uluslararası bir müşterisiyle toplam 442,5 milyon dolar tutarında ihracat sözleşmesi imzaladığını açıkladı.",
+    "url": "https://www.foreks.com/haber/detay/6adb16a34a09973672cb8237/PICNEWS/tr/aselsan-dan-442-5-milyon-dolarlik-ihracat-anlasmasi-23-10-26",
+    "published_at": "2026-10-23T08:11:15.000Z",
+    "evaluated_at": 1792756061100,
+    "route": "digest",
+    "reasons": "[\"relevance_uncertain\"]",
+    "confidence": "{\"entity\":\"unresolved\",\"event_confidence\":\"explicit\",\"evidence\":\"metadata_only\",\"priority\":0,\"codes\":[],\"event\":\"contract\",\"stage\":\"decided\",\"periods\":[],\"numbers\":[\"442 5 milyon\",\"442 5 milyon\"]}",
+    "rule_version": "investor-v1"
+  },
+  {
+    "title": "Erdemir'in dokuz aylık net karı 11,1 milyar TL oldu",
+    "summary": "Ereğli Demir ve Çelik Fabrikaları T.A.Ş.’nin (Erdemir) 2026 yılının ocak-eylül döneminde ana ortaklığa ait net karı 11 milyar 143 milyon 436 bin TL olarak gerçekleşti. Şirket, geçen yılın aynı dönemin...",
+    "url": "https://www.foreks.com/haber/detay/6ada4ddd422c786f3f7a8296/PICNEWS/tr/erdemir-in-dokuz-aylik-net-kari-11-1-milyar-tl-oldu-22-10-26",
+    "published_at": "2026-10-22T17:54:37.000Z",
+    "evaluated_at": 1792756061129,
+    "route": "digest",
+    "reasons": "[\"routine_or_unresolved\"]",
+    "confidence": "{\"entity\":\"unresolved\",\"event_confidence\":\"low\",\"evidence\":\"metadata_only\",\"priority\":0,\"codes\":[],\"event\":\"other\",\"stage\":\"unresolved\",\"periods\":[\"2026\"],\"numbers\":[\"11 1 milyar\",\"2026\",\"11 milyar\",\"143 milyon\",\"436 bin\"]}",
+    "rule_version": "investor-v1"
+  },
+  {
+    "title": "Akfen GYO'nun 9 aylık net karı yüzde 72 geriledi",
+    "summary": "Akfen Gayrimenkul Yatırım Ortaklığı A.Ş. (AKFGY), 2026 yılının ilk dokuz ayında net karının geçen yılın aynı dönemine göre yüzde 72 azalarak 512 milyon TL'ye gerilediğini açıkladı. Şirket, 2025 yılını...",
+    "url": "https://www.foreks.com/haber/detay/6ada2d9c422c786f3f7a803d/PICNEWS/tr/akfen-gyo-nun-9-aylik-net-kari-yuzde-72-geriledi-22-10-26",
+    "published_at": "2026-10-22T15:37:00.000Z",
+    "evaluated_at": 1792756061130,
+    "route": "digest",
+    "reasons": "[\"relevance_uncertain\"]",
+    "confidence": "{\"entity\":\"unresolved\",\"event_confidence\":\"low\",\"evidence\":\"metadata_only\",\"priority\":0,\"codes\":[],\"event\":\"other\",\"stage\":\"decided\",\"periods\":[\"2026\",\"2025\"],\"numbers\":[\"9\",\"72\",\"2026\",\"72\",\"512 milyon\",\"2025\"]}",
+    "rule_version": "investor-v1"
+  },
+  {
+    "title": "Ebebek'in üçüncü çeyrek net karı yüzde 147 arttı",
+    "summary": "Ebebek Mağazacılık A.Ş. (EBEBK), 2026 yılının üçüncü çeyreğinde konsolide net karını geçen yılın aynı dönemine göre yüzde 146,9 artırarak 314,8 milyon TL'ye yükseltti. Şirket, 2025 yılının aynı dönemi...",
+    "url": "https://www.foreks.com/haber/detay/6ada2cd458b1b941c208f443/PICNEWS/tr/ebebek-in-ucuncu-ceyrek-net-kari-yuzde-147-artti-22-10-26",
+    "published_at": "2026-10-22T15:33:40.000Z",
+    "evaluated_at": 1792756061131,
+    "route": "digest",
+    "reasons": "[\"relevance_uncertain\"]",
+    "confidence": "{\"entity\":\"unresolved\",\"event_confidence\":\"low\",\"evidence\":\"metadata_only\",\"priority\":0,\"codes\":[],\"event\":\"other\",\"stage\":\"unresolved\",\"periods\":[\"2026\",\"2025\"],\"numbers\":[\"147\",\"2026\",\"146 9\",\"314 8 milyon\",\"2025\"]}",
+    "rule_version": "investor-v1"
+  },
+  {
+    "title": "ŞİMDİ RAFLARDA! BİM’DE BUGÜN GÖRÜLMEMİŞ İNDİRİM FIRSATI BAŞLADI (BİM 30 EKİM-5 KASIM)",
+    "summary": "Mutfak bütçesini rahatlatmak isteyen tüketiciler için merakla beklenen BİM 30 Ekim- 5 Kasım aktüel ürünler listesi netleşti. Bu hafta özellikle temel gıda maddelerinde, et reyonlarında ve temizlik ürünlerinde büyük fiyat indirimleri devreye giriyor. Listeyi gören tüketicilerin alışveriş planlarını şimdiden değiştirdiği bu kampanya dönemi, bütçesini korumak isteyenlerin ana gündemi haline geldi. Sabah ilk saatlerden itibaren başlayacak olan bu indirim dalgası, tasarruflu alışverişin kapılarını aralayacak.",
+    "url": "https://www.ekonomim.com/foto-galeri/aktuel/simdi-raflarda-bimde-bugun-gorulmemis-indirim-firsati-basladi-bim-30-ekim-5-kasim-s1-galeri-926562",
+    "published_at": "2026-10-23T06:15:00.000Z",
+    "evaluated_at": 1792742924230,
+    "route": "digest",
+    "reasons": "[\"relevance_uncertain\"]",
+    "confidence": "{\"entity\":\"unresolved\",\"event_confidence\":\"low\",\"evidence\":\"metadata_only\",\"priority\":0,\"codes\":[],\"event\":\"other\",\"stage\":\"unresolved\",\"periods\":[],\"numbers\":[\"30\",\"5\",\"30\",\"5\"]}",
+    "rule_version": "investor-v1"
+  }
+]

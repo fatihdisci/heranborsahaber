@@ -118,3 +118,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS publication_snapshots_event ON publication_sna
 -- Telegram UI: independent owner interests; existing detailed feedback and routes remain untouched.
 CREATE TABLE IF NOT EXISTS news_interests (actor TEXT NOT NULL,article_id TEXT NOT NULL,candidate_id TEXT,source_id TEXT NOT NULL,choice TEXT CHECK(choice IN ('like','dislike') OR choice IS NULL),update_id INTEGER NOT NULL,updated_at INTEGER NOT NULL,PRIMARY KEY(actor,article_id));
 CREATE TABLE IF NOT EXISTS news_interest_actions (update_id INTEGER PRIMARY KEY,actor TEXT NOT NULL,article_id TEXT NOT NULL,choice TEXT NOT NULL,created_at INTEGER NOT NULL);
+-- Independent report receipts, using the existing drafts/delivery/publication ledgers.
+CREATE TABLE IF NOT EXISTS buyback_reports (
+ id TEXT PRIMARY KEY,url TEXT NOT NULL,image_url TEXT NOT NULL,image_hash TEXT NOT NULL,
+ published_at TEXT NOT NULL,day TEXT,semantic_hash TEXT,state TEXT NOT NULL,
+ result_draft TEXT,error TEXT,evidence TEXT,created_at INTEGER NOT NULL,lease_until INTEGER NOT NULL DEFAULT 0,
+ UNIQUE(url,image_hash)
+);
+CREATE TABLE IF NOT EXISTS buyback_days (
+ day TEXT PRIMARY KEY,producer TEXT NOT NULL,draft_id TEXT NOT NULL,version TEXT NOT NULL
+);
+-- Minimal editor audit metadata, no full article or source body. Votes remain untouched.
+CREATE TABLE IF NOT EXISTS news_interest_context (
+ actor TEXT NOT NULL, article_id TEXT NOT NULL, title TEXT, url TEXT, source_id TEXT,
+ saved_at INTEGER NOT NULL, provenance TEXT NOT NULL, PRIMARY KEY(actor,article_id)
+);
+CREATE TABLE IF NOT EXISTS news_interest_snapshots (
+ update_id INTEGER PRIMARY KEY, actor TEXT NOT NULL, article_id TEXT NOT NULL,
+ result_choice TEXT, decision TEXT, captured_at INTEGER NOT NULL
+);
+-- A lookup today cannot reconstruct the decision when a legacy button was pressed.
+INSERT OR IGNORE INTO news_interest_context(actor,article_id,title,url,source_id,saved_at,provenance)
+ SELECT i.actor,i.article_id,COALESCE(a.title,(SELECT title FROM news_candidates WHERE article_id=i.article_id ORDER BY evaluated_at DESC LIMIT 1)),COALESCE(a.url,(SELECT url FROM news_candidates WHERE article_id=i.article_id ORDER BY evaluated_at DESC LIMIT 1)),i.source_id,CAST(strftime('%s','now') AS INTEGER)*1000,'migration_lookup'
+ FROM news_interests i LEFT JOIN articles a ON a.id=i.article_id;

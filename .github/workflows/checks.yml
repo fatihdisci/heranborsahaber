@@ -56,6 +56,10 @@ jobs:
         env:
           SECTOR_TEST_OCR_BINARY: ${{ runner.temp }}/sector-pdf-ocr
 
+      - run: python -m unittest discover -s test -p 'test_buyback_image.py'
+        env:
+          SECTOR_TEST_OCR_BINARY: ${{ runner.temp }}/sector-pdf-ocr
+
   python-312:
     name: Python 3.12 compatibility
     runs-on: ubuntu-latest

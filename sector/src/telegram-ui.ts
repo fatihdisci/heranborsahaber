@@ -27,7 +27,7 @@ export function draftKeyboard(id:string,revision:number,docs:Document[],publish:
  const data=draft?.card_data,table=!!data&&(!!data.report||!!data.tickers?.length||['buy','sell','holdings','metrics'].some(k=>(data as any)[k]?.length));
  if(table&&editable)rows.push([{text:'Tablo verileri',callback_data:`ed:data:${id}:${revision}`}]);
  if(editable&&!locked&&!data?.report&&['buy','sell','holdings','metrics'].some(k=>(data as any)?.[k]?.length))rows.push([{text:'Hücre düzelt',callback_data:`ed:correct:${id}:${revision}`}]);
- if(data?.report?.general)rows.push([{text:'CSV indir',callback_data:`asset:csv:${id}:${revision}`}]);
+ if(data?.report?.general||data?.report?.buyback)rows.push([{text:'CSV indir',callback_data:`asset:csv:${id}:${revision}`}]);
  if(editable&&state.manual&&!state.api)rows.push([pub('time','Manuel saati düzelt'),pub('undo','İşareti geri al')]);
  rows.push([back]);return {inline_keyboard:rows};
 }

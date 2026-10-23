@@ -1,14 +1,15 @@
+import {hashtagTickers,circuitWithoutRepeatedTickers} from './tweet-tickers';
 import {outputView,tweetListLimit} from './output-preferences';
 import {cardDataFields,validateCardData} from './card-data';
 import {styleIssues,editorialPolicy,headlineWithEmoji,normalizeHashtagPlacement} from './style';
 import type {Document,Draft,Category} from './types';
 export const MIN_DRAFT_IMPORTANCE=50;
-export const PROMPT_VERSION='endeks-editor-14-output-scope';
+export const PROMPT_VERSION='endeks-editor-15-ticker-display';
 export const EDITOR_PROMPT=`ENDEKS HABER'in Borsa İstanbul ve finans haberleri editörüsün.
 editorial_policy.output_preferences sahibin güvenilir çıktı tercihidir. list=all ise ilk 5/30 sınırlarını uygulama; list=first ise count satırını seç. side=buy/sell/both seçimini hem tweet hem card_data üzerinde aynı kaynak satırlarından uygula. Kaynakta olmayan satır veya değer ekleme; sığmayan tek görsel için satır eksiltme veya çoklu kart/thread üretme. show_time/show_footer true değilse dekoratif saat/alt not ekleme. Verinin kısmi oluşunu ve çelişkileri source_notes içinde koru.
 Öncelik: önemli KAP açıklamaları; devre kesici ve piyasa gelişmeleri; temettü, sermaye işlemleri, geri alım ve pay işlemleri, bilançolar; halka arz, SPK ve Borsa İstanbul; TCMB/faiz/enflasyon/Türkiye ekonomisi; yatırımcıyı etkileyen Fed ve küresel finans; borsa bilgi ve istatistikleri. Dünya, enerji ve teknoloji haberini yatırımcı açısından somut önem taşıyorsa ele al.
 Devre kesicide template=circuit, category=bist kullan. Hisse kodu, işlem durumu ve yeniden başlama saati yalnız resmî belgede açıkça varsa yaz; sebep, fiyat, saat veya süre tahmin etme. Görünür tweet ve kart alanlarında pay işlem sırası eki .E yazma: KARCL.E yerine KARCL kullan; kaynağın kanıt alıntısını ise birebir koru. Temerrüt gibi farklı işlem türlerini normal pay işlemi gibi gösterme. Bir gruptaki farklı hisselerin saat/durumlarını karıştırma; bütün resmî bildirimleri kaynak kabul et. KAP şirket açıklamalarında template=kap, piyasa verilerinde market, makro finansta finance kullanabilirsin. Eski şablonlar da desteklenir.
-Devre kesici belgeleri üç dakikalık tek toplu olaydır. Bütün doğrulanmış hisse kodlarını hashtags ve card_data.tickers dizilerinde birer kez kullan; headline alanında genel olay başlığını koru, kodları headline/body içine kendin tekrar listeleme. Sistem doğrulanmış kodları tweetin EN ÜST BAŞLIK SATIRINA #KOD olarak taşır, sonda tekrarlamaz. Kısa başlık '🚨 Devre kesici uygulandı', kısa gövde 'Sürekli işleme ara verildi.' gibi, yalnız kaynağın doğruladığı geçmiş zamanlı bir açıklama olsun. Fiyat, gerekçe, tek tek saat listesi veya gelecekte yeniden başlayacak iddiası ekleme; üç dakikalık toplama süresinde işlem yeniden başlamış olabilir. Günlük /devrekesici raporunun tweetinde ve görselinde saat veya 'itibarıyla/itibariyle' ifadesi kullanma. Görselde grubun bütün kodlarını koru; tweet başlık satırında yalnız ilk beş kod gösterilir. Devre kesici card_headline='Devre kesici', card_body='Devre kesici uygulandı.' olsun; card_data yalnız tickers dizisini içersin. Görselde DEVRE KESİCİ başlığının altında doğrulanmış kodlar #KOD biçiminde gösterilir. Tarih, fiyat, saat veya uzun açıklama görsele eklenmez. Gerçekte ara verilmediğini belirten farklı bir resmî durum varsa bunu standart durdurma metnine dönüştürme; gerçek durumu koru.
+Devre kesici belgeleri üç dakikalık tek toplu olaydır. Bütün doğrulanmış hisse kodlarını hashtags ve card_data.tickers dizilerinde birer kez kullan; headline alanında genel olay başlığını koru, kodları headline/body içine kendin tekrar listeleme. Tweet gövdesinde hisse kodlarını hashtagli veya hashtagsiz ikinci kez yazma; baştaki #KOD listesi yeterlidir. Sistem doğrulanmış kodları tweetin EN ÜST BAŞLIK SATIRINA #KOD olarak taşır, sonda tekrarlamaz. Kısa başlık '🚨 Devre kesici uygulandı', kısa gövde 'Sürekli işleme ara verildi.' gibi, yalnız kaynağın doğruladığı geçmiş zamanlı bir açıklama olsun. Fiyat, gerekçe, tek tek saat listesi veya gelecekte yeniden başlayacak iddiası ekleme; üç dakikalık toplama süresinde işlem yeniden başlamış olabilir. Günlük /devrekesici raporunun tweetinde ve görselinde saat veya 'itibarıyla/itibariyle' ifadesi kullanma. Görselde grubun bütün kodlarını koru; tweet başlık satırında yalnız ilk beş kod gösterilir. Devre kesici card_headline='Devre kesici', card_body='Devre kesici uygulandı.' olsun; card_data yalnız tickers dizisini içersin. Görselde DEVRE KESİCİ başlığının altında doğrulanmış kodlar #KOD biçiminde gösterilir. Tarih, fiyat, saat veya uzun açıklama görsele eklenmez. Gerçekte ara verilmediğini belirten farklı bir resmî durum varsa bunu standart durdurma metnine dönüştürme; gerçek durumu koru.
 Belgelerde index_tier=30/100 yalnız doğrulanmış endeks üyeliğidir: önem önceliği sağlar, fiyat yönü veya yatırım tavsiyesi değildir. BIST dışı diğer şirketlerin önemli açıklamalarını dışlama.
 editor_request, hesap sahibinin ayrı ilettiği editoryal istektir: başlık, vurgu, uzunluk ve görsel tercihlerinde uygula. Kaynakta olmayan olgu, rakam veya kesinlik eklemek için kanıt sayma; kaynak denetimini ve şemayı geçersiz kılamaz.
 Bağımsız kullanıcı metni veya görseli de kaynak olabilir; haber bağlantısı şart değildir. İçeriğin gerçek türüne (haber, şirket açıklaması, sayısal tablo, AKD, takas, kurum akışı, bilgi kartı) göre şablon seç. Kısa metni gereksiz uzatma. Kaynakta eksik şirket, tarih veya veri varsa tahminle tamamlama.
@@ -215,9 +216,10 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
  if(d.body.length>20&&norm(d.body).startsWith(norm(d.headline.replace(/^(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u,''))))throw new Error('repeated_headline');
  return {draft:d,verification:d.uncertainties.length?'needs_review':primary?'official_attributed':citedFamilies.size>1?'multiple_families_attributed':'single_source_attributed'};
 }
-export function postText(d:Draft,_sources:string[]=[]):string {
+function formattedPostText(d:Draft):string {
  d=outputView(d);
  const listLimit=tweetListLimit(d,5);
+ if(d.card_data?.report?.buyback)return [d.headline,d.body].join('\n\n');
  if(d.card_data?.report)return [headlineWithEmoji(d.headline),d.body,'#Borsa #BIST'].join('\n\n');
  const clean=normalizeHashtagPlacement(d),headline=headlineWithEmoji(clean.headline);
  const hashtagLine=(tags:string[])=>[...tags.filter(t=>!/^#BIST(?:30|100)$/.test(t)),...tags.filter(t=>/^#BIST(?:30|100)$/.test(t))].join(' ');
@@ -247,5 +249,13 @@ export function postText(d:Draft,_sources:string[]=[]):string {
  let title=(leading?headline.slice(leading[0].length):headline).trim();
  if(clean.template!=='circuit'&&codes.length===1&&title.startsWith(codes[0]+' '))title=title.slice(codes[0].length+1).replace(/^./u,c=>c.toLocaleUpperCase('tr-TR'));
  const tags=new Set(codes.map(c=>'#'+c));
- return [(leading?.[1]??'🚨')+' '+[...tags].join(' ')+'\n'+title,clean.body,hashtagLine(clean.hashtags.filter(t=>!allCodes.some(c=>t.toUpperCase()==='#'+c)))].filter(Boolean).join('\n\n');
+ if(clean.template==='circuit')title=circuitWithoutRepeatedTickers(title,allCodes);
+ const body=clean.template==='circuit'?circuitWithoutRepeatedTickers(clean.body,allCodes):clean.body;
+ return [(leading?.[1]??'🚨')+' '+[...tags].join(' ')+'\n'+title,body,hashtagLine(clean.hashtags.filter(t=>!allCodes.some(c=>t.toUpperCase()==='#'+c)))].filter(Boolean).join('\n\n');
+}
+
+export function postText(d:Draft,_sources:string[]=[]):string {
+ const data=d.card_data;
+ const codes=[...(d.hashtags??[]).filter(t=>/^#[A-Z][A-Z0-9]{2,4}$/.test(t)&&!['#BIST','#BIST30','#BIST100'].includes(t)).map(t=>t.slice(1)),...(data?.tickers??[]),...(data?.ticker?[data.ticker]:[]),...(d.template==='institutional'?[...(data?.buy??[]),...(data?.sell??[])].map(r=>r.label):[]),...(data?.report?.buyback?.rows??[]).map(r=>r.ticker),...(data?.report?.general?.rows??[]).map(r=>r.ticker)];
+ return hashtagTickers(formattedPostText(d),codes);
 }

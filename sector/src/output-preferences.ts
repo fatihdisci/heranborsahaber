@@ -28,6 +28,7 @@ export function outputView<T extends Pick<Draft,'card_data'|'output_preferences'
  for(const side of ['buy','sell'] as const)if(data[side])data[side]=p.side&&p.side!=='both'&&p.side!==side?[]:take(data[side]!);
  if(data.holdings)data.holdings=take(data.holdings);
  if(data.tickers)data.tickers=take(data.tickers);
+ if(data.report?.buyback){data.report={...data.report,rows:[...data.report.rows]};return {...d,card_data:data};}
  if(data.report?.general&&p.list==='first')throw Error('general_report_subset_requires_recalculation');
  if(data.report)data.report={...data.report,rows:take(data.report.rows),footer:p.show_footer===false?'':data.report.footer};
  if(!p.show_time)delete data.as_of;

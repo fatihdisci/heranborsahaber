@@ -17,6 +17,14 @@ export async function newsMenuCallback(env:Env,data:string,messageId:number,upda
  // State change + callback receipt are atomic. Duplicate and older callbacks never retoggle.
  await env.DB.batch([
  env.DB.prepare(`INSERT INTO news_interests(actor,article_id,candidate_id,source_id,choice,update_id,updated_at) SELECT ?,?,?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM news_interest_actions WHERE update_id=?) ON CONFLICT(actor,article_id) DO UPDATE SET choice=CASE WHEN news_interests.choice=excluded.choice THEN NULL ELSE excluded.choice END,candidate_id=excluded.candidate_id,source_id=excluded.source_id,update_id=excluded.update_id,updated_at=excluded.updated_at WHERE excluded.update_id>news_interests.update_id`).bind(actor,row.article_id,row.candidate_id,row.source_id,choice,update,at,update),
+ env.DB.prepare(`INSERT INTO news_interest_context(actor,article_id,title,url,source_id,saved_at,provenance)
+ SELECT i.actor,i.article_id,a.title,a.url,i.source_id,?,'callback_lookup' FROM news_interests i LEFT JOIN articles a ON a.id=i.article_id
+ WHERE i.actor=? AND i.article_id=? AND i.update_id=? AND NOT EXISTS(SELECT 1 FROM news_interest_actions WHERE update_id=?)
+ ON CONFLICT(actor,article_id) DO UPDATE SET title=excluded.title,url=excluded.url,source_id=excluded.source_id,saved_at=excluded.saved_at,provenance=excluded.provenance`).bind(at,actor,row.article_id,update,update),
+ env.DB.prepare(`INSERT OR IGNORE INTO news_interest_snapshots(update_id,actor,article_id,result_choice,decision,captured_at)
+ SELECT i.update_id,i.actor,i.article_id,i.choice,CASE WHEN n.id IS NULL THEN NULL ELSE json_object('candidate_id',n.id,'route',n.route,'reasons',json(n.reasons),'confidence',json(n.confidence),'rule_version',n.rule_version,'evaluated_at',n.evaluated_at) END,?
+ FROM news_interests i LEFT JOIN news_candidates n ON n.id=i.candidate_id
+ WHERE i.actor=? AND i.article_id=? AND i.update_id=? AND NOT EXISTS(SELECT 1 FROM news_interest_actions WHERE update_id=?)`).bind(at,actor,row.article_id,update,update),
  env.DB.prepare('INSERT OR IGNORE INTO news_interest_actions(update_id,actor,article_id,choice,created_at) VALUES(?,?,?,?,?)').bind(update,actor,row.article_id,choice,at)
  ]);
  await refreshNewsMenu(env,id,messageId);return '';

@@ -58,7 +58,7 @@ test('shadow report separates owner interests from human route evaluation and pr
  }finally{f.restore();}
 });
 test('UI schema upgrades a populated previous schema without altering source, publication or detailed-feedback rows',async()=>{
- const schema=await readFile('migrations/0001_sector.sql','utf8'),ui=await readFile('migrations/0003_telegram_ui.sql','utf8');assert.equal(schema.slice(schema.indexOf('-- Telegram UI:')),ui);
+ const schema=await readFile('migrations/0001_sector.sql','utf8'),ui=await readFile('migrations/0003_telegram_ui.sql','utf8');assert.equal(schema.slice(schema.indexOf('-- Telegram UI:'),schema.indexOf('-- Independent report receipts')),ui);
  const {mkdtemp,rm}=await import('node:fs/promises'),{tmpdir}=await import('node:os'),{join}=await import('node:path'),{DatabaseSync}=await import('node:sqlite');const dir=await mkdtemp(join(tmpdir(),'endeks-ui-schema-'));try{const path=join(dir,'old.sqlite'),old=new DatabaseSync(path);old.exec(schema.slice(0,schema.indexOf('-- Telegram UI:')));old.exec('PRAGMA application_id=1397048148;');old.exec("INSERT INTO news_feedback VALUES(1,'old','digest',1);");old.close();const db=await localDatabase(path,schema);assert.equal((await db.prepare('SELECT kind FROM news_feedback').first<any>()).kind,'digest');assert.equal((await db.prepare('SELECT COUNT(*) n FROM news_interests').first<any>()).n,0);assert.equal((await db.prepare('PRAGMA integrity_check').first<any>()).integrity_check,'ok');}finally{await rm(dir,{recursive:true,force:true});}
 });
 

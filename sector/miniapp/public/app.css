@@ -71,3 +71,9 @@ dialog h2{font-size:25px;line-height:1.45;overflow-wrap:anywhere}
 #publicationSummary{font-size:15px;line-height:1.65;margin-top:18px;max-width:65ch;color:#E4E9EC}.actions button,.actions a{min-width:48px;min-height:48px;font-size:23px}.tabs{overflow-x:auto;white-space:nowrap}#publicationActions{margin-top:10px}
 
 .actions{position:static;display:flex;flex-wrap:wrap}.actions button,.actions a{width:52px;height:52px;flex:0 0 52px}.actions #copy{grid-column:auto}
+
+/* Read-only editor: explicit labels, secondary actions collapsed. */
+.actions button,.actions a{width:auto;height:auto;flex:1 1 auto;font-size:15px;min-height:48px}
+details>summary{cursor:pointer;padding:14px 0;font-size:16px;color:var(--paper)}
+.overview{margin-top:12px}.overview .stats{margin-top:8px}
+#interestNote{font-size:15px;color:var(--paper)}

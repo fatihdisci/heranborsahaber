@@ -34,6 +34,8 @@ class FakeInstaller(module.Installer):
         if args[:2]==['npm','ci'] and self.failure=='npm':raise RuntimeError('npm failed')
         if args[:3]==['npm','run','build']:
             assert (Path(kwargs['cwd'])/'wrangler.toml').is_file(), 'staged build requires its configuration'
+            assert (Path(kwargs['cwd'])/'miniapp/public/app.js').is_file(), 'staged tests require public Mini App assets'
+            assert not (Path(kwargs['cwd'])/'miniapp/config.json').exists(), 'panel credentials must not enter staging'
             if self.failure=='build':raise RuntimeError('build failed')
         if args[:2]==['/usr/bin/xcrun','swiftc']:
             if self.failure=='ocr':raise RuntimeError('OCR failed')

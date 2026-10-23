@@ -1,3 +1,6 @@
+import {pollBuybacks} from '../src/buyback-pipeline';
+import {readBuybackImage} from './buyback_reader';
+import {DatabaseSync} from 'node:sqlite';
 import {pollFintablesX,fintablesPostDocuments} from '../src/fintables-x';
 import {pollSpkX,spkPostDocuments} from '../src/spk-x';
 import {readImage} from './image_reader';
@@ -79,6 +82,10 @@ async function modelLoop(){while(!stopping()){let job:Awaited<ReturnType<typeof 
  }catch(e){if(job)await env.DB.prepare("UPDATE model_jobs SET state='needs_review',error=? WHERE id=? AND state='leased'").bind(errorCode(e),job.id).run();await status('model_health',{ok:false,at:new Date().toISOString(),code:errorCode(e),duration_ms:Date.now()-started});if(e instanceof Error&&['quota_paused','hermes_auth_unavailable'].includes(e.message))await status('model_paused_until',Date.now()+3600_000);await pause(e instanceof Error&&['quota_paused','hermes_auth_unavailable','subscription_turn_failed','hermes_job_failed'].includes(e.message)?60_000:2_000);}
 }}
 async function newsLoop(){let official=0;while(!stopping()){try{await tick(env);await status('collector_health',{ok:true,at:new Date().toISOString()});if(Date.now()-official>10*60_000){try{await scanOfficial(async(_path,value)=>ingestOfficial(env,value as Record<string,unknown>),directory+'/official-state.json');official=Date.now();await status('official_health',{ok:true,at:new Date().toISOString()});}catch(e){await status('official_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}}catch(e){await status('collector_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}if(Date.now()-lastArtifactCleanup>=60*60_000){try{await cleanupSourceArtifacts();lastArtifactCleanup=Date.now();}catch(e){await status('artifact_cleanup_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}await pause(60_000);}}
+async function buybackLoop(){while(!stopping()){try{
+ const result=await pollBuybacks(env,{readImage:readBuybackImage,indices:async()=>{let db:DatabaseSync|undefined;try{db=new DatabaseSync(directory+'/kap/kap.sqlite',{readOnly:true});if(Number(db.prepare('PRAGMA application_id').get()!.application_id)!==0x534B4150)return null;const row=db.prepare("SELECT value FROM settings WHERE key='indices'").get();return row?JSON.parse(String(row.value)):null;}catch{return null;}finally{db?.close();}}});
+ await status('buyback_report_health',{ok:!['needs_review','blocked_existing'].includes(result.state),at:new Date().toISOString(),...result});
+ }catch(e){await status('buyback_report_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10*60_000);}}
 async function fintablesXLoop(){while(!stopping()){try{await pollFintablesX(env);}catch(e){await status('fintables_x_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
 async function spkXLoop(){while(!stopping()){try{await pollSpkX(env);}catch(e){await status('spk_x_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
 async function xAccountReportLoop(){let nextPoll=0;while(!stopping()){
@@ -132,5 +139,5 @@ try{await withServiceLock(lock,()=>unlink(lockPath),async()=>{
   const stopCheck=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){shutdown.stop();clearInterval(stopCheck);}},1000);
   try{await modelLoop();}finally{clearInterval(stopCheck);}return;
  }
- await Promise.all([spkXLoop(),fintablesXLoop(),xAccountReportLoop(),newsLoop(),modelLoop(),telegramLoop(),telegramCommandsLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);
+ await Promise.all([buybackLoop(),spkXLoop(),fintablesXLoop(),xAccountReportLoop(),newsLoop(),modelLoop(),telegramLoop(),telegramCommandsLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);
 });}finally{shutdown.dispose();}

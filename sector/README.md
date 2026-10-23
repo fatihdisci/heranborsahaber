@@ -279,3 +279,11 @@ Etkinleştirme, geri dönüş, geçiş testi ve kalan kararlar: [editör iş ak�
 Editör iş akışının takip düzeltmeleri, ayrı Python/OCR/build sonuçları ve güncel ZIP hash’i: [takip incelemesi](docs/editor-workflow-followup.md). Aktif filtreye geçişin sürümlü insan incelemesi şartları: [hazırlık kontrolü](docs/news-filter-readiness.md). Bu dosyalar etkinleştirme yapmaz.
 
 Telegram ana menüleri sadeleştirilmiştir: haber önizlemesinde İçerik oluştur / ❤️ / 👎 / Diğer; hazır kartta X’te paylaş / Düzenle / Diğer. İkincil işlemler aynı karttaki açılır menüdedir; Geri ana menüye döner. Yayın sayacı `/yayinlar`, sağlık `/durum`, filtre `/haberfiltre`, gölge ve ayrı ilgi özeti `/golgerapor` ile erişilir. Beğeni seçimi yayın veya rota onayı değildir. [Güncel rehber](docs/telegram-buttons.md).
+
+### İş Yatırım günlük geri alım tablosu ve sade panel
+
+RSS'den bulunan tam tablo görseli mevcut yerel OCR ile okunur; bütün satırlar özgün PNG/CSV'ye, endeks önceliğiyle en çok 10 hisse tweet'e aktarılır. İşlem tarihi, nominal kaynak birimi ve boş hücreler korunur. Tekrar/düzeltme ve eski günlük raporla gün bazında çakışma kontrolü mevcut Telegram inceleme akışına bağlıdır; otomatik X paylaşımı yoktur. Ayrıntılar, kapasite ve devreye alma sınırları: [yerel doğrulama raporu](reports/buyback-preview/README.md).
+
+Mini app'de Beğendiklerim / Beğenmediklerim ayrımı sahibin mevcut kayıtlarını salt okunur gösterir; kaynak/filtre tercihini değiştirmez. Mevcut 7 günlük panel kapsamı korunur.
+
+Geri alımın endeks/10 hisse seçim kanıtı, resmî şirket kataloğu, v2 gölge sınıflandırması ve bütün beğeni geçmişini indiren `/golgerapor` için [23 Ekim takip raporu](docs/news-catalog-feedback-followup.md). Asgari geri bildirim metadata/karar anlık görüntüleri oy defteriyle korunur; tam haber metni içermez ve 7 günlük haber aday saklama politikasından ayrıdır. Eski karar geçmişi geriye dönük uydurulmaz. Bu yerel değişiklikler aktif filtre veya canlıya geçiş onayı değildir.

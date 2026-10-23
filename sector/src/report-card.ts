@@ -1,8 +1,10 @@
+import {buybackCard} from './buyback-card';
 import {COLORS,PROFILE_DATA} from './brand';
 import type {Draft} from './types';
 import {normalizeCardText} from './card-text';
 const esc=(s:string)=>normalizeCardText(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 export function reportCard(d:Pick<Draft,'headline'|'body'|'card_data'|'output_preferences'>):string{
+ if(d.card_data!.report!.buyback)return buybackCard(d.card_data!.report!.buyback!);
  if(d.card_data!.report!.general)return generalCard(d.card_data!.report!.general!,d.output_preferences?.show_time===true,d.output_preferences?.show_footer!==false);
  const data=d.card_data!.report!,rows=data.rows,cols=rows.length>15?2:1,height=Math.min(65,850/Math.ceil(Math.max(1,rows.length)/cols));
  if(rows.length>30)throw Error('report_card_capacity_exceeded');

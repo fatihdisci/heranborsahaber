@@ -214,6 +214,7 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
 export function postText(d:Draft,_sources:string[]=[]):string {
  if(d.card_data?.report)return [headlineWithEmoji(d.headline),d.body,'#Borsa #BIST'].join('\n\n');
  const clean=normalizeHashtagPlacement(d),headline=headlineWithEmoji(clean.headline);
+ const hashtagLine=(tags:string[])=>[...tags.filter(t=>!/^#BIST(?:30|100)$/.test(t)),...tags.filter(t=>/^#BIST(?:30|100)$/.test(t))].join(' ');
  if(clean.template==='institutional'){
   const groups=(['buy','sell'] as const).map(side=>{
    const rows=clean.card_data?.[side]??[];
@@ -222,7 +223,7 @@ export function postText(d:Draft,_sources:string[]=[]):string {
   }).filter(Boolean);
   if(groups.length){
    const stockTags=new Set([...(clean.card_data?.buy??[]),...(clean.card_data?.sell??[])].map(r=>'#'+r.label));
-   return [headline,clean.body,...groups,clean.hashtags.filter(t=>!stockTags.has(t.toUpperCase())).join(' ')].filter(Boolean).join('\n\n');
+   return [headline,clean.body,...groups,hashtagLine(clean.hashtags.filter(t=>!stockTags.has(t.toUpperCase())))].filter(Boolean).join('\n\n');
   }
  }
  const allCodes=clean.template==='circuit'?clean.card_data?.tickers??[]:['akd','custody'].includes(clean.template)&&clean.card_data?.ticker?[clean.card_data.ticker]:[];
@@ -234,11 +235,11 @@ export function postText(d:Draft,_sources:string[]=[]):string {
   const text=[tag(headline),tag(clean.body)].filter(Boolean).join('\n\n');
   const used=new Set(text.match(/#[A-Z][A-Z0-9]{3,4}/g)??[]);
   const remaining=clean.hashtags.filter(t=>!used.has(t));
-  return [text,remaining.filter(t=>!stockTags.includes(t)).concat(stockTags.filter(t=>!used.has(t)).slice(0,used.size?0:5)).join(' ')].filter(Boolean).join('\n\n');
+  return [text,hashtagLine(remaining.filter(t=>!stockTags.includes(t)).concat(stockTags.filter(t=>!used.has(t)).slice(0,used.size?0:5)))].filter(Boolean).join('\n\n');
  }
  const leading=/^((?:📢|🚨|📊|🏦|🌍|⚡|💻|📈|📉)\uFE0F?)\s+/u.exec(headline);
  let title=(leading?headline.slice(leading[0].length):headline).trim();
  if(clean.template!=='circuit'&&codes.length===1&&title.startsWith(codes[0]+' '))title=title.slice(codes[0].length+1).replace(/^./u,c=>c.toLocaleUpperCase('tr-TR'));
  const tags=new Set(codes.map(c=>'#'+c));
- return [(leading?.[1]??'🚨')+' '+[...tags].join(' ')+'\n'+title,clean.body,clean.hashtags.filter(t=>!allCodes.some(c=>t.toUpperCase()==='#'+c)).join(' ')].filter(Boolean).join('\n\n');
+ return [(leading?.[1]??'🚨')+' '+[...tags].join(' ')+'\n'+title,clean.body,hashtagLine(clean.hashtags.filter(t=>!allCodes.some(c=>t.toUpperCase()==='#'+c)))].filter(Boolean).join('\n\n');
 }

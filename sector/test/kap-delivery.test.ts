@@ -204,3 +204,12 @@ test('MKK settlement is suppressed before reading and at final delivery without 
   }finally{s.close();}
  }
 });
+test('KAP model evidence carries verified per-subject membership from the official index snapshot',async()=>{
+ const {s,env,docs}=await setup();try{
+  const pool=Array.from({length:99},(_,i)=>'A'+String(i).padStart(4,'0'));
+  s.set('indices',{bist30:['KPEKS',...pool.slice(0,29)],bist100:['KPEKS',...pool],checkedAt:new Date(NOW).toISOString(),source:'https://www.kap.org.tr/tr/Endeksler'});
+  assert.equal((await new KapDelivery(s,env,async()=>docs,()=>NOW).run()).state,'model_queued');
+  const job=await env.DB.prepare('SELECT documents FROM model_jobs').first<{documents:string}>();const loaded=JSON.parse(job!.documents) as Document[];
+  assert.deepEqual(loaded[0].index_membership?.bist30,['KPEKS']);assert.deepEqual(loaded[0].index_membership?.bist100,['KPEKS']);
+ }finally{s.close();}
+});

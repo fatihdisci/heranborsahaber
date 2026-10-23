@@ -1,3 +1,4 @@
+import {kapIndexHashtags} from './kap/index-tags';
 import {cardDataFields} from './card-data';
 import {repairKapShareWording} from './kap-unit-evidence';
 import {verifiedEquityCodes} from './equity-codes';
@@ -17,10 +18,11 @@ export function editorialPolicy(documents:Document[]){
   ?fundWord.test(fold(d.title))||/(?:\btefas\b|\bpblk\b|yatirim fon|emeklilik fon|serbest fon|fon(?:lar)?(?:in|un|u)?\s+(?:kriz|tasfiye|katilma|iade|ödeme|odeme))/u.test(fold(d.body))
   :fundWord.test(fold(d.title+'\n'+d.body)));
  const bist=codes.length>0||/\bbist\b|borsa istanbul/i.test(fold(text));
+ const indexTags=fund?[]:kapIndexHashtags(documents);
  const ipo=!!kap?.official&&!fund&&codes.some(isRecentIpoTicker),ipoTag=ipo?['#HalkaArz']:[];
- return {required_hashtags:circuit?['#Borsa','#BIST',...(codes.length?codes.map(c=>'#'+c):['#DevreKesici']),...ipoTag]:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(documents.some(d=>d.market_data?.kind==='institutional')?[]:codes.map(c=>'#'+c)),...ipoTag]:[],verified_equity_codes:codes,
+ return {required_hashtags:circuit?['#Borsa','#BIST',...(codes.length?codes.map(c=>'#'+c):['#DevreKesici']),...ipoTag,...indexTags]:fund?['#Fon','#PBLK','#Tasfiye']:bist?['#Borsa','#BIST',...(documents.some(d=>d.market_data?.kind==='institutional')?[]:codes.map(c=>'#'+c)),...ipoTag,...indexTags]:[],verified_equity_codes:codes,
   publisher_names:[...new Set(documents.filter(d=>!d.official).map(d=>d.source_name))],
-  instruction:'Etiketleri yalnız hashtags dizisinde ver; başlık, gövde ve kart alanlarına hashtag satırı ekleme. Devre kesici gruplarında #Borsa #BIST ve gruptaki bütün doğrulanmış asıl hisse kodlarını kullan; yalnız kod yoksa #DevreKesici kullan. Bu gruplarda zorunlu kodlar 3 etiket sınırından önceliklidir; ek konu etiketi ekleme. Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Çok hisseli haberlerde kodları gruplandırıp her grubun ilk beşini tweet gövdesinde göster; doğrulanmış kod etiketleri 3 etiket sınırından önceliklidir. Görselde tam listeyi koru. Diğer içeriklerde konu etiketleri 2–3 adet; required_hashtags zorunludur. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
+  instruction:'Etiketleri yalnız hashtags dizisinde ver; başlık, gövde ve kart alanlarına hashtag satırı ekleme. Devre kesici gruplarında #Borsa #BIST ve gruptaki bütün doğrulanmış asıl hisse kodlarını kullan; yalnız kod yoksa #DevreKesici kullan. Bu gruplarda zorunlu kodlar 3 etiket sınırından önceliklidir; ek konu etiketi ekleme. Yayıncıya göre/haberine göre veya Kaynak satırı yazma. Kaynak düğmede bulunur. İddia, koşul ve açıklamanın gerçek sahibini koru. Çok hisseli haberlerde kodları gruplandırıp her grubun ilk beşini tweet gövdesinde göster; doğrulanmış kod etiketleri 3 etiket sınırından önceliklidir. Görselde tam listeyi koru. Diğer içeriklerde konu etiketleri 2–3 adet; required_hashtags zorunludur. KAP endeks etiketlerinde yalnız required_hashtags içindeki doğrulanmış #BIST30 ve #BIST100 etiketlerini kullan; index_tier veya metinden üyelik tahmin etme. Fon içeriklerinde yalnız #Fon #PBLK #Tasfiye kullan; bu üç etiket hisse etiketlerinden önceliklidir. Diğer içeriklerde doğrulanmış tek şirket kodu varsa kullan. BIST dışındaki haberleri BIST diye etiketleme.'};
 }
 export function hasPublisherAttribution(text:string,names:string[]):boolean {
  const t=fold(text);
@@ -37,6 +39,7 @@ export function styleIssues(draft:Draft,documents:Document[]):string[]{
  if(invalidEmojiPlacement(draft))issues.push('invalid_emoji_placement');
  if([draft.headline,draft.body,draft.card_headline,draft.card_body].some(t=>typeof t==='string'&&hasTextHashtags(t)))issues.push('misplaced_hashtags');
  if(hasPublisherAttribution([draft.headline,draft.body,draft.card_headline,draft.card_body].join('\n'),p.publisher_names))issues.push('publisher_attribution');
+ if(draft.hashtags.some(t=>/^#BIST(?:30|100)$/i.test(t)&&!p.required_hashtags.includes(t.toUpperCase())))issues.push('unverified_index_hashtag');
  if(p.required_hashtags.some(tag=>!draft.hashtags.some(t=>fold(t)===fold(tag))))issues.push('missing_market_hashtags');
  if(documents.some(d=>d.market_data)&&/bugün|anlık|son seans/iu.test([draft.headline,draft.body,draft.card_headline,draft.card_body,...cardDataFields(draft.card_data).map(([,v])=>v)].join('\n')))issues.push('unsupported_market_relative_period');
  return issues;
@@ -98,7 +101,7 @@ export function repairDraftStyle(value:Draft,documents:Document[]):Draft {
  value=normalizeEquityDisplay(normalizeHashtagPlacement(value),documents);
  const policy=editorialPolicy(documents),required=policy.required_hashtags;
  const tags=Array.isArray(value.hashtags)?[...new Set(value.hashtags.filter((t):t is string=>typeof t==='string').map(t=>'#'+t.trim().replace(/^#+/,'').replace(/[^\p{L}\p{N}_]/gu,'')))]:[];
- const valid=tags.filter(t=>/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));
+ const valid=tags.filter(t=>!(/^#BIST(?:30|100)$/i.test(t)&&!required.includes(t.toUpperCase()))&&/^#[\p{L}\p{N}_]{2,40}$/u.test(t)&&!/^#(?:haber|gündem|keşfet|viral)$/iu.test(t));
  const hashtags=required.length?[...required,...valid.filter(t=>!required.some(r=>fold(r)===fold(t)))].slice(0,Math.max(3,required.length)):valid;
  const circuit=documents.some(d=>d.official&&d.source_id==='kap'&&/devre kesici/i.test(d.title));
  const market=documents.find(d=>d.market_data)?.market_data;

@@ -10,7 +10,7 @@ export interface Source {
   method?:'rss'|'bridge_pdf'|'reference';
 }
 export interface Item {title:string;url:string;summary:string;published_at:string|null;}
-export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];index_tier?:30|100;language?:string;images?:string[];market_data?:{kind:'broker_flow'|'akd'|'custody'|'institutional';ticker?:string;broker?:string;focus?:'buy'|'sell'|'both';submitted_at?:number;editorial_period?:string;tickers?:string[];rows?:{side:'buy'|'sell';symbol:string;volume:string;rank?:number}[]};coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
+export interface Document {source_id:string;source_name:string;family:string;official:boolean;url:string;title:string;body:string;published_at:string|null;passages:{id:string;text:string}[];primary_urls?:string[];equity_codes?:string[];index_tier?:30|100;index_membership?:{bist30:string[];bist100:string[];checked_at:string;source:string};language?:string;images?:string[];market_data?:{kind:'broker_flow'|'akd'|'custody'|'institutional';ticker?:string;broker?:string;focus?:'buy'|'sell'|'both';submitted_at?:number;editorial_period?:string;tickers?:string[];rows?:{side:'buy'|'sell';symbol:string;volume:string;rank?:number}[]};coverage?:{complete:boolean;page_count:number;pages:unknown[]};}
 export interface Evidence {document:number;passage:string;quote:string;}
 export interface Claim {text:string;evidence:Evidence[];}
 export interface CardRow {label:string;value:string;}

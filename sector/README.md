@@ -252,3 +252,5 @@ Nitter aynaları üçüncü taraf ve kesintiye açık olduğundan kayıtlar gün
 
 
 ChatGPT için indirilebilir çevrimdışı kart ve prompt paketi: [`exports/ENDEKS-HABER-ChatGPT.zip`](exports/ENDEKS-HABER-ChatGPT.zip). Kaynak paketi aynı dizindeki `exports/ENDEKS-HABER-ChatGPT/` klasöründe ve `scripts/export_chatgpt_kit.ts` ile yeniden üretilebilir.
+
+KAP tweetlerinde güncel resmî KAP endeks listesinden doğrulanan BIST 30 hisselerine `#BIST30 #BIST100`, yalnız BIST 100 hisselerine `#BIST100` eklenir. Diğer hisselere endeks etiketi eklenmez. Üyelik bildirimin asıl hisse kodlarıyla eşleştirilir; PDF içindeki ilgisiz şirketlerden veya model tahmininden çıkarılmaz. Liste günlük yenilenir; doğrulaması 36 saatten eskiyse endeks etiketi üretilmez.

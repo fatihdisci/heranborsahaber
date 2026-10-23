@@ -31,6 +31,6 @@ test('generation queues the entire evidence bundle only after request and retain
  await prepare(env);assert.equal(reads,0);
  await DB.prepare("INSERT INTO news_cards(id,article_id,state,message_id,created_at) VALUES('n','a','requested',1,0)").run();await prepare(env);assert.equal(reads,1);
  const job=await DB.prepare('SELECT documents FROM model_jobs').first<{documents:string}>();assert.equal(JSON.parse(job!.documents).length,2);
- const cache=JSON.parse((await DB.prepare("SELECT document FROM articles WHERE id='a'").first<{document:string}>())!.document);assert.equal(cache.id,id);assert.equal(cache.cached_documents.length,2);
+ const article=await DB.prepare("SELECT document,document_expires FROM articles WHERE id='a'").first<{document:string;document_expires:number}>(),cache=JSON.parse(article!.document);assert.equal(cache.id,id);assert.equal(cache.cached_documents.length,2);assert(article!.document_expires>=Math.floor(Date.now()/1000)+6*86400);
  await prepare(env);assert.equal(reads,1);
 });

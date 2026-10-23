@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {localDatabase} from '../src/local-adapters';
 import {cleanupRawDocuments} from '../src/pipeline';
+import {OFFICIAL_PDF_DOCUMENT_TTL_SECONDS} from '../src/bridge';
 import type {Env} from '../src/types';
+
+test('official SPK PDF source bodies follow the 24-hour raw document retention policy',()=>{
+ assert.equal(OFFICIAL_PDF_DOCUMENT_TTL_SECONDS,24*3600);
+});
 
 test('raw documents expire on terminal or stale jobs while active and fresh review evidence remains',async()=>{
  const DB=await localDatabase(':memory:',await readFile('migrations/0001_sector.sql','utf8')),time=2_000_000_000;

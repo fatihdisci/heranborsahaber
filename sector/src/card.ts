@@ -3,11 +3,13 @@ import {marketCard} from './market-card';
 import {type CardLayout} from './card-layout';
 import {legacyTheme,type CardTheme} from './card-theme';
 import {PROFILE_DATA,COLORS,MARK_PATH,BRAND_NAME} from './brand';
+import {normalizeCardText} from './card-text';
 export {COLORS} from './brand';
 import type {Draft} from './types';
-const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const esc=(s:string)=>normalizeCardText(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const measure=(s:string,size:number)=>[...s].reduce((n,c)=>n+(/[MW@%]/.test(c)?.94:/[ilıİ.,:;!' ]/.test(c)?.32:/[A-ZÇĞÖŞÜ0-9]/.test(c)?.69:.59),0)*size;
 export function wrap(text:string,size:number,width:number):string[] {
+ text=normalizeCardText(text);
  const words=text.trim().split(/\s+/).filter(Boolean);if(words.some(w=>measure(w,size)>width))throw new Error('card_word_overflow');
  // Balance all lines, not just the last one. Keep the original words and order.
  const greedy:string[]=[];let line='';

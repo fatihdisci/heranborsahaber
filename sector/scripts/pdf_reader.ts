@@ -1,7 +1,7 @@
 import {spawn} from 'node:child_process';
 import {mkdir,writeFile,readdir,stat,rm} from 'node:fs/promises';
 import {homedir} from 'node:os';
-import {join} from 'node:path';
+import {join,resolve,sep} from 'node:path';
 import type {ChildProcess} from 'node:child_process';
 export const pdfRoot=join(homedir(),'Library/Application Support/sector-haber/source-pdf');
 export interface PdfEvidence {body:string;passages:{id:string;text:string}[];images:string[];coverage:{page_count:number;complete:boolean;pages:{page:number;mode:string;tables:number;characters:number}[]};}
@@ -21,12 +21,13 @@ export function collectProcessOutput(child:ChildProcess,timeout:number,limit:num
   child.on('close',code=>finish(resolve,{code,output,error}));
  });
 }
-export async function cleanupPdfArtifacts(root=pdfRoot,now=Date.now(),ttl=24*3600_000):Promise<number>{
+export async function cleanupPdfArtifacts(root=pdfRoot,now=Date.now(),ttl=24*3600_000,protectedPaths:Iterable<string>=[]):Promise<number>{
  let removed=0;const cutoff=now-ttl;
+ const base=resolve(root),protectedSet=new Set([...protectedPaths].map(path=>resolve(path)).filter(path=>path===base||path.startsWith(base+sep)));
  async function visit(dir:string):Promise<void>{
   let entries;try{entries=await readdir(dir,{withFileTypes:true});}catch{return;}
   for(const entry of entries){const path=join(dir,entry.name);if(entry.isDirectory()){await visit(path);try{if((await readdir(path)).length===0)await rm(path,{recursive:true});}catch{/* concurrently removed */}continue;}
-   try{const info=await stat(path);if(info.mtimeMs<cutoff){await rm(path,{force:true});removed++;}}catch{/* concurrently removed */}
+   try{const info=await stat(path);if(info.mtimeMs<cutoff&&!protectedSet.has(resolve(path))){await rm(path,{force:true});removed++;}}catch{/* concurrently removed */}
   }
  }
  await visit(root);return removed;

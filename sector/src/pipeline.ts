@@ -83,9 +83,10 @@ export async function prepare(env:Env):Promise<void> {
    const jobs=await env.DB.prepare("SELECT COUNT(*) AS count FROM model_jobs WHERE state IN ('queued','leased')").first<{count:number}>();
    if((jobs?.count??0)>=4||!await quota(env,'news-request-budget')){await env.DB.prepare('UPDATE articles SET lease_until=0,next_try=? WHERE id=?').bind(time+30,article.id).run();break;}
    const jobId=crypto.randomUUID(),input=JSON.stringify(documents);
+   const cachedXSource=['spk-x','fintables-x'].includes(source.id);
    await env.DB.batch([
     env.DB.prepare("INSERT INTO model_jobs(id,article_id,documents,related_ids,input_hash,created_at,kind) VALUES(?,?,?,?,?,?,'news') ON CONFLICT(article_id,expected_revision) DO UPDATE SET documents=excluded.documents,related_ids=excluded.related_ids,input_hash=excluded.input_hash,created_at=excluded.created_at,kind='news',state='queued',error=NULL,lease_until=0 WHERE model_jobs.state IN ('needs_review','expired','paused')").bind(jobId,article.id,input,JSON.stringify(relatedIds),await sha256(input),time),
-    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(['spk-x','fintables-x'].includes(source.id)?article.document:JSON.stringify(doc),time+24*3600,article.id),
+    env.DB.prepare("UPDATE articles SET status='model_queued',document=?,document_expires=?,lease_until=0 WHERE id=?").bind(cachedXSource?article.document:JSON.stringify(doc),time+(cachedXSource?7*86400:24*3600),article.id),
     env.DB.prepare("UPDATE news_cards SET state='model_queued' WHERE article_id=? AND state='requested'").bind(article.id)
    ]);
   } catch(e) {

@@ -1,6 +1,7 @@
 import {COLORS,PROFILE_DATA} from './brand';
 import type {Draft} from './types';
-const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+import {normalizeCardText} from './card-text';
+const esc=(s:string)=>normalizeCardText(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 export function reportCard(d:Pick<Draft,'headline'|'body'|'card_data'>):string{
  if(d.card_data!.report!.general)return generalCard(d.card_data!.report!.general!);
  const data=d.card_data!.report!,rows=data.rows.slice(0,30),cols=rows.length>15?2:1,height=Math.min(65,850/Math.ceil(Math.max(1,rows.length)/cols));

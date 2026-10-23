@@ -21,7 +21,8 @@ export class KapReports {
   const rows=this.store.rows<{metadata:string;rows_json:string|null;error:string|null}>(`SELECT d.metadata,b.rows_json,b.error FROM disclosures d LEFT JOIN report_buybacks b ON b.id=d.id WHERE julianday(d.published_at)>=julianday(?) AND julianday(d.published_at)<=julianday(?) AND d.first_seen<=?`,istanbulDay(at)+'T00:00:00+03:00',new Date(at).toISOString(),at);
   const listing=this.store.get<{at:number}>('last_listing');
   const gaps=this.store.row<{n:number}>("SELECT COUNT(*) n FROM gaps WHERE first_seen>=?",Date.parse(istanbulDay(at)+'T00:00:00+03:00'))?.n??0;
-  const coverage=!listing||at-listing.at>180000||gaps?'Toplayıcıda gecikme veya eksik kayıt olabilir; rapor kayıtlı bildirimlerle sınırlıdır.':'Rapor komut saatine kadar sisteme alınan KAP kayıtlarıyla sınırlıdır.';
+  const delayed=!listing||at-listing.at>180000||gaps;
+  const coverage=kind==='circuit'?(delayed?'Toplayıcıda gecikme veya eksik kayıt olabilir; rapor kayıtlı bildirimlerle sınırlıdır.':'Rapor, KAP sistemine ulaşan günlük bildirimlerle sınırlıdır.'):(delayed?'Toplayıcıda gecikme veya eksik kayıt olabilir; rapor kayıtlı bildirimlerle sınırlıdır.':'Rapor komut saatine kadar sisteme alınan KAP kayıtlarıyla sınırlıdır.');
   const entries=rows.map(r=>({disclosure:JSON.parse(r.metadata) as Disclosure,purchases:r.rows_json?JSON.parse(r.rows_json):undefined,error:r.error??undefined}));
   const indices=this.store.get<Indices>('indices');return kind==='general_buyback'?generalBuyback(kind,entries,indices,at,coverage):report(kind,entries,indices,at,coverage);
  }

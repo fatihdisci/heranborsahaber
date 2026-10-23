@@ -95,7 +95,7 @@ Güncel kararlar: X'e zamanlanmış/otomatik yayın yok; kullanıcı yalnız Tel
 Gizli bilgiler repo dışında, `~/Library/Application Support/sector-haber/secrets.json` içinde `0600` izinle saklanır.
 Çalışma kodu `.../sector-haber/app`, veritabanı `sector-haber.sqlite`, medya `media/` altındadır.
 SQLite’ın uygulama kimliği `SECT` olarak sabittir; başka uygulama veritabanı açılmaz.
-Normal haber/KAP kaynaklarının tam metin geçici kaydı 24 saatle sınırlıdır; model işlerinin ham belgeleri terminal duruma geldiğinde temizlenir. SPK/Fintables X gönderisi ve ekleri için tekrar okuma önbelleği en fazla 7 gün tutulur. PDF ve raster ara dosyaları 24 saati aşınca servis başlangıcında temizlenir; aktif işler bu süreden kısa bir kirayla çalışır. Kanıt pasajları taslak onay kaydında korunur.
+Normal haber/KAP kaynaklarının tam metin geçici kaydı 24 saatle sınırlıdır; resmi SPK PDF gövdeleri de bu kurala dahildir. Model işlerinin ham belgeleri terminal duruma geldiğinde temizlenir. SPK/Fintables X gönderileri ve ekleri için tekrar okuma önbelleği, yeniden indirme ve kaynak doğrulama ihtiyacı nedeniyle ayrı olarak en fazla 7 gün tutulur. PDF ve raster ara dosyaları 24 saati aşınca servis başlangıcında ve saatlik olarak temizlenir; etkin kuyruk/iş kayıtlarının hâlâ başvurduğu dosyalar korunur. Kanıt pasajları taslak onay kaydında korunur.
 
 ```sh
 npm ci --ignore-scripts

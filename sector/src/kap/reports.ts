@@ -38,11 +38,11 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
  const replaced=new Set(unique.map(r=>r.disclosure.relatedOid).filter(Boolean));
  const current=unique.filter(r=>!r.disclosure.oid||!replaced.has(r.disclosure.oid));
  const rows:{label:string;value:string}[]=[],parts:string[]=[];
- let heading='',footer='KAP kayıtları • '+day+' '+time+' itibarıyla';
+ let heading='',footer=kind==='circuit'?'KAP günlük kayıtları':'KAP kayıtları • '+day+' '+time+' itibarıyla';
  if(kind==='circuit'){
   const counts=new Map<string,number>();for(const r of current)for(const code of new Set(r.disclosure.subjectCodes))counts.set(code,(counts.get(code)??0)+1);
   heading=`Devre kesici raporu: ${current.length} bildirim`;
-  parts.push(`${day} saat ${time} itibarıyla kaydedilen ${current.length} devre kesici bildirimi, ${counts.size} farklı hisseyi kapsıyor.`);
+  parts.push(`Bugün kaydedilen ${current.length} devre kesici bildirimi, ${counts.size} farklı hisseyi kapsıyor.`);
   const fresh=indices&&indices.bist50?.length===50&&Math.abs(at-Date.parse(indices.checkedAt))<36*3600000;
   const tier=(c:string)=>fresh?(indices!.bist30.includes(c)?30:indices!.bist50?.includes(c)?50:indices!.bist100.includes(c)?100:999):999;
   const sorted=[...counts].sort((a,b)=>tier(a[0])-tier(b[0])||b[1]-a[1]||a[0].localeCompare(b[0]));
@@ -76,6 +76,6 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
  const title='📢 '+heading;
  const source='https://www.kap.org.tr/tr/bildirim-sorgu';
  const doc:Document={source_id:'kap-daily-report',source_name:'KAP günlük kayıt raporu',family:'kap-report',official:true,url:source+'#'+kind+'-'+at,title:heading,body,passages:[{id:'computed_report',text:body}],published_at:new Date(at).toISOString(),primary_urls:current.map(r=>r.disclosure.url),language:'tr'};
- const draft:Draft={headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:day+' • '+time+' itibarıyla',card_data:{report:{rows,footer}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
+ const draft:Draft={headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+' • '+time+' itibarıyla',card_data:{report:{rows,footer}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
  return {draft,documents:[doc]};
 }

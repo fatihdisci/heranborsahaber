@@ -35,11 +35,11 @@ test('PDF timeout cleanup terminates a detached process group',async()=>{
   assert.equal(code,null);assert.equal(signal,'SIGKILL');
  }finally{if(real.exitCode===null)killProcessTree(real);}
 });
-test('PDF cleanup removes expired orphan images but preserves fresh active files',async()=>{
+test('PDF cleanup removes expired orphan images but preserves fresh and explicitly active files',async()=>{
  const root=await mkdtemp(join(tmpdir(),'pdf-clean-'));try{
-  const orphan=join(root,'sha256','page-1.png'),active=join(root,'active.pdf');await mkdir(join(root,'sha256'));await writeFile(orphan,'old');await writeFile(active,'current');
-  const old=new Date(Date.now()-48*3600_000);await utimes(orphan,old,old);
-  assert.equal(await cleanupPdfArtifacts(root,Date.now(),24*3600_000),1);
-  await assert.rejects(readFile(orphan));assert.equal(await readFile(active,'utf8'),'current');
+  const orphan=join(root,'sha256','page-1.png'),active=join(root,'active.pdf'),oldActive=join(root,'queued','page-2.png');await mkdir(join(root,'sha256'));await mkdir(join(root,'queued'));await writeFile(orphan,'old');await writeFile(active,'current');await writeFile(oldActive,'active evidence');
+  const old=new Date(Date.now()-48*3600_000);await utimes(orphan,old,old);await utimes(oldActive,old,old);
+  assert.equal(await cleanupPdfArtifacts(root,Date.now(),24*3600_000,[oldActive]),1);
+  await assert.rejects(readFile(orphan));assert.equal(await readFile(active,'utf8'),'current');assert.equal(await readFile(oldActive,'utf8'),'active evidence');
  }finally{await rm(root,{recursive:true,force:true});}
 });

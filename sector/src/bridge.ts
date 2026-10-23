@@ -16,6 +16,7 @@ import type {Source} from './types';
 import {readPublic,safeUrl} from './network';
 type Job={id:string;article_id:string;documents:string;related_ids:string;input_hash:string;lease_token:string;lease_until:number;state:string;kind:string;draft_id:string|null;expected_revision:number;edit_request:string|null;result_draft:string|null;};
 const now=()=>Math.floor(Date.now()/1000);
+export const OFFICIAL_PDF_DOCUMENT_TTL_SECONDS=24*3600;
 export async function ingestOfficial(env:Env,input:Record<string,unknown>):Promise<{accepted:boolean}> {
  const doc=input.document as Document,source=(registry as Source[]).find(s=>s.id===doc?.source_id&&s.method==='bridge_pdf');
  if(!source||source.id!=='spk'||!/^https:\/\/(?:www\.)?spk\.gov\.tr\/data\/[a-f\d]+\/20\d{2}-\d+\.pdf$/.test(doc.url)||typeof doc.body!=='string'||doc.body.length<80||doc.body.length>120_000||!Array.isArray(doc.passages)||doc.passages.some(p=>typeof p.id!=='string'||typeof p.text!=='string')||!doc.published_at||!Number.isFinite(Date.parse(doc.published_at))||Date.parse(doc.published_at)>Date.now()+300_000||Date.now()-Date.parse(doc.published_at)>48*3600_000)throw new Error('invalid_official_document');
@@ -26,7 +27,7 @@ export async function ingestOfficial(env:Env,input:Record<string,unknown>):Promi
  const id=await sha256(doc.url),document=JSON.stringify({...doc,source_name:'SPK',family:'spk',official:true});
  await env.DB.batch([
   env.DB.prepare('INSERT OR IGNORE INTO articles(id,source_id,url,title,summary,published_at,first_seen,status) VALUES(?,?,?,?,?,?,?,?)').bind(id,'spk',doc.url,doc.title,'',doc.published_at,now(),'queued'),
-  env.DB.prepare('UPDATE articles SET document=?,document_expires=?,summary=? WHERE id=?').bind(document,now()+7*24*3600,doc.passages[0]?.text.slice(0,700)??'',id),
+  env.DB.prepare('UPDATE articles SET document=?,document_expires=?,summary=? WHERE id=?').bind(document,now()+OFFICIAL_PDF_DOCUMENT_TTL_SECONDS,doc.passages[0]?.text.slice(0,700)??'',id),
   env.DB.prepare('UPDATE sources SET last_ok=?,last_error=NULL WHERE id=?').bind(now(),'spk')]);
  return {accepted:true};
 }

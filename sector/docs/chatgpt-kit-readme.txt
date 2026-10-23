@@ -24,7 +24,7 @@ theme: navy | paper
 layout: editorial | frame | rail | masthead | center | brief
 Devre kesici bu seçimlerden bağımsız daima navy/editorial kullanır.
 card_data: ticker, tickers, broker, as_of, buy/sell/holdings [{label,value}], metrics [{label,value}].
-Kurum listeleri en fazla 10, AKD/takas listeleri en fazla 5 satır; diğer satırlar tweet gövdesinde özetlenebilir. Bilgi eksiltme veya tablo taşması varsa kartı üretmeden düzenle. Devre kesicide 120 kod test edilmiştir; kapasite aşımında motor hata verir, sessizce kod silmez.
+Tek kart motorunun güvenli kapasitesi kurum tablolarında 10, AKD/takas tablolarında 5 satırdır. Daha çok satır varsa hiçbir hisseyi atma veya tweet metninde özetleyerek görsel listesini eksiltme: mevcut motor kapasite aşımında açık hata verir. Tüm satırları korumak için uyumlu çok kartlı/dinamik düzen kur veya bu destek eklenene kadar veriyi sığdıran tasarımı seç. Devre kesicide 120 kod test edilmiştir; kapasite aşımında motor hata verir, sessizce kod silmez.
 
 KAYNAKTAN YENİDEN ÜRETİM
 Kaynak repoda Node 22 kullan: npm ci --ignore-scripts && npm run kit:export. Komut temiz geçici staging alanında kaynakları ve varlıkları kopyalar, runtime'ı derler, 19 örnek PNG üretir, SHA256 manifestini doğrular ve ZIP'i oluşturur. ZIP içindeki src/ dosyaları esbuild ile yeniden derlenebilir.

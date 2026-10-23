@@ -7,6 +7,7 @@ import {join,relative,dirname,extname} from 'node:path';
 import {cardSvgs} from '../src/card-pages';
 import {png} from './render_local';
 import {CARD_LAYOUTS} from '../src/card-layout';
+import {report} from '../src/kap/reports';
 
 const root=process.cwd(),exportsDir=join(root,'exports'),name='ENDEKS-HABER-ChatGPT',target=join(exportsDir,name),zipTarget=join(exportsDir,name+'.zip');
 const temp=await mkdtemp(join(tmpdir(),'endeks-kit-')),stage=join(temp,name),zipTemp=join(exportsDir,'.'+name+'.tmp.zip');
@@ -31,6 +32,8 @@ const base=new URL('./',import.meta.url),input=process.argv[2],output=process.ar
  for(const count of [2,24,120])samples.push({name:`devre-kesici-${count}`,template:'circuit',headline:'Devre kesici uygulandı',body:'Sürekli işleme ara verildi.',card_data:{tickers:Array.from({length:count},(_,i)=>'A'+String(i).padStart(4,'0'))}});
  samples.push({name:'hisse-akd',template:'akd',headline:'ABCD aracı kurum dağılımı',body:'Net alıcı ve satıcı kurumların pay miktarları.',card_data:{ticker:'ABCD',buy:[{label:'Alfa Yatırım',value:'%20 · 123 lot · —'}],sell:[{label:'Beta Menkul',value:'110.000 lot'}]}},{name:'kurum',template:'institutional',headline:'Örnek Kurum üzerinden alınan/satılan hisseler',body:'Alım tarafında öne çıkan hisseler.',card_data:{broker:'Bank of America',buy:Array.from({length:10},(_,i)=>({label:'A'+String(i).padStart(4,'0'),value:`${10-i} milyon TL`}))}},{name:'takas',template:'custody',headline:'ABCD takas dağılımı',body:'Kaynakta yer alan saklama kuruluşları.',card_data:{ticker:'ABCD',metrics:[{label:'Toplam takas',value:'100 milyon lot'}],holdings:[{label:'Alfa',value:'10 milyon lot / %10'}]}},{name:'hacim',template:'volume',headline:'ABCD işlem hacmi',body:'Kaynakta açıklanan işlem hacmi.',card_data:{ticker:'ABCD',metrics:[{label:'İŞLEM HACMİ',value:'125 milyon TL'}]}});
  samples.push({name:'pay-geri-alimlari',template:'info',headline:'PAY GERİ ALIMLARI',body:'22.10.2026',card_data:{report:{rows:[],footer:'',buyback:{day:'2026-10-22',row_count:2,reader:'example',rows:[{ticker:'AAAA',day:'22.10.2026',nominal:'100.000',price:'4,25',amount:'425.000',raw:[]},{ticker:'BBBB',day:'22.10.2026',nominal:'70.000',price:null,amount:null,raw:[]}]}}}});
+ const circuitFixture=JSON.parse(await readFile(join(root,'test/fixtures/circuit-report-2026-10-23.json'),'utf8'));
+ samples.push({name:'devre-kesici-raporu-40',provenance:circuitFixture.provenance,...report('circuit',circuitFixture.disclosures.map((disclosure:any)=>({disclosure})),circuitFixture.indices,circuitFixture.at,'').draft});
  for(const s of samples){const {name:n,...d}=s;await writeFile(join(stage,'examples',n+'.json'),JSON.stringify(d,null,2));const svgs=cardSvgs(d,d.theme,d.layout);for(let i=0;i<svgs.length;i++){const svg=svgs[i],page=svgs.length===1?n:n+'-'+(i+1);await writeFile(join(stage,'examples',page+'.svg'),svg);await writeFile(join(stage,'examples',page+'.png'),await png(svg));}}
  await copyFile(join(root,'docs/chatgpt-kit-prompt.txt'),join(stage,'CHATGPT-PROMPT.txt'));await copyFile(join(root,'docs/chatgpt-kit-readme.txt'),join(stage,'ONCE-BUNU-OKU.txt'));
  await writeFile(join(stage,'THIRD-PARTY.txt'),'PNG renderer: @resvg/resvg-wasm 2.6.2, MPL-2.0. Noto Sans: SIL OFL, assets/OFL.txt.\n');

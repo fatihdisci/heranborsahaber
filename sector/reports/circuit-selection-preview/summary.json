@@ -1,0 +1,75 @@
+{
+  "provenance": {
+    "kind": "reconstructed_public_kap_cache",
+    "captured_at": "2026-10-23T20:18:04.619147+00:00",
+    "cutoff": "2026-10-23T20:08:48.000Z",
+    "note": "Read-only cache reconstruction at the recorded cutoff; not the original frozen failure-time snapshot. No owner identifiers or production delivery state."
+  },
+  "total_events": 475,
+  "total_tickers": 400,
+  "selected": [
+    "EREGL",
+    "AEFES",
+    "AKBNK",
+    "ASELS",
+    "ASTOR",
+    "EKGYO",
+    "FROTO",
+    "GARAN",
+    "ISCTR",
+    "KRDMD",
+    "MGROS",
+    "PETKM",
+    "PGSUS",
+    "SAHOL",
+    "SASA",
+    "SISE",
+    "TCELL",
+    "TOASO",
+    "TRALT",
+    "TRMET",
+    "TTKOM",
+    "VAKBN",
+    "YKBNK",
+    "AKFYE",
+    "AKSEN",
+    "ALTNY",
+    "ALARK",
+    "BERA",
+    "BINHO",
+    "BRYAT",
+    "BTCIM",
+    "CWENE",
+    "ECILC",
+    "ECZYT",
+    "EGEEN",
+    "EGGUB",
+    "EUREN",
+    "FENER",
+    "GLRMK",
+    "GLYHO"
+  ],
+  "omitted": 360,
+  "tweet_weighted_length": 279,
+  "tweet_style": "plain",
+  "pages": [
+    {
+      "file": "devre-kesici-1.png",
+      "rows": 14,
+      "bytes": 98415,
+      "sha256": "e6c83f6fb7eda96d240a516a8040720c42790fa2da449ae4954c79c3060ecdf7"
+    },
+    {
+      "file": "devre-kesici-2.png",
+      "rows": 13,
+      "bytes": 92553,
+      "sha256": "32909e44d0bcef2c091ea1db85566206f3ff09ae7d87d8ae76a8417f019e6e65"
+    },
+    {
+      "file": "devre-kesici-3.png",
+      "rows": 13,
+      "bytes": 92756,
+      "sha256": "295074dc74f8c75757073994aca7464c3a31d0fcf76947a3e8871beb1d1a59f6"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # /devrekesici — gerçek kapasite teşhisi
 
+Bu, e313484 öncesi tam-liste kapasitesinin tarihsel teşhisidir. Sonraki açık kullanıcı kararı günlük raporda en fazla 40 hisselik gösterim seçkisine izin verir; güncel davranış `docs/circuit-selection-40.md` içinde açıklanır. Sayım ve kök neden bulguları korunur.
+
 23 Ekim 2026 23:08:48 TRT komutunun canlı isteğinde hata `multi_card_capacity_exceeded`; taslak/teslimat işi oluşmamış. Çalışan kaynak bu inceleme başında `6fd44f3` idi. İstekte liste tercihi yok; bu akışta global tüm-hisseler tercihi okunmuyor.
 
 Hata anının donmuş veri çıktısı saklanmamış. Eklenen fixture, 20:18:04 UTC'deki salt okunur KAP önbelleğinden **komutun kayıtlı zaman sınırıyla yeniden kurulmuş** kamuya açık metaveridir; orijinal hata-anı snapshot'ı veya üretim teslimat makbuzu değildir. Kullanıcı, mesaj/güncelleme kimlikleri, sırlar ve üretim teslimat durumları içermez. Aynı yayın günü, yayın zamanı ve `first_seen <= at` koşulları kullanıldı. 730 adayın ilk görülme aralığı 05:03:29–19:54:12 UTC; tarihlerin tamamı İstanbul günü 23 Ekim'dir.

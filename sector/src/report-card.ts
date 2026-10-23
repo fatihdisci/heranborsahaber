@@ -3,6 +3,7 @@ import {buybackCard} from './buyback-card';
 import {COLORS,PROFILE_DATA} from './brand';
 import type {Draft} from './types';
 import {normalizeCardText} from './card-text';
+import {circuitOmissionNote} from './circuit-selection';
 const esc=(s:string)=>normalizeCardText(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 export function reportCard(d:Pick<Draft,'headline'|'body'|'card_data'|'output_preferences'>):string{
  if(d.card_data!.report!.buyback)return buybackCard(d.card_data!.report!.buyback!);
@@ -15,8 +16,9 @@ export function reportCard(d:Pick<Draft,'headline'|'body'|'card_data'|'output_pr
  rows.forEach((r,i)=>{const x=64,y=350+i*height;if(reportTextWidth(r.label,30,true)>280||reportTextWidth(r.value,28)>670)throw Error('report_cell_capacity_exceeded');svg+=`<g data-report-row="${i}">`+text(r.label,x,y,30)+text(r.value,x+300,y,28)+'</g>';});
  if(!rows.length)svg+=text('Doğrulanmış günlük işlem satırı yok.',64,380,32);
 
- const words=data.footer.split(' '),lines:string[]=[];let line='';for(const w of words){if((line+' '+w).length>73){lines.push(line);line=w;}else line+=(line?' ':'')+w;}if(line)lines.push(line);
- if(d.output_preferences?.show_footer===true||d.output_preferences?.show_footer!==false&&/Pay geri alım/i.test(d.headline)){if(lines.length>2)throw Error('report_footer_capacity_exceeded');lines.forEach((s,i)=>svg+=text(s,64,1260+i*30,26,COLORS.steel));}return svg+'</g></svg>';
+ const omission=data.circuit?circuitOmissionNote(data.circuit):'';
+ const words=(omission||data.footer).split(' '),lines:string[]=[];let line='';for(const w of words){if((line+' '+w).length>73){lines.push(line);line=w;}else line+=(line?' ':'')+w;}if(line)lines.push(line);
+ if(omission||d.output_preferences?.show_footer===true||d.output_preferences?.show_footer!==false&&/Pay geri alım/i.test(d.headline)){if(lines.length>2)throw Error('report_footer_capacity_exceeded');lines.forEach((s,i)=>svg+=text(s,64,1260+i*30,26,COLORS.steel));}return svg+'</g></svg>';
 }
 
 function generalCard(g:NonNullable<NonNullable<import('./types').CardData['report']>['general']>,showTime=false,showFooter=true):string{

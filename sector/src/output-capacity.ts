@@ -10,11 +10,15 @@ export interface CapacityDiagnostic {
  tweet_length?:number;
  tweet_limit?:number;
  preference?:'default_summary'|'all'|'first';
+ selected_tickers?:number;
+ fit_tickers?:number;
+ hashtag_tweet_length?:number;
 }
 export class OutputCapacityError extends Error {
  constructor(code:string,public diagnostic:CapacityDiagnostic){super(code);}
 }
 export function capacityMessage(code:string,value?:CapacityDiagnostic):string|undefined {
+ if(code==='tweet_capacity_exceeded'&&value?.selected_tickers!==undefined)return `Seçilen ${value.selected_tickers} hisse kodu başlık ve zorunlu kapsam notuyla hashtagsiz ${value.tweet_length}/${value.tweet_limit??280} karakter${value.hashtag_tweet_length!==undefined?'; # ile '+value.hashtag_tweet_length+' karakter':''}. Aynı öncelik sırasında en fazla ${value.fit_tickers??0} kod sığıyor. Hiçbir kod kendiliğinden çıkarılmadı; görsel veya yayın oluşturulmadı. Daha az kodu açıkça seçmen gerekir; otomatik thread açılmadı.`;
  if(code==='tweet_capacity_exceeded')return `Tweet metni X’in ${value?.tweet_limit??280} karakter sınırını aşıyor${value?.tweet_length!==undefined?' ('+value.tweet_length+' karakter)':''}. ${value?.preference==='all'?'Açık tüm-hisseler tercihin korunuyor; hiçbir kod çıkarılmadı. ':''}Bu hata tweet metnine ait; görsel üretimi başlamadı. Kısa tweet özeti için kapsam tercihini değiştirmen gerekir; otomatik thread açılmadı.`;
  if(code==='multi_card_capacity_exceeded'){
   const field=value?.fields?.find(f=>f.name==='report.rows');

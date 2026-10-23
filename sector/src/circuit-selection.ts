@@ -1,0 +1,27 @@
+export interface CircuitEvent {id:number;tickers:string[];published_at:string;}
+export interface CircuitIndices {bist30:string[];bist100:string[];checkedAt:string;source:string;}
+export interface CircuitSelection {
+ version:1;rule:'bist30-bist100-repeats-code-v1';limit:number;
+ total_events:number;total_tickers:number;selected_tickers:string[];omitted:number;
+ all_rows:{label:string;value:string}[];
+ indices:{status:'verified'|'missing';snapshot:CircuitIndices|null};
+ tweet_style?:'hashtags'|'plain';
+}
+export const CIRCUIT_REPORT_LIMIT=40;
+const code=/^[A-Z][A-Z0-9]{3,4}$/;
+export function circuitOmissionNote(s:Pick<CircuitSelection,'total_tickers'|'omitted'>):string{return s.omitted?`${s.total_tickers} hisse; ${s.omitted} gösterilmedi.`:'';}
+/** Selection affects presentation only. Every event and aggregate remains archived. */
+export function selectCircuitReport(events:readonly CircuitEvent[],indices:CircuitIndices|null,at:number,limit=CIRCUIT_REPORT_LIMIT){
+ if(!Number.isSafeInteger(limit)||limit<1||limit>CIRCUIT_REPORT_LIMIT)throw Error('invalid_output_limit');
+ const counts=new Map<string,number>();for(const event of events)for(const ticker of new Set(event.tickers)){if(!code.test(ticker))throw Error('circuit_report_ticker_invalid');counts.set(ticker,(counts.get(ticker)??0)+1);}
+ const members=(values:unknown,n:number):values is string[]=>Array.isArray(values)&&values.length===n&&new Set(values).size===n&&values.every(v=>typeof v==='string'&&code.test(v));
+ const checked=indices?Date.parse(indices.checkedAt):NaN;
+ const verified=!!indices&&indices.source==='https://www.kap.org.tr/tr/Endeksler'&&members(indices.bist30,30)&&members(indices.bist100,100)&&indices.bist30.every(c=>indices.bist100.includes(c))&&Number.isFinite(checked)&&checked<=at+300_000&&at-checked<=36*3600_000;
+ if(counts.size&&!verified)throw Error('circuit_report_indices_unavailable');
+ const tier=(c:string)=>verified?(indices!.bist30.includes(c)?30:indices!.bist100.includes(c)?100:999):999;
+ const sorted=[...counts].sort((a,b)=>tier(a[0])-tier(b[0])||b[1]-a[1]||(a[0]<b[0]?-1:a[0]>b[0]?1:0));
+ const all_rows=sorted.map(([ticker,n])=>({label:'#'+ticker,value:`${n} bildirim${tier(ticker)<999?' · BIST '+tier(ticker):''}`}));
+ const rows=all_rows.slice(0,limit);
+ const selection:CircuitSelection={version:1,rule:'bist30-bist100-repeats-code-v1',limit,total_events:events.length,total_tickers:counts.size,selected_tickers:rows.map(r=>r.label.slice(1)),omitted:counts.size-rows.length,all_rows,indices:{status:verified?'verified':'missing',snapshot:verified?{bist30:[...indices!.bist30],bist100:[...indices!.bist100],checkedAt:indices!.checkedAt,source:indices!.source}:null}};
+ return {rows,selection};
+}

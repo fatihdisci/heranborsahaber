@@ -1,0 +1,5320 @@
+{
+  "provenance": {
+    "kind": "reconstructed_public_kap_cache",
+    "captured_at": "2026-10-23T20:18:04.619147+00:00",
+    "cutoff": "2026-10-23T20:08:48.000Z",
+    "note": "Read-only cache reconstruction at the recorded cutoff; not the original frozen failure-time snapshot. No owner identifiers or production delivery state."
+  },
+  "headline": "Devre kesici",
+  "body": "EREGL AEFES AKBNK ASELS ASTOR EKGYO FROTO GARAN ISCTR KRDMD MGROS PETKM PGSUS SAHOL SASA SISE TCELL TOASO TRALT TRMET TTKOM VAKBN YKBNK AKFYE AKSEN ALTNY ALARK BERA BINHO BRYAT BTCIM CWENE ECILC ECZYT EGEEN EGGUB EUREN FENER GLRMK GLYHO\n400 hisse; 360 gösterilmedi.",
+  "hashtags": [],
+  "category": "kap",
+  "importance": 85,
+  "template": "info",
+  "card_headline": "Devre kesici raporu",
+  "card_body": "475 bildirim · 400 farklı hisse",
+  "card_data": {
+    "report": {
+      "rows": [
+        {
+          "label": "#EREGL",
+          "value": "2 bildirim · BIST 30"
+        },
+        {
+          "label": "#AEFES",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#AKBNK",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#ASELS",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#ASTOR",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#EKGYO",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#FROTO",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#GARAN",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#ISCTR",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#KRDMD",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#MGROS",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#PETKM",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#PGSUS",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#SAHOL",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#SASA",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#SISE",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#TCELL",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#TOASO",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#TRALT",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#TRMET",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#TTKOM",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#VAKBN",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#YKBNK",
+          "value": "1 bildirim · BIST 30"
+        },
+        {
+          "label": "#AKFYE",
+          "value": "2 bildirim · BIST 100"
+        },
+        {
+          "label": "#AKSEN",
+          "value": "2 bildirim · BIST 100"
+        },
+        {
+          "label": "#ALTNY",
+          "value": "2 bildirim · BIST 100"
+        },
+        {
+          "label": "#ALARK",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#BERA",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#BINHO",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#BRYAT",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#BTCIM",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#CWENE",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#ECILC",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#ECZYT",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#EGEEN",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#EGGUB",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#EUREN",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#FENER",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#GLRMK",
+          "value": "1 bildirim · BIST 100"
+        },
+        {
+          "label": "#GLYHO",
+          "value": "1 bildirim · BIST 100"
+        }
+      ],
+      "footer": "400 hisse; 360 gösterilmedi.",
+      "events": [
+        {
+          "id": 1686160,
+          "tickers": [
+            "BLUME"
+          ],
+          "published_at": "2026-10-23T07:00:04.000Z"
+        },
+        {
+          "id": 1686161,
+          "tickers": [
+            "OZRDN"
+          ],
+          "published_at": "2026-10-23T07:00:06.000Z"
+        },
+        {
+          "id": 1686162,
+          "tickers": [
+            "MEPET"
+          ],
+          "published_at": "2026-10-23T07:00:09.000Z"
+        },
+        {
+          "id": 1686163,
+          "tickers": [
+            "CEMAS"
+          ],
+          "published_at": "2026-10-23T07:00:13.000Z"
+        },
+        {
+          "id": 1686164,
+          "tickers": [
+            "PKENT"
+          ],
+          "published_at": "2026-10-23T07:00:22.000Z"
+        },
+        {
+          "id": 1686165,
+          "tickers": [
+            "BAYRK"
+          ],
+          "published_at": "2026-10-23T07:00:22.000Z"
+        },
+        {
+          "id": 1686166,
+          "tickers": [
+            "HATEK"
+          ],
+          "published_at": "2026-10-23T07:00:40.000Z"
+        },
+        {
+          "id": 1686167,
+          "tickers": [
+            "BYDNR"
+          ],
+          "published_at": "2026-10-23T07:01:01.000Z"
+        },
+        {
+          "id": 1686168,
+          "tickers": [
+            "HALKB"
+          ],
+          "published_at": "2026-10-23T07:01:47.000Z"
+        },
+        {
+          "id": 1686169,
+          "tickers": [
+            "PAGYO"
+          ],
+          "published_at": "2026-10-23T07:02:08.000Z"
+        },
+        {
+          "id": 1686170,
+          "tickers": [
+            "VKFYO"
+          ],
+          "published_at": "2026-10-23T07:02:21.000Z"
+        },
+        {
+          "id": 1686171,
+          "tickers": [
+            "SMART"
+          ],
+          "published_at": "2026-10-23T07:02:23.000Z"
+        },
+        {
+          "id": 1686172,
+          "tickers": [
+            "DURDO"
+          ],
+          "published_at": "2026-10-23T07:02:32.000Z"
+        },
+        {
+          "id": 1686173,
+          "tickers": [
+            "KLRHO"
+          ],
+          "published_at": "2026-10-23T07:02:39.000Z"
+        },
+        {
+          "id": 1686174,
+          "tickers": [
+            "RTALB"
+          ],
+          "published_at": "2026-10-23T07:02:43.000Z"
+        },
+        {
+          "id": 1686175,
+          "tickers": [
+            "ARFYE"
+          ],
+          "published_at": "2026-10-23T07:03:02.000Z"
+        },
+        {
+          "id": 1686176,
+          "tickers": [
+            "TATEN"
+          ],
+          "published_at": "2026-10-23T07:03:18.000Z"
+        },
+        {
+          "id": 1686177,
+          "tickers": [
+            "ISDMR"
+          ],
+          "published_at": "2026-10-23T07:03:20.000Z"
+        },
+        {
+          "id": 1686178,
+          "tickers": [
+            "EREGL"
+          ],
+          "published_at": "2026-10-23T07:03:39.000Z"
+        },
+        {
+          "id": 1686180,
+          "tickers": [
+            "IHAAS"
+          ],
+          "published_at": "2026-10-23T07:03:54.000Z"
+        },
+        {
+          "id": 1686181,
+          "tickers": [
+            "AKMGY"
+          ],
+          "published_at": "2026-10-23T07:05:08.000Z"
+        },
+        {
+          "id": 1686182,
+          "tickers": [
+            "ACSEL"
+          ],
+          "published_at": "2026-10-23T07:05:17.000Z"
+        },
+        {
+          "id": 1686183,
+          "tickers": [
+            "EPLAS"
+          ],
+          "published_at": "2026-10-23T07:06:27.000Z"
+        },
+        {
+          "id": 1686184,
+          "tickers": [
+            "GLBMD"
+          ],
+          "published_at": "2026-10-23T07:06:41.000Z"
+        },
+        {
+          "id": 1686185,
+          "tickers": [
+            "PRKAB"
+          ],
+          "published_at": "2026-10-23T07:06:49.000Z"
+        },
+        {
+          "id": 1686186,
+          "tickers": [
+            "PKART"
+          ],
+          "published_at": "2026-10-23T07:07:06.000Z"
+        },
+        {
+          "id": 1686187,
+          "tickers": [
+            "ISVEA"
+          ],
+          "published_at": "2026-10-23T07:07:13.000Z"
+        },
+        {
+          "id": 1686188,
+          "tickers": [
+            "ARMGD"
+          ],
+          "published_at": "2026-10-23T07:07:53.000Z"
+        },
+        {
+          "id": 1686189,
+          "tickers": [
+            "VESTL"
+          ],
+          "published_at": "2026-10-23T07:08:44.000Z"
+        },
+        {
+          "id": 1686190,
+          "tickers": [
+            "CITAS"
+          ],
+          "published_at": "2026-10-23T07:08:53.000Z"
+        },
+        {
+          "id": 1686191,
+          "tickers": [
+            "INGRM"
+          ],
+          "published_at": "2026-10-23T07:09:00.000Z"
+        },
+        {
+          "id": 1686192,
+          "tickers": [
+            "EUKYO"
+          ],
+          "published_at": "2026-10-23T07:11:06.000Z"
+        },
+        {
+          "id": 1686193,
+          "tickers": [
+            "IDGYO"
+          ],
+          "published_at": "2026-10-23T07:11:18.000Z"
+        },
+        {
+          "id": 1686194,
+          "tickers": [
+            "ULUFA"
+          ],
+          "published_at": "2026-10-23T07:12:30.000Z"
+        },
+        {
+          "id": 1686195,
+          "tickers": [
+            "EUYO"
+          ],
+          "published_at": "2026-10-23T07:13:02.000Z"
+        },
+        {
+          "id": 1686196,
+          "tickers": [
+            "ARZUM"
+          ],
+          "published_at": "2026-10-23T07:13:05.000Z"
+        },
+        {
+          "id": 1686197,
+          "tickers": [
+            "BOSSA"
+          ],
+          "published_at": "2026-10-23T07:14:16.000Z"
+        },
+        {
+          "id": 1686199,
+          "tickers": [
+            "HUNER"
+          ],
+          "published_at": "2026-10-23T07:15:12.000Z"
+        },
+        {
+          "id": 1686200,
+          "tickers": [
+            "MCARD"
+          ],
+          "published_at": "2026-10-23T07:15:25.000Z"
+        },
+        {
+          "id": 1686201,
+          "tickers": [
+            "DESPC"
+          ],
+          "published_at": "2026-10-23T07:15:28.000Z"
+        },
+        {
+          "id": 1686202,
+          "tickers": [
+            "CEMZY"
+          ],
+          "published_at": "2026-10-23T07:15:48.000Z"
+        },
+        {
+          "id": 1686203,
+          "tickers": [
+            "INTET"
+          ],
+          "published_at": "2026-10-23T07:15:58.000Z"
+        },
+        {
+          "id": 1686204,
+          "tickers": [
+            "RODRG"
+          ],
+          "published_at": "2026-10-23T07:16:13.000Z"
+        },
+        {
+          "id": 1686205,
+          "tickers": [
+            "BESLR"
+          ],
+          "published_at": "2026-10-23T07:16:21.000Z"
+        },
+        {
+          "id": 1686206,
+          "tickers": [
+            "ORCAY"
+          ],
+          "published_at": "2026-10-23T07:16:45.000Z"
+        },
+        {
+          "id": 1686207,
+          "tickers": [
+            "KRDMD"
+          ],
+          "published_at": "2026-10-23T07:16:53.000Z"
+        },
+        {
+          "id": 1686208,
+          "tickers": [
+            "KZBGY"
+          ],
+          "published_at": "2026-10-23T07:17:04.000Z"
+        },
+        {
+          "id": 1686209,
+          "tickers": [
+            "IZINV"
+          ],
+          "published_at": "2026-10-23T07:17:40.000Z"
+        },
+        {
+          "id": 1686210,
+          "tickers": [
+            "MIATK"
+          ],
+          "published_at": "2026-10-23T07:17:41.000Z"
+        },
+        {
+          "id": 1686211,
+          "tickers": [
+            "IHLAS"
+          ],
+          "published_at": "2026-10-23T07:18:11.000Z"
+        },
+        {
+          "id": 1686212,
+          "tickers": [
+            "ISYAT"
+          ],
+          "published_at": "2026-10-23T07:18:41.000Z"
+        },
+        {
+          "id": 1686213,
+          "tickers": [
+            "DGATE"
+          ],
+          "published_at": "2026-10-23T07:18:54.000Z"
+        },
+        {
+          "id": 1686214,
+          "tickers": [
+            "LINK"
+          ],
+          "published_at": "2026-10-23T07:18:56.000Z"
+        },
+        {
+          "id": 1686215,
+          "tickers": [
+            "AYEN"
+          ],
+          "published_at": "2026-10-23T07:18:56.000Z"
+        },
+        {
+          "id": 1686216,
+          "tickers": [
+            "ASELS"
+          ],
+          "published_at": "2026-10-23T07:19:05.000Z"
+        },
+        {
+          "id": 1686217,
+          "tickers": [
+            "ICUGS"
+          ],
+          "published_at": "2026-10-23T07:19:06.000Z"
+        },
+        {
+          "id": 1686218,
+          "tickers": [
+            "FORMT"
+          ],
+          "published_at": "2026-10-23T07:20:13.000Z"
+        },
+        {
+          "id": 1686223,
+          "tickers": [
+            "ANGEN"
+          ],
+          "published_at": "2026-10-23T07:20:50.000Z"
+        },
+        {
+          "id": 1686224,
+          "tickers": [
+            "METRO"
+          ],
+          "published_at": "2026-10-23T07:20:51.000Z"
+        },
+        {
+          "id": 1686226,
+          "tickers": [
+            "AKFYE"
+          ],
+          "published_at": "2026-10-23T07:21:10.000Z"
+        },
+        {
+          "id": 1686227,
+          "tickers": [
+            "CRFSA"
+          ],
+          "published_at": "2026-10-23T07:21:19.000Z"
+        },
+        {
+          "id": 1686228,
+          "tickers": [
+            "ISGSY"
+          ],
+          "published_at": "2026-10-23T07:22:26.000Z"
+        },
+        {
+          "id": 1686229,
+          "tickers": [
+            "ETILR"
+          ],
+          "published_at": "2026-10-23T07:22:31.000Z"
+        },
+        {
+          "id": 1686230,
+          "tickers": [
+            "YAYLA"
+          ],
+          "published_at": "2026-10-23T07:22:37.000Z"
+        },
+        {
+          "id": 1686231,
+          "tickers": [
+            "ORGE"
+          ],
+          "published_at": "2026-10-23T07:22:41.000Z"
+        },
+        {
+          "id": 1686232,
+          "tickers": [
+            "IHEVA"
+          ],
+          "published_at": "2026-10-23T07:22:44.000Z"
+        },
+        {
+          "id": 1686233,
+          "tickers": [
+            "AKGRT"
+          ],
+          "published_at": "2026-10-23T07:23:06.000Z"
+        },
+        {
+          "id": 1686234,
+          "tickers": [
+            "HURGZ"
+          ],
+          "published_at": "2026-10-23T07:23:11.000Z"
+        },
+        {
+          "id": 1686235,
+          "tickers": [
+            "SEYKM"
+          ],
+          "published_at": "2026-10-23T07:23:40.000Z"
+        },
+        {
+          "id": 1686236,
+          "tickers": [
+            "OYAYO"
+          ],
+          "published_at": "2026-10-23T07:24:02.000Z"
+        },
+        {
+          "id": 1686237,
+          "tickers": [
+            "TSGYO"
+          ],
+          "published_at": "2026-10-23T07:24:39.000Z"
+        },
+        {
+          "id": 1686238,
+          "tickers": [
+            "BORLS"
+          ],
+          "published_at": "2026-10-23T07:24:49.000Z"
+        },
+        {
+          "id": 1686239,
+          "tickers": [
+            "RUBNS"
+          ],
+          "published_at": "2026-10-23T07:24:54.000Z"
+        },
+        {
+          "id": 1686240,
+          "tickers": [
+            "ADEL"
+          ],
+          "published_at": "2026-10-23T07:25:03.000Z"
+        },
+        {
+          "id": 1686241,
+          "tickers": [
+            "KZGYO"
+          ],
+          "published_at": "2026-10-23T07:25:10.000Z"
+        },
+        {
+          "id": 1686242,
+          "tickers": [
+            "MEGMT"
+          ],
+          "published_at": "2026-10-23T07:25:24.000Z"
+        },
+        {
+          "id": 1686243,
+          "tickers": [
+            "DMRGD"
+          ],
+          "published_at": "2026-10-23T07:26:01.000Z"
+        },
+        {
+          "id": 1686244,
+          "tickers": [
+            "ESCOM"
+          ],
+          "published_at": "2026-10-23T07:27:44.000Z"
+        },
+        {
+          "id": 1686246,
+          "tickers": [
+            "DYOBY"
+          ],
+          "published_at": "2026-10-23T07:28:56.000Z"
+        },
+        {
+          "id": 1686247,
+          "tickers": [
+            "KRDMA"
+          ],
+          "published_at": "2026-10-23T07:29:29.000Z"
+        },
+        {
+          "id": 1686248,
+          "tickers": [
+            "HUNER"
+          ],
+          "published_at": "2026-10-23T07:29:30.000Z"
+        },
+        {
+          "id": 1686249,
+          "tickers": [
+            "EKOS"
+          ],
+          "published_at": "2026-10-23T07:29:51.000Z"
+        },
+        {
+          "id": 1686250,
+          "tickers": [
+            "INVEO"
+          ],
+          "published_at": "2026-10-23T07:30:24.000Z"
+        },
+        {
+          "id": 1686251,
+          "tickers": [
+            "EGSER"
+          ],
+          "published_at": "2026-10-23T07:30:34.000Z"
+        },
+        {
+          "id": 1686252,
+          "tickers": [
+            "AVOD"
+          ],
+          "published_at": "2026-10-23T07:30:37.000Z"
+        },
+        {
+          "id": 1686253,
+          "tickers": [
+            "SEKUR"
+          ],
+          "published_at": "2026-10-23T07:31:09.000Z"
+        },
+        {
+          "id": 1686254,
+          "tickers": [
+            "PAPIL"
+          ],
+          "published_at": "2026-10-23T07:31:23.000Z"
+        },
+        {
+          "id": 1686255,
+          "tickers": [
+            "ICUGS"
+          ],
+          "published_at": "2026-10-23T07:32:00.000Z"
+        },
+        {
+          "id": 1686256,
+          "tickers": [
+            "QUAGR"
+          ],
+          "published_at": "2026-10-23T07:35:47.000Z"
+        },
+        {
+          "id": 1686257,
+          "tickers": [
+            "ALBTN"
+          ],
+          "published_at": "2026-10-23T07:36:12.000Z"
+        },
+        {
+          "id": 1686258,
+          "tickers": [
+            "AVGYO"
+          ],
+          "published_at": "2026-10-23T07:37:56.000Z"
+        },
+        {
+          "id": 1686260,
+          "tickers": [
+            "CUSAN"
+          ],
+          "published_at": "2026-10-23T07:41:31.000Z"
+        },
+        {
+          "id": 1686261,
+          "tickers": [
+            "KZBGY"
+          ],
+          "published_at": "2026-10-23T07:41:37.000Z"
+        },
+        {
+          "id": 1686262,
+          "tickers": [
+            "FLAP"
+          ],
+          "published_at": "2026-10-23T07:41:40.000Z"
+        },
+        {
+          "id": 1686263,
+          "tickers": [
+            "TKNKA"
+          ],
+          "published_at": "2026-10-23T07:42:23.000Z"
+        },
+        {
+          "id": 1686264,
+          "tickers": [
+            "SMRTG"
+          ],
+          "published_at": "2026-10-23T07:42:25.000Z"
+        },
+        {
+          "id": 1686265,
+          "tickers": [
+            "BAKAB"
+          ],
+          "published_at": "2026-10-23T07:42:48.000Z"
+        },
+        {
+          "id": 1686266,
+          "tickers": [
+            "BVSAN"
+          ],
+          "published_at": "2026-10-23T07:43:15.000Z"
+        },
+        {
+          "id": 1686267,
+          "tickers": [
+            "KUVVA"
+          ],
+          "published_at": "2026-10-23T07:43:57.000Z"
+        },
+        {
+          "id": 1686268,
+          "tickers": [
+            "KRTEK"
+          ],
+          "published_at": "2026-10-23T07:45:40.000Z"
+        },
+        {
+          "id": 1686269,
+          "tickers": [
+            "UCAYM"
+          ],
+          "published_at": "2026-10-23T07:45:48.000Z"
+        },
+        {
+          "id": 1686270,
+          "tickers": [
+            "MAGEN"
+          ],
+          "published_at": "2026-10-23T07:45:57.000Z"
+        },
+        {
+          "id": 1686271,
+          "tickers": [
+            "DENGE"
+          ],
+          "published_at": "2026-10-23T07:45:57.000Z"
+        },
+        {
+          "id": 1686272,
+          "tickers": [
+            "SVGYO"
+          ],
+          "published_at": "2026-10-23T07:46:24.000Z"
+        },
+        {
+          "id": 1686273,
+          "tickers": [
+            "EUPWR"
+          ],
+          "published_at": "2026-10-23T07:46:31.000Z"
+        },
+        {
+          "id": 1686274,
+          "tickers": [
+            "PSGYO"
+          ],
+          "published_at": "2026-10-23T07:46:54.000Z"
+        },
+        {
+          "id": 1686275,
+          "tickers": [
+            "CMBTN"
+          ],
+          "published_at": "2026-10-23T07:47:04.000Z"
+        },
+        {
+          "id": 1686276,
+          "tickers": [
+            "YKSLN"
+          ],
+          "published_at": "2026-10-23T07:48:05.000Z"
+        },
+        {
+          "id": 1686279,
+          "tickers": [
+            "NATEN"
+          ],
+          "published_at": "2026-10-23T07:50:09.000Z"
+        },
+        {
+          "id": 1686280,
+          "tickers": [
+            "MARTI"
+          ],
+          "published_at": "2026-10-23T07:50:09.000Z"
+        },
+        {
+          "id": 1686281,
+          "tickers": [
+            "VESBE"
+          ],
+          "published_at": "2026-10-23T07:50:21.000Z"
+        },
+        {
+          "id": 1686282,
+          "tickers": [
+            "QUICK"
+          ],
+          "published_at": "2026-10-23T07:50:32.000Z"
+        },
+        {
+          "id": 1686283,
+          "tickers": [
+            "SARAE"
+          ],
+          "published_at": "2026-10-23T07:51:13.000Z"
+        },
+        {
+          "id": 1686284,
+          "tickers": [
+            "AKHAN"
+          ],
+          "published_at": "2026-10-23T07:51:14.000Z"
+        },
+        {
+          "id": 1686285,
+          "tickers": [
+            "EKIM"
+          ],
+          "published_at": "2026-10-23T07:51:20.000Z"
+        },
+        {
+          "id": 1686286,
+          "tickers": [
+            "TSPOR"
+          ],
+          "published_at": "2026-10-23T07:51:37.000Z"
+        },
+        {
+          "id": 1686287,
+          "tickers": [
+            "KFEIN"
+          ],
+          "published_at": "2026-10-23T07:51:47.000Z"
+        },
+        {
+          "id": 1686290,
+          "tickers": [
+            "OZYSR"
+          ],
+          "published_at": "2026-10-23T07:52:56.000Z"
+        },
+        {
+          "id": 1686291,
+          "tickers": [
+            "OZGYO"
+          ],
+          "published_at": "2026-10-23T07:53:13.000Z"
+        },
+        {
+          "id": 1686292,
+          "tickers": [
+            "VKING"
+          ],
+          "published_at": "2026-10-23T07:53:26.000Z"
+        },
+        {
+          "id": 1686293,
+          "tickers": [
+            "ATATR"
+          ],
+          "published_at": "2026-10-23T07:54:25.000Z"
+        },
+        {
+          "id": 1686294,
+          "tickers": [
+            "SUNTK"
+          ],
+          "published_at": "2026-10-23T07:54:33.000Z"
+        },
+        {
+          "id": 1686295,
+          "tickers": [
+            "GIPTA"
+          ],
+          "published_at": "2026-10-23T07:56:01.000Z"
+        },
+        {
+          "id": 1686296,
+          "tickers": [
+            "KPEKS"
+          ],
+          "published_at": "2026-10-23T07:56:06.000Z"
+        },
+        {
+          "id": 1686297,
+          "tickers": [
+            "KRDMB"
+          ],
+          "published_at": "2026-10-23T07:56:27.000Z"
+        },
+        {
+          "id": 1686298,
+          "tickers": [
+            "ODAS"
+          ],
+          "published_at": "2026-10-23T07:57:06.000Z"
+        },
+        {
+          "id": 1686299,
+          "tickers": [
+            "GOLDA"
+          ],
+          "published_at": "2026-10-23T07:57:07.000Z"
+        },
+        {
+          "id": 1686300,
+          "tickers": [
+            "JANTS"
+          ],
+          "published_at": "2026-10-23T07:57:38.000Z"
+        },
+        {
+          "id": 1686301,
+          "tickers": [
+            "TLMAN"
+          ],
+          "published_at": "2026-10-23T07:57:43.000Z"
+        },
+        {
+          "id": 1686302,
+          "tickers": [
+            "SDTTR"
+          ],
+          "published_at": "2026-10-23T07:57:47.000Z"
+        },
+        {
+          "id": 1686303,
+          "tickers": [
+            "PATEK"
+          ],
+          "published_at": "2026-10-23T07:57:51.000Z"
+        },
+        {
+          "id": 1686304,
+          "tickers": [
+            "KONYA"
+          ],
+          "published_at": "2026-10-23T07:58:22.000Z"
+        },
+        {
+          "id": 1686305,
+          "tickers": [
+            "FRMPL"
+          ],
+          "published_at": "2026-10-23T07:58:22.000Z"
+        },
+        {
+          "id": 1686306,
+          "tickers": [
+            "EREGL"
+          ],
+          "published_at": "2026-10-23T07:58:28.000Z"
+        },
+        {
+          "id": 1686307,
+          "tickers": [
+            "MRSHL"
+          ],
+          "published_at": "2026-10-23T07:58:30.000Z"
+        },
+        {
+          "id": 1686308,
+          "tickers": [
+            "OZSUB"
+          ],
+          "published_at": "2026-10-23T07:58:46.000Z"
+        },
+        {
+          "id": 1686309,
+          "tickers": [
+            "CEMTS"
+          ],
+          "published_at": "2026-10-23T07:58:50.000Z"
+        },
+        {
+          "id": 1686310,
+          "tickers": [
+            "EGEEN"
+          ],
+          "published_at": "2026-10-23T07:58:57.000Z"
+        },
+        {
+          "id": 1686311,
+          "tickers": [
+            "NIBAS"
+          ],
+          "published_at": "2026-10-23T07:59:19.000Z"
+        },
+        {
+          "id": 1686312,
+          "tickers": [
+            "DURDO"
+          ],
+          "published_at": "2026-10-23T08:00:18.000Z"
+        },
+        {
+          "id": 1686314,
+          "tickers": [
+            "MSGYO"
+          ],
+          "published_at": "2026-10-23T08:00:35.000Z"
+        },
+        {
+          "id": 1686315,
+          "tickers": [
+            "KNFRT"
+          ],
+          "published_at": "2026-10-23T08:00:36.000Z"
+        },
+        {
+          "id": 1686316,
+          "tickers": [
+            "YEOTK"
+          ],
+          "published_at": "2026-10-23T08:00:47.000Z"
+        },
+        {
+          "id": 1686317,
+          "tickers": [
+            "ORZAX"
+          ],
+          "published_at": "2026-10-23T08:01:20.000Z"
+        },
+        {
+          "id": 1686318,
+          "tickers": [
+            "BOSSA"
+          ],
+          "published_at": "2026-10-23T08:01:35.000Z"
+        },
+        {
+          "id": 1686319,
+          "tickers": [
+            "DOFER"
+          ],
+          "published_at": "2026-10-23T08:02:04.000Z"
+        },
+        {
+          "id": 1686320,
+          "tickers": [
+            "KLSER"
+          ],
+          "published_at": "2026-10-23T08:02:07.000Z"
+        },
+        {
+          "id": 1686321,
+          "tickers": [
+            "ARMGD"
+          ],
+          "published_at": "2026-10-23T08:02:45.000Z"
+        },
+        {
+          "id": 1686323,
+          "tickers": [
+            "SEGYO"
+          ],
+          "published_at": "2026-10-23T08:03:25.000Z"
+        },
+        {
+          "id": 1686324,
+          "tickers": [
+            "DOKTA"
+          ],
+          "published_at": "2026-10-23T08:03:28.000Z"
+        },
+        {
+          "id": 1686325,
+          "tickers": [
+            "VEYAS"
+          ],
+          "published_at": "2026-10-23T08:04:48.000Z"
+        },
+        {
+          "id": 1686326,
+          "tickers": [
+            "SAMAT"
+          ],
+          "published_at": "2026-10-23T08:04:56.000Z"
+        },
+        {
+          "id": 1686327,
+          "tickers": [
+            "OBAMS"
+          ],
+          "published_at": "2026-10-23T08:05:09.000Z"
+        },
+        {
+          "id": 1686328,
+          "tickers": [
+            "VERTU"
+          ],
+          "published_at": "2026-10-23T08:05:41.000Z"
+        },
+        {
+          "id": 1686329,
+          "tickers": [
+            "PRKME"
+          ],
+          "published_at": "2026-10-23T08:06:33.000Z"
+        },
+        {
+          "id": 1686330,
+          "tickers": [
+            "LIDFA"
+          ],
+          "published_at": "2026-10-23T08:06:35.000Z"
+        },
+        {
+          "id": 1686332,
+          "tickers": [
+            "TUREX"
+          ],
+          "published_at": "2026-10-23T08:08:04.000Z"
+        },
+        {
+          "id": 1686333,
+          "tickers": [
+            "BAYRK"
+          ],
+          "published_at": "2026-10-23T08:08:32.000Z"
+        },
+        {
+          "id": 1686334,
+          "tickers": [
+            "AKSEN"
+          ],
+          "published_at": "2026-10-23T08:09:29.000Z"
+        },
+        {
+          "id": 1686335,
+          "tickers": [
+            "ALTNY"
+          ],
+          "published_at": "2026-10-23T08:09:45.000Z"
+        },
+        {
+          "id": 1686336,
+          "tickers": [
+            "DAPGM"
+          ],
+          "published_at": "2026-10-23T08:09:58.000Z"
+        },
+        {
+          "id": 1686337,
+          "tickers": [
+            "DMSAS"
+          ],
+          "published_at": "2026-10-23T08:10:26.000Z"
+        },
+        {
+          "id": 1686338,
+          "tickers": [
+            "INTET"
+          ],
+          "published_at": "2026-10-23T08:10:27.000Z"
+        },
+        {
+          "id": 1686340,
+          "tickers": [
+            "VRGYO"
+          ],
+          "published_at": "2026-10-23T08:11:13.000Z"
+        },
+        {
+          "id": 1686341,
+          "tickers": [
+            "ZERGY"
+          ],
+          "published_at": "2026-10-23T08:11:37.000Z"
+        },
+        {
+          "id": 1686342,
+          "tickers": [
+            "REEDR"
+          ],
+          "published_at": "2026-10-23T08:12:17.000Z"
+        },
+        {
+          "id": 1686343,
+          "tickers": [
+            "OYYAT"
+          ],
+          "published_at": "2026-10-23T08:14:30.000Z"
+        },
+        {
+          "id": 1686344,
+          "tickers": [
+            "IHYAY"
+          ],
+          "published_at": "2026-10-23T08:14:39.000Z"
+        },
+        {
+          "id": 1686345,
+          "tickers": [
+            "MEDTR"
+          ],
+          "published_at": "2026-10-23T08:15:13.000Z"
+        },
+        {
+          "id": 1686346,
+          "tickers": [
+            "VANGD"
+          ],
+          "published_at": "2026-10-23T08:15:14.000Z"
+        },
+        {
+          "id": 1686348,
+          "tickers": [
+            "GLRMK"
+          ],
+          "published_at": "2026-10-23T08:19:56.000Z"
+        },
+        {
+          "id": 1686350,
+          "tickers": [
+            "ERCB"
+          ],
+          "published_at": "2026-10-23T08:28:54.000Z"
+        },
+        {
+          "id": 1686353,
+          "tickers": [
+            "DGGYO"
+          ],
+          "published_at": "2026-10-23T08:33:33.000Z"
+        },
+        {
+          "id": 1686357,
+          "tickers": [
+            "IHYAY"
+          ],
+          "published_at": "2026-10-23T08:35:02.000Z"
+        },
+        {
+          "id": 1686358,
+          "tickers": [
+            "KORDS"
+          ],
+          "published_at": "2026-10-23T08:35:43.000Z"
+        },
+        {
+          "id": 1686359,
+          "tickers": [
+            "SKYMD"
+          ],
+          "published_at": "2026-10-23T08:36:56.000Z"
+        },
+        {
+          "id": 1686360,
+          "tickers": [
+            "LUKSK"
+          ],
+          "published_at": "2026-10-23T08:38:28.000Z"
+        },
+        {
+          "id": 1686361,
+          "tickers": [
+            "BKRGY"
+          ],
+          "published_at": "2026-10-23T08:38:57.000Z"
+        },
+        {
+          "id": 1686362,
+          "tickers": [
+            "OYLUM"
+          ],
+          "published_at": "2026-10-23T08:39:45.000Z"
+        },
+        {
+          "id": 1686363,
+          "tickers": [
+            "MNDTR"
+          ],
+          "published_at": "2026-10-23T08:39:54.000Z"
+        },
+        {
+          "id": 1686365,
+          "tickers": [
+            "TNZTP"
+          ],
+          "published_at": "2026-10-23T08:42:03.000Z"
+        },
+        {
+          "id": 1686366,
+          "tickers": [
+            "YIGIT"
+          ],
+          "published_at": "2026-10-23T08:42:26.000Z"
+        },
+        {
+          "id": 1686367,
+          "tickers": [
+            "EFOR"
+          ],
+          "published_at": "2026-10-23T08:43:26.000Z"
+        },
+        {
+          "id": 1686368,
+          "tickers": [
+            "ADESE"
+          ],
+          "published_at": "2026-10-23T08:44:14.000Z"
+        },
+        {
+          "id": 1686369,
+          "tickers": [
+            "EKDMR"
+          ],
+          "published_at": "2026-10-23T08:45:16.000Z"
+        },
+        {
+          "id": 1686370,
+          "tickers": [
+            "IZFAS"
+          ],
+          "published_at": "2026-10-23T08:46:25.000Z"
+        },
+        {
+          "id": 1686371,
+          "tickers": [
+            "SSAAT"
+          ],
+          "published_at": "2026-10-23T08:47:32.000Z"
+        },
+        {
+          "id": 1686372,
+          "tickers": [
+            "ARENA"
+          ],
+          "published_at": "2026-10-23T08:48:09.000Z"
+        },
+        {
+          "id": 1686373,
+          "tickers": [
+            "KBORU"
+          ],
+          "published_at": "2026-10-23T08:49:11.000Z"
+        },
+        {
+          "id": 1686374,
+          "tickers": [
+            "SRVGY"
+          ],
+          "published_at": "2026-10-23T08:49:35.000Z"
+        },
+        {
+          "id": 1686375,
+          "tickers": [
+            "DNISI"
+          ],
+          "published_at": "2026-10-23T08:50:38.000Z"
+        },
+        {
+          "id": 1686376,
+          "tickers": [
+            "ERBOS"
+          ],
+          "published_at": "2026-10-23T08:50:52.000Z"
+        },
+        {
+          "id": 1686377,
+          "tickers": [
+            "SAYAS"
+          ],
+          "published_at": "2026-10-23T08:52:09.000Z"
+        },
+        {
+          "id": 1686378,
+          "tickers": [
+            "BRLSM"
+          ],
+          "published_at": "2026-10-23T08:52:25.000Z"
+        },
+        {
+          "id": 1686379,
+          "tickers": [
+            "AYCES"
+          ],
+          "published_at": "2026-10-23T08:53:06.000Z"
+        },
+        {
+          "id": 1686380,
+          "tickers": [
+            "FMIZP"
+          ],
+          "published_at": "2026-10-23T08:53:18.000Z"
+        },
+        {
+          "id": 1686381,
+          "tickers": [
+            "LXGYO"
+          ],
+          "published_at": "2026-10-23T08:53:21.000Z"
+        },
+        {
+          "id": 1686382,
+          "tickers": [
+            "TTKOM"
+          ],
+          "published_at": "2026-10-23T08:53:35.000Z"
+        },
+        {
+          "id": 1686383,
+          "tickers": [
+            "ATATP"
+          ],
+          "published_at": "2026-10-23T08:53:39.000Z"
+        },
+        {
+          "id": 1686384,
+          "tickers": [
+            "PKART"
+          ],
+          "published_at": "2026-10-23T08:53:42.000Z"
+        },
+        {
+          "id": 1686385,
+          "tickers": [
+            "KCAER"
+          ],
+          "published_at": "2026-10-23T08:53:52.000Z"
+        },
+        {
+          "id": 1686386,
+          "tickers": [
+            "BESTE"
+          ],
+          "published_at": "2026-10-23T08:53:55.000Z"
+        },
+        {
+          "id": 1686388,
+          "tickers": [
+            "DERHL"
+          ],
+          "published_at": "2026-10-23T08:54:08.000Z"
+        },
+        {
+          "id": 1686389,
+          "tickers": [
+            "ENSRI"
+          ],
+          "published_at": "2026-10-23T08:54:47.000Z"
+        },
+        {
+          "id": 1686390,
+          "tickers": [
+            "MCARD"
+          ],
+          "published_at": "2026-10-23T08:55:00.000Z"
+        },
+        {
+          "id": 1686391,
+          "tickers": [
+            "MARMR"
+          ],
+          "published_at": "2026-10-23T08:55:01.000Z"
+        },
+        {
+          "id": 1686392,
+          "tickers": [
+            "RYSAS"
+          ],
+          "published_at": "2026-10-23T08:55:07.000Z"
+        },
+        {
+          "id": 1686394,
+          "tickers": [
+            "TARKM"
+          ],
+          "published_at": "2026-10-23T08:55:27.000Z"
+        },
+        {
+          "id": 1686395,
+          "tickers": [
+            "EMPAE"
+          ],
+          "published_at": "2026-10-23T08:55:38.000Z"
+        },
+        {
+          "id": 1686396,
+          "tickers": [
+            "PCILT"
+          ],
+          "published_at": "2026-10-23T08:56:07.000Z"
+        },
+        {
+          "id": 1686397,
+          "tickers": [
+            "HATEK"
+          ],
+          "published_at": "2026-10-23T08:56:10.000Z"
+        },
+        {
+          "id": 1686398,
+          "tickers": [
+            "KAREL"
+          ],
+          "published_at": "2026-10-23T08:56:32.000Z"
+        },
+        {
+          "id": 1686399,
+          "tickers": [
+            "EFOR"
+          ],
+          "published_at": "2026-10-23T08:56:52.000Z"
+        },
+        {
+          "id": 1686400,
+          "tickers": [
+            "MRGYO"
+          ],
+          "published_at": "2026-10-23T08:57:15.000Z"
+        },
+        {
+          "id": 1686401,
+          "tickers": [
+            "TCKRC"
+          ],
+          "published_at": "2026-10-23T08:58:11.000Z"
+        },
+        {
+          "id": 1686402,
+          "tickers": [
+            "TRENJ"
+          ],
+          "published_at": "2026-10-23T08:58:24.000Z"
+        },
+        {
+          "id": 1686403,
+          "tickers": [
+            "BEGYO"
+          ],
+          "published_at": "2026-10-23T08:58:26.000Z"
+        },
+        {
+          "id": 1686404,
+          "tickers": [
+            "NETGL"
+          ],
+          "published_at": "2026-10-23T08:58:28.000Z"
+        },
+        {
+          "id": 1686405,
+          "tickers": [
+            "NETCD"
+          ],
+          "published_at": "2026-10-23T08:58:42.000Z"
+        },
+        {
+          "id": 1686407,
+          "tickers": [
+            "AHSGY"
+          ],
+          "published_at": "2026-10-23T08:58:57.000Z"
+        },
+        {
+          "id": 1686408,
+          "tickers": [
+            "AKHAN"
+          ],
+          "published_at": "2026-10-23T08:58:58.000Z"
+        },
+        {
+          "id": 1686409,
+          "tickers": [
+            "ALFAS"
+          ],
+          "published_at": "2026-10-23T08:59:33.000Z"
+        },
+        {
+          "id": 1686410,
+          "tickers": [
+            "TUCLK"
+          ],
+          "published_at": "2026-10-23T08:59:46.000Z"
+        },
+        {
+          "id": 1686411,
+          "tickers": [
+            "INTEM"
+          ],
+          "published_at": "2026-10-23T08:59:54.000Z"
+        },
+        {
+          "id": 1686412,
+          "tickers": [
+            "ZGYO"
+          ],
+          "published_at": "2026-10-23T08:59:55.000Z"
+        },
+        {
+          "id": 1686413,
+          "tickers": [
+            "AZTEK"
+          ],
+          "published_at": "2026-10-23T08:59:56.000Z"
+        },
+        {
+          "id": 1686414,
+          "tickers": [
+            "AKENR"
+          ],
+          "published_at": "2026-10-23T08:59:57.000Z"
+        },
+        {
+          "id": 1686415,
+          "tickers": [
+            "TRMET"
+          ],
+          "published_at": "2026-10-23T09:00:35.000Z"
+        },
+        {
+          "id": 1686416,
+          "tickers": [
+            "PRDGS"
+          ],
+          "published_at": "2026-10-23T09:00:45.000Z"
+        },
+        {
+          "id": 1686417,
+          "tickers": [
+            "TURGG"
+          ],
+          "published_at": "2026-10-23T09:00:57.000Z"
+        },
+        {
+          "id": 1686418,
+          "tickers": [
+            "TRALT"
+          ],
+          "published_at": "2026-10-23T09:01:01.000Z"
+        },
+        {
+          "id": 1686419,
+          "tickers": [
+            "SMART"
+          ],
+          "published_at": "2026-10-23T09:01:11.000Z"
+        },
+        {
+          "id": 1686420,
+          "tickers": [
+            "GRNYO"
+          ],
+          "published_at": "2026-10-23T09:01:48.000Z"
+        },
+        {
+          "id": 1686422,
+          "tickers": [
+            "BMSCH"
+          ],
+          "published_at": "2026-10-23T09:02:22.000Z"
+        },
+        {
+          "id": 1686423,
+          "tickers": [
+            "PAMEL"
+          ],
+          "published_at": "2026-10-23T09:02:31.000Z"
+        },
+        {
+          "id": 1686424,
+          "tickers": [
+            "AVOD"
+          ],
+          "published_at": "2026-10-23T09:02:45.000Z"
+        },
+        {
+          "id": 1686425,
+          "tickers": [
+            "ECOGR"
+          ],
+          "published_at": "2026-10-23T09:04:23.000Z"
+        },
+        {
+          "id": 1686426,
+          "tickers": [
+            "SOHOE"
+          ],
+          "published_at": "2026-10-23T09:04:32.000Z"
+        },
+        {
+          "id": 1686428,
+          "tickers": [
+            "POLTK"
+          ],
+          "published_at": "2026-10-23T09:05:45.000Z"
+        },
+        {
+          "id": 1686429,
+          "tickers": [
+            "DENGE"
+          ],
+          "published_at": "2026-10-23T09:06:10.000Z"
+        },
+        {
+          "id": 1686430,
+          "tickers": [
+            "HRKET"
+          ],
+          "published_at": "2026-10-23T09:07:23.000Z"
+        },
+        {
+          "id": 1686431,
+          "tickers": [
+            "CELHA"
+          ],
+          "published_at": "2026-10-23T09:07:47.000Z"
+        },
+        {
+          "id": 1686432,
+          "tickers": [
+            "VERTU"
+          ],
+          "published_at": "2026-10-23T09:08:31.000Z"
+        },
+        {
+          "id": 1686433,
+          "tickers": [
+            "PNLSN"
+          ],
+          "published_at": "2026-10-23T09:09:19.000Z"
+        },
+        {
+          "id": 1686434,
+          "tickers": [
+            "DERIM"
+          ],
+          "published_at": "2026-10-23T09:09:27.000Z"
+        },
+        {
+          "id": 1686435,
+          "tickers": [
+            "CGCAM"
+          ],
+          "published_at": "2026-10-23T09:11:33.000Z"
+        },
+        {
+          "id": 1686436,
+          "tickers": [
+            "INTEM"
+          ],
+          "published_at": "2026-10-23T09:11:54.000Z"
+        },
+        {
+          "id": 1686440,
+          "tickers": [
+            "MSGYO"
+          ],
+          "published_at": "2026-10-23T09:15:16.000Z"
+        },
+        {
+          "id": 1686441,
+          "tickers": [
+            "TURSG"
+          ],
+          "published_at": "2026-10-23T09:16:25.000Z"
+        },
+        {
+          "id": 1686442,
+          "tickers": [
+            "MOBTL"
+          ],
+          "published_at": "2026-10-23T09:16:33.000Z"
+        },
+        {
+          "id": 1686443,
+          "tickers": [
+            "INVEO"
+          ],
+          "published_at": "2026-10-23T09:16:52.000Z"
+        },
+        {
+          "id": 1686444,
+          "tickers": [
+            "MTRYO"
+          ],
+          "published_at": "2026-10-23T09:17:06.000Z"
+        },
+        {
+          "id": 1686445,
+          "tickers": [
+            "ASUZU"
+          ],
+          "published_at": "2026-10-23T09:18:00.000Z"
+        },
+        {
+          "id": 1686446,
+          "tickers": [
+            "GRNYO"
+          ],
+          "published_at": "2026-10-23T09:19:42.000Z"
+        },
+        {
+          "id": 1686447,
+          "tickers": [
+            "MARBL"
+          ],
+          "published_at": "2026-10-23T09:19:48.000Z"
+        },
+        {
+          "id": 1686449,
+          "tickers": [
+            "ASTOR"
+          ],
+          "published_at": "2026-10-23T09:22:44.000Z"
+        },
+        {
+          "id": 1686450,
+          "tickers": [
+            "BLCYT"
+          ],
+          "published_at": "2026-10-23T09:23:17.000Z"
+        },
+        {
+          "id": 1686451,
+          "tickers": [
+            "OBASE"
+          ],
+          "published_at": "2026-10-23T09:24:46.000Z"
+        },
+        {
+          "id": 1686452,
+          "tickers": [
+            "DGGYO"
+          ],
+          "published_at": "2026-10-23T09:25:36.000Z"
+        },
+        {
+          "id": 1686453,
+          "tickers": [
+            "AKSEN"
+          ],
+          "published_at": "2026-10-23T09:26:22.000Z"
+        },
+        {
+          "id": 1686454,
+          "tickers": [
+            "PARSN"
+          ],
+          "published_at": "2026-10-23T09:28:36.000Z"
+        },
+        {
+          "id": 1686455,
+          "tickers": [
+            "GLYHO"
+          ],
+          "published_at": "2026-10-23T09:29:43.000Z"
+        },
+        {
+          "id": 1686456,
+          "tickers": [
+            "MOBTL"
+          ],
+          "published_at": "2026-10-23T09:30:24.000Z"
+        },
+        {
+          "id": 1686457,
+          "tickers": [
+            "BNTAS"
+          ],
+          "published_at": "2026-10-23T09:31:16.000Z"
+        },
+        {
+          "id": 1686458,
+          "tickers": [
+            "TMSN"
+          ],
+          "published_at": "2026-10-23T09:32:51.000Z"
+        },
+        {
+          "id": 1686459,
+          "tickers": [
+            "EDIP"
+          ],
+          "published_at": "2026-10-23T09:38:55.000Z"
+        },
+        {
+          "id": 1686460,
+          "tickers": [
+            "AGESA"
+          ],
+          "published_at": "2026-10-23T09:43:25.000Z"
+        },
+        {
+          "id": 1686461,
+          "tickers": [
+            "DGNMO"
+          ],
+          "published_at": "2026-10-23T09:45:07.000Z"
+        },
+        {
+          "id": 1686462,
+          "tickers": [
+            "ECZYT"
+          ],
+          "published_at": "2026-10-23T09:46:02.000Z"
+        },
+        {
+          "id": 1686463,
+          "tickers": [
+            "LRSHO"
+          ],
+          "published_at": "2026-10-23T09:46:07.000Z"
+        },
+        {
+          "id": 1686464,
+          "tickers": [
+            "DAGI"
+          ],
+          "published_at": "2026-10-23T09:46:13.000Z"
+        },
+        {
+          "id": 1686465,
+          "tickers": [
+            "BINHO"
+          ],
+          "published_at": "2026-10-23T09:47:18.000Z"
+        },
+        {
+          "id": 1686466,
+          "tickers": [
+            "UNLU"
+          ],
+          "published_at": "2026-10-23T09:48:04.000Z"
+        },
+        {
+          "id": 1686467,
+          "tickers": [
+            "EDIP"
+          ],
+          "published_at": "2026-10-23T09:50:54.000Z"
+        },
+        {
+          "id": 1686468,
+          "tickers": [
+            "SILVR"
+          ],
+          "published_at": "2026-10-23T09:51:43.000Z"
+        },
+        {
+          "id": 1686469,
+          "tickers": [
+            "BALSU"
+          ],
+          "published_at": "2026-10-23T09:52:32.000Z"
+        },
+        {
+          "id": 1686471,
+          "tickers": [
+            "ODINE"
+          ],
+          "published_at": "2026-10-23T09:56:55.000Z"
+        },
+        {
+          "id": 1686472,
+          "tickers": [
+            "HOROZ"
+          ],
+          "published_at": "2026-10-23T09:57:52.000Z"
+        },
+        {
+          "id": 1686473,
+          "tickers": [
+            "MEKAG"
+          ],
+          "published_at": "2026-10-23T09:58:05.000Z"
+        },
+        {
+          "id": 1686474,
+          "tickers": [
+            "GUNDG"
+          ],
+          "published_at": "2026-10-23T09:59:00.000Z"
+        },
+        {
+          "id": 1686475,
+          "tickers": [
+            "OFSYM"
+          ],
+          "published_at": "2026-10-23T10:02:03.000Z"
+        },
+        {
+          "id": 1686476,
+          "tickers": [
+            "PAPIL"
+          ],
+          "published_at": "2026-10-23T10:02:53.000Z"
+        },
+        {
+          "id": 1686477,
+          "tickers": [
+            "KRPLS"
+          ],
+          "published_at": "2026-10-23T10:03:07.000Z"
+        },
+        {
+          "id": 1686478,
+          "tickers": [
+            "OYAYO"
+          ],
+          "published_at": "2026-10-23T10:07:38.000Z"
+        },
+        {
+          "id": 1686480,
+          "tickers": [
+            "ODINE"
+          ],
+          "published_at": "2026-10-23T10:11:08.000Z"
+        },
+        {
+          "id": 1686481,
+          "tickers": [
+            "GUNDG"
+          ],
+          "published_at": "2026-10-23T10:11:29.000Z"
+        },
+        {
+          "id": 1686482,
+          "tickers": [
+            "ATAGY"
+          ],
+          "published_at": "2026-10-23T10:14:19.000Z"
+        },
+        {
+          "id": 1686483,
+          "tickers": [
+            "FONET"
+          ],
+          "published_at": "2026-10-23T10:15:58.000Z"
+        },
+        {
+          "id": 1686484,
+          "tickers": [
+            "ARDYZ"
+          ],
+          "published_at": "2026-10-23T10:19:49.000Z"
+        },
+        {
+          "id": 1686485,
+          "tickers": [
+            "BAHKM"
+          ],
+          "published_at": "2026-10-23T10:20:17.000Z"
+        },
+        {
+          "id": 1686486,
+          "tickers": [
+            "TATEN"
+          ],
+          "published_at": "2026-10-23T10:20:40.000Z"
+        },
+        {
+          "id": 1686488,
+          "tickers": [
+            "MEYSU"
+          ],
+          "published_at": "2026-10-23T10:22:30.000Z"
+        },
+        {
+          "id": 1686490,
+          "tickers": [
+            "GESAN"
+          ],
+          "published_at": "2026-10-23T10:25:45.000Z"
+        },
+        {
+          "id": 1686491,
+          "tickers": [
+            "RNPOL"
+          ],
+          "published_at": "2026-10-23T10:26:52.000Z"
+        },
+        {
+          "id": 1686492,
+          "tickers": [
+            "BFREN"
+          ],
+          "published_at": "2026-10-23T10:27:52.000Z"
+        },
+        {
+          "id": 1686494,
+          "tickers": [
+            "MZHLD"
+          ],
+          "published_at": "2026-10-23T10:41:14.000Z"
+        },
+        {
+          "id": 1686495,
+          "tickers": [
+            "ALCAR"
+          ],
+          "published_at": "2026-10-23T10:43:05.000Z"
+        },
+        {
+          "id": 1686497,
+          "tickers": [
+            "TCELL"
+          ],
+          "published_at": "2026-10-23T10:43:43.000Z"
+        },
+        {
+          "id": 1686498,
+          "tickers": [
+            "MTRKS"
+          ],
+          "published_at": "2026-10-23T10:45:47.000Z"
+        },
+        {
+          "id": 1686499,
+          "tickers": [
+            "EKSUN"
+          ],
+          "published_at": "2026-10-23T10:49:38.000Z"
+        },
+        {
+          "id": 1686500,
+          "tickers": [
+            "BIGCH"
+          ],
+          "published_at": "2026-10-23T10:53:55.000Z"
+        },
+        {
+          "id": 1686501,
+          "tickers": [
+            "PASEU"
+          ],
+          "published_at": "2026-10-23T10:54:18.000Z"
+        },
+        {
+          "id": 1686503,
+          "tickers": [
+            "ZEDUR"
+          ],
+          "published_at": "2026-10-23T10:54:48.000Z"
+        },
+        {
+          "id": 1686505,
+          "tickers": [
+            "EGPRO"
+          ],
+          "published_at": "2026-10-23T10:56:08.000Z"
+        },
+        {
+          "id": 1686509,
+          "tickers": [
+            "TSKB"
+          ],
+          "published_at": "2026-10-23T11:02:36.000Z"
+        },
+        {
+          "id": 1686511,
+          "tickers": [
+            "DMSAS"
+          ],
+          "published_at": "2026-10-23T11:08:57.000Z"
+        },
+        {
+          "id": 1686512,
+          "tickers": [
+            "ONRYT"
+          ],
+          "published_at": "2026-10-23T11:09:37.000Z"
+        },
+        {
+          "id": 1686518,
+          "tickers": [
+            "INDES"
+          ],
+          "published_at": "2026-10-23T11:14:28.000Z"
+        },
+        {
+          "id": 1686519,
+          "tickers": [
+            "EUREN"
+          ],
+          "published_at": "2026-10-23T11:14:29.000Z"
+        },
+        {
+          "id": 1686522,
+          "tickers": [
+            "HOROZ"
+          ],
+          "published_at": "2026-10-23T11:16:14.000Z"
+        },
+        {
+          "id": 1686524,
+          "tickers": [
+            "SNGYO"
+          ],
+          "published_at": "2026-10-23T11:17:40.000Z"
+        },
+        {
+          "id": 1686526,
+          "tickers": [
+            "GRSEL"
+          ],
+          "published_at": "2026-10-23T11:18:17.000Z"
+        },
+        {
+          "id": 1686530,
+          "tickers": [
+            "NETAS"
+          ],
+          "published_at": "2026-10-23T11:18:53.000Z"
+        },
+        {
+          "id": 1686532,
+          "tickers": [
+            "SONME"
+          ],
+          "published_at": "2026-10-23T11:19:30.000Z"
+        },
+        {
+          "id": 1686543,
+          "tickers": [
+            "PNSUT"
+          ],
+          "published_at": "2026-10-23T11:23:31.000Z"
+        },
+        {
+          "id": 1686545,
+          "tickers": [
+            "AKFIS"
+          ],
+          "published_at": "2026-10-23T11:28:22.000Z"
+        },
+        {
+          "id": 1686546,
+          "tickers": [
+            "ALARK"
+          ],
+          "published_at": "2026-10-23T11:29:29.000Z"
+        },
+        {
+          "id": 1686547,
+          "tickers": [
+            "KATMR"
+          ],
+          "published_at": "2026-10-23T11:29:32.000Z"
+        },
+        {
+          "id": 1686548,
+          "tickers": [
+            "EKGYO"
+          ],
+          "published_at": "2026-10-23T11:29:36.000Z"
+        },
+        {
+          "id": 1686549,
+          "tickers": [
+            "SKYMD"
+          ],
+          "published_at": "2026-10-23T11:29:58.000Z"
+        },
+        {
+          "id": 1686550,
+          "tickers": [
+            "MERCN"
+          ],
+          "published_at": "2026-10-23T11:30:05.000Z"
+        },
+        {
+          "id": 1686553,
+          "tickers": [
+            "SONME"
+          ],
+          "published_at": "2026-10-23T11:31:30.000Z"
+        },
+        {
+          "id": 1686554,
+          "tickers": [
+            "SEGYO"
+          ],
+          "published_at": "2026-10-23T11:31:43.000Z"
+        },
+        {
+          "id": 1686555,
+          "tickers": [
+            "SASA"
+          ],
+          "published_at": "2026-10-23T11:32:11.000Z"
+        },
+        {
+          "id": 1686557,
+          "tickers": [
+            "SNICA"
+          ],
+          "published_at": "2026-10-23T11:34:52.000Z"
+        },
+        {
+          "id": 1686558,
+          "tickers": [
+            "ESCOM"
+          ],
+          "published_at": "2026-10-23T11:35:47.000Z"
+        },
+        {
+          "id": 1686559,
+          "tickers": [
+            "ATAGY"
+          ],
+          "published_at": "2026-10-23T11:36:01.000Z"
+        },
+        {
+          "id": 1686560,
+          "tickers": [
+            "FROTO"
+          ],
+          "published_at": "2026-10-23T11:36:19.000Z"
+        },
+        {
+          "id": 1686562,
+          "tickers": [
+            "EGGUB"
+          ],
+          "published_at": "2026-10-23T11:38:32.000Z"
+        },
+        {
+          "id": 1686563,
+          "tickers": [
+            "BANVT"
+          ],
+          "published_at": "2026-10-23T11:39:06.000Z"
+        },
+        {
+          "id": 1686568,
+          "tickers": [
+            "ICBCT"
+          ],
+          "published_at": "2026-10-23T11:40:34.000Z"
+        },
+        {
+          "id": 1686569,
+          "tickers": [
+            "IHGZT"
+          ],
+          "published_at": "2026-10-23T11:42:35.000Z"
+        },
+        {
+          "id": 1686571,
+          "tickers": [
+            "KARSN"
+          ],
+          "published_at": "2026-10-23T11:42:48.000Z"
+        },
+        {
+          "id": 1686573,
+          "tickers": [
+            "BRYAT"
+          ],
+          "published_at": "2026-10-23T11:43:00.000Z"
+        },
+        {
+          "id": 1686577,
+          "tickers": [
+            "VAKBN"
+          ],
+          "published_at": "2026-10-23T11:43:42.000Z"
+        },
+        {
+          "id": 1686578,
+          "tickers": [
+            "MAKIM"
+          ],
+          "published_at": "2026-10-23T11:43:43.000Z"
+        },
+        {
+          "id": 1686580,
+          "tickers": [
+            "BRISA"
+          ],
+          "published_at": "2026-10-23T11:44:02.000Z"
+        },
+        {
+          "id": 1686581,
+          "tickers": [
+            "SRVGY"
+          ],
+          "published_at": "2026-10-23T11:44:17.000Z"
+        },
+        {
+          "id": 1686582,
+          "tickers": [
+            "GSDDE"
+          ],
+          "published_at": "2026-10-23T11:44:31.000Z"
+        },
+        {
+          "id": 1686583,
+          "tickers": [
+            "KGYO"
+          ],
+          "published_at": "2026-10-23T11:44:35.000Z"
+        },
+        {
+          "id": 1686584,
+          "tickers": [
+            "METRO"
+          ],
+          "published_at": "2026-10-23T11:44:54.000Z"
+        },
+        {
+          "id": 1686586,
+          "tickers": [
+            "CATES"
+          ],
+          "published_at": "2026-10-23T11:45:01.000Z"
+        },
+        {
+          "id": 1686587,
+          "tickers": [
+            "IHLGM"
+          ],
+          "published_at": "2026-10-23T11:45:08.000Z"
+        },
+        {
+          "id": 1686600,
+          "tickers": [
+            "HATSN"
+          ],
+          "published_at": "2026-10-23T11:45:38.000Z"
+        },
+        {
+          "id": 1686601,
+          "tickers": [
+            "KMPUR"
+          ],
+          "published_at": "2026-10-23T11:46:26.000Z"
+        },
+        {
+          "id": 1686602,
+          "tickers": [
+            "EMKEL"
+          ],
+          "published_at": "2026-10-23T11:46:39.000Z"
+        },
+        {
+          "id": 1686603,
+          "tickers": [
+            "PRDGS"
+          ],
+          "published_at": "2026-10-23T11:46:47.000Z"
+        },
+        {
+          "id": 1686604,
+          "tickers": [
+            "PINSU"
+          ],
+          "published_at": "2026-10-23T11:47:16.000Z"
+        },
+        {
+          "id": 1686605,
+          "tickers": [
+            "UCAYM"
+          ],
+          "published_at": "2026-10-23T11:47:32.000Z"
+        },
+        {
+          "id": 1686606,
+          "tickers": [
+            "PETKM"
+          ],
+          "published_at": "2026-10-23T11:47:35.000Z"
+        },
+        {
+          "id": 1686607,
+          "tickers": [
+            "CEMAS"
+          ],
+          "published_at": "2026-10-23T11:47:38.000Z"
+        },
+        {
+          "id": 1686608,
+          "tickers": [
+            "RUZYE"
+          ],
+          "published_at": "2026-10-23T11:47:39.000Z"
+        },
+        {
+          "id": 1686609,
+          "tickers": [
+            "ECILC"
+          ],
+          "published_at": "2026-10-23T11:48:23.000Z"
+        },
+        {
+          "id": 1686610,
+          "tickers": [
+            "ZEDUR"
+          ],
+          "published_at": "2026-10-23T11:49:33.000Z"
+        },
+        {
+          "id": 1686612,
+          "tickers": [
+            "IHAAS"
+          ],
+          "published_at": "2026-10-23T11:51:16.000Z"
+        },
+        {
+          "id": 1686613,
+          "tickers": [
+            "YESIL"
+          ],
+          "published_at": "2026-10-23T11:51:43.000Z"
+        },
+        {
+          "id": 1686614,
+          "tickers": [
+            "AKFYE"
+          ],
+          "published_at": "2026-10-23T11:52:19.000Z"
+        },
+        {
+          "id": 1686615,
+          "tickers": [
+            "CUSAN"
+          ],
+          "published_at": "2026-10-23T11:52:20.000Z"
+        },
+        {
+          "id": 1686616,
+          "tickers": [
+            "KIMMR"
+          ],
+          "published_at": "2026-10-23T11:52:42.000Z"
+        },
+        {
+          "id": 1686617,
+          "tickers": [
+            "DURKN"
+          ],
+          "published_at": "2026-10-23T11:53:57.000Z"
+        },
+        {
+          "id": 1686619,
+          "tickers": [
+            "PLTUR"
+          ],
+          "published_at": "2026-10-23T11:55:08.000Z"
+        },
+        {
+          "id": 1686620,
+          "tickers": [
+            "OSTIM"
+          ],
+          "published_at": "2026-10-23T11:56:22.000Z"
+        },
+        {
+          "id": 1686621,
+          "tickers": [
+            "GENIL"
+          ],
+          "published_at": "2026-10-23T11:58:10.000Z"
+        },
+        {
+          "id": 1686622,
+          "tickers": [
+            "AKBNK"
+          ],
+          "published_at": "2026-10-23T11:58:27.000Z"
+        },
+        {
+          "id": 1686623,
+          "tickers": [
+            "PSGYO"
+          ],
+          "published_at": "2026-10-23T11:58:31.000Z"
+        },
+        {
+          "id": 1686624,
+          "tickers": [
+            "ISCTR"
+          ],
+          "published_at": "2026-10-23T11:58:33.000Z"
+        },
+        {
+          "id": 1686625,
+          "tickers": [
+            "TUKAS"
+          ],
+          "published_at": "2026-10-23T11:59:01.000Z"
+        },
+        {
+          "id": 1686626,
+          "tickers": [
+            "NUGYO"
+          ],
+          "published_at": "2026-10-23T11:59:51.000Z"
+        },
+        {
+          "id": 1686627,
+          "tickers": [
+            "HEKTS"
+          ],
+          "published_at": "2026-10-23T12:00:44.000Z"
+        },
+        {
+          "id": 1686628,
+          "tickers": [
+            "VKGYO"
+          ],
+          "published_at": "2026-10-23T12:01:06.000Z"
+        },
+        {
+          "id": 1686629,
+          "tickers": [
+            "FENER"
+          ],
+          "published_at": "2026-10-23T12:01:20.000Z"
+        },
+        {
+          "id": 1686630,
+          "tickers": [
+            "BRKSN"
+          ],
+          "published_at": "2026-10-23T12:01:58.000Z"
+        },
+        {
+          "id": 1686631,
+          "tickers": [
+            "BETAE"
+          ],
+          "published_at": "2026-10-23T12:03:19.000Z"
+        },
+        {
+          "id": 1686632,
+          "tickers": [
+            "MAKTK"
+          ],
+          "published_at": "2026-10-23T12:03:42.000Z"
+        },
+        {
+          "id": 1686633,
+          "tickers": [
+            "ALKIM"
+          ],
+          "published_at": "2026-10-23T12:05:01.000Z"
+        },
+        {
+          "id": 1686634,
+          "tickers": [
+            "FADE"
+          ],
+          "published_at": "2026-10-23T12:05:44.000Z"
+        },
+        {
+          "id": 1686635,
+          "tickers": [
+            "MNDTR"
+          ],
+          "published_at": "2026-10-23T12:06:33.000Z"
+        },
+        {
+          "id": 1686636,
+          "tickers": [
+            "CUSAN"
+          ],
+          "published_at": "2026-10-23T12:07:05.000Z"
+        },
+        {
+          "id": 1686637,
+          "tickers": [
+            "GENTS"
+          ],
+          "published_at": "2026-10-23T12:07:12.000Z"
+        },
+        {
+          "id": 1686638,
+          "tickers": [
+            "MHRGY"
+          ],
+          "published_at": "2026-10-23T12:07:17.000Z"
+        },
+        {
+          "id": 1686640,
+          "tickers": [
+            "KRONT"
+          ],
+          "published_at": "2026-10-23T12:07:22.000Z"
+        },
+        {
+          "id": 1686641,
+          "tickers": [
+            "GENKM"
+          ],
+          "published_at": "2026-10-23T12:08:19.000Z"
+        },
+        {
+          "id": 1686642,
+          "tickers": [
+            "GOKNR"
+          ],
+          "published_at": "2026-10-23T12:09:15.000Z"
+        },
+        {
+          "id": 1686643,
+          "tickers": [
+            "DOFRB"
+          ],
+          "published_at": "2026-10-23T12:09:48.000Z"
+        },
+        {
+          "id": 1686644,
+          "tickers": [
+            "BAGFS"
+          ],
+          "published_at": "2026-10-23T12:10:48.000Z"
+        },
+        {
+          "id": 1686645,
+          "tickers": [
+            "YYLGD"
+          ],
+          "published_at": "2026-10-23T12:10:49.000Z"
+        },
+        {
+          "id": 1686646,
+          "tickers": [
+            "YKBNK"
+          ],
+          "published_at": "2026-10-23T12:11:21.000Z"
+        },
+        {
+          "id": 1686647,
+          "tickers": [
+            "BTCIM"
+          ],
+          "published_at": "2026-10-23T12:11:42.000Z"
+        },
+        {
+          "id": 1686648,
+          "tickers": [
+            "DYOBY"
+          ],
+          "published_at": "2026-10-23T12:12:35.000Z"
+        },
+        {
+          "id": 1686649,
+          "tickers": [
+            "EKIM"
+          ],
+          "published_at": "2026-10-23T12:12:48.000Z"
+        },
+        {
+          "id": 1686650,
+          "tickers": [
+            "ZEDUR"
+          ],
+          "published_at": "2026-10-23T12:13:22.000Z"
+        },
+        {
+          "id": 1686652,
+          "tickers": [
+            "AGROT"
+          ],
+          "published_at": "2026-10-23T12:17:42.000Z"
+        },
+        {
+          "id": 1686655,
+          "tickers": [
+            "KONKA"
+          ],
+          "published_at": "2026-10-23T12:18:13.000Z"
+        },
+        {
+          "id": 1686657,
+          "tickers": [
+            "AKFGY"
+          ],
+          "published_at": "2026-10-23T12:19:50.000Z"
+        },
+        {
+          "id": 1686658,
+          "tickers": [
+            "SKBNK"
+          ],
+          "published_at": "2026-10-23T12:20:12.000Z"
+        },
+        {
+          "id": 1686659,
+          "tickers": [
+            "BINBN"
+          ],
+          "published_at": "2026-10-23T12:22:06.000Z"
+        },
+        {
+          "id": 1686660,
+          "tickers": [
+            "PETUN"
+          ],
+          "published_at": "2026-10-23T12:22:23.000Z"
+        },
+        {
+          "id": 1686665,
+          "tickers": [
+            "ISSEN"
+          ],
+          "published_at": "2026-10-23T12:24:49.000Z"
+        },
+        {
+          "id": 1686667,
+          "tickers": [
+            "GARAN"
+          ],
+          "published_at": "2026-10-23T12:25:43.000Z"
+        },
+        {
+          "id": 1686668,
+          "tickers": [
+            "ALKA"
+          ],
+          "published_at": "2026-10-23T12:26:53.000Z"
+        },
+        {
+          "id": 1686669,
+          "tickers": [
+            "EPLAS"
+          ],
+          "published_at": "2026-10-23T12:26:58.000Z"
+        },
+        {
+          "id": 1686673,
+          "tickers": [
+            "KLKIM"
+          ],
+          "published_at": "2026-10-23T12:27:44.000Z"
+        },
+        {
+          "id": 1686674,
+          "tickers": [
+            "AEFES"
+          ],
+          "published_at": "2026-10-23T12:28:53.000Z"
+        },
+        {
+          "id": 1686675,
+          "tickers": [
+            "CONSE"
+          ],
+          "published_at": "2026-10-23T12:28:58.000Z"
+        },
+        {
+          "id": 1686676,
+          "tickers": [
+            "BERA"
+          ],
+          "published_at": "2026-10-23T12:29:27.000Z"
+        },
+        {
+          "id": 1686677,
+          "tickers": [
+            "ISFIN"
+          ],
+          "published_at": "2026-10-23T12:30:32.000Z"
+        },
+        {
+          "id": 1686678,
+          "tickers": [
+            "ISMEN"
+          ],
+          "published_at": "2026-10-23T12:30:49.000Z"
+        },
+        {
+          "id": 1686679,
+          "tickers": [
+            "ULKER"
+          ],
+          "published_at": "2026-10-23T12:31:05.000Z"
+        },
+        {
+          "id": 1686680,
+          "tickers": [
+            "CEMTS"
+          ],
+          "published_at": "2026-10-23T12:31:06.000Z"
+        },
+        {
+          "id": 1686681,
+          "tickers": [
+            "KUTPO"
+          ],
+          "published_at": "2026-10-23T12:31:40.000Z"
+        },
+        {
+          "id": 1686682,
+          "tickers": [
+            "SURGY"
+          ],
+          "published_at": "2026-10-23T12:31:42.000Z"
+        },
+        {
+          "id": 1686684,
+          "tickers": [
+            "DARDL"
+          ],
+          "published_at": "2026-10-23T12:31:58.000Z"
+        },
+        {
+          "id": 1686685,
+          "tickers": [
+            "GEDZA"
+          ],
+          "published_at": "2026-10-23T12:32:06.000Z"
+        },
+        {
+          "id": 1686686,
+          "tickers": [
+            "ESEN"
+          ],
+          "published_at": "2026-10-23T12:33:12.000Z"
+        },
+        {
+          "id": 1686687,
+          "tickers": [
+            "AKSUE"
+          ],
+          "published_at": "2026-10-23T12:33:30.000Z"
+        },
+        {
+          "id": 1686689,
+          "tickers": [
+            "SAHOL"
+          ],
+          "published_at": "2026-10-23T12:35:49.000Z"
+        },
+        {
+          "id": 1686691,
+          "tickers": [
+            "HLGYO"
+          ],
+          "published_at": "2026-10-23T12:36:26.000Z"
+        },
+        {
+          "id": 1686692,
+          "tickers": [
+            "KAYSE"
+          ],
+          "published_at": "2026-10-23T12:36:26.000Z"
+        },
+        {
+          "id": 1686693,
+          "tickers": [
+            "ALCTL"
+          ],
+          "published_at": "2026-10-23T12:36:26.000Z"
+        },
+        {
+          "id": 1686695,
+          "tickers": [
+            "BAKAB"
+          ],
+          "published_at": "2026-10-23T12:36:35.000Z"
+        },
+        {
+          "id": 1686696,
+          "tickers": [
+            "KRSTL"
+          ],
+          "published_at": "2026-10-23T12:36:44.000Z"
+        },
+        {
+          "id": 1686697,
+          "tickers": [
+            "GSDHO"
+          ],
+          "published_at": "2026-10-23T12:36:55.000Z"
+        },
+        {
+          "id": 1686698,
+          "tickers": [
+            "CWENE"
+          ],
+          "published_at": "2026-10-23T12:37:36.000Z"
+        },
+        {
+          "id": 1686700,
+          "tickers": [
+            "ALTNY"
+          ],
+          "published_at": "2026-10-23T12:38:47.000Z"
+        },
+        {
+          "id": 1686701,
+          "tickers": [
+            "MGROS"
+          ],
+          "published_at": "2026-10-23T12:39:13.000Z"
+        },
+        {
+          "id": 1686702,
+          "tickers": [
+            "NTHOL"
+          ],
+          "published_at": "2026-10-23T12:39:29.000Z"
+        },
+        {
+          "id": 1686703,
+          "tickers": [
+            "PENTA"
+          ],
+          "published_at": "2026-10-23T12:39:36.000Z"
+        },
+        {
+          "id": 1686704,
+          "tickers": [
+            "BOSSA"
+          ],
+          "published_at": "2026-10-23T12:39:38.000Z"
+        },
+        {
+          "id": 1686705,
+          "tickers": [
+            "ELITE"
+          ],
+          "published_at": "2026-10-23T12:39:47.000Z"
+        },
+        {
+          "id": 1686706,
+          "tickers": [
+            "PENGD"
+          ],
+          "published_at": "2026-10-23T12:39:51.000Z"
+        },
+        {
+          "id": 1686707,
+          "tickers": [
+            "DITAS"
+          ],
+          "published_at": "2026-10-23T12:39:51.000Z"
+        },
+        {
+          "id": 1686708,
+          "tickers": [
+            "ARASE"
+          ],
+          "published_at": "2026-10-23T12:39:55.000Z"
+        },
+        {
+          "id": 1686709,
+          "tickers": [
+            "OYAKC"
+          ],
+          "published_at": "2026-10-23T12:40:01.000Z"
+        },
+        {
+          "id": 1686710,
+          "tickers": [
+            "GZNMI"
+          ],
+          "published_at": "2026-10-23T12:40:07.000Z"
+        },
+        {
+          "id": 1686711,
+          "tickers": [
+            "ORZAX"
+          ],
+          "published_at": "2026-10-23T12:40:24.000Z"
+        },
+        {
+          "id": 1686712,
+          "tickers": [
+            "VAKKO"
+          ],
+          "published_at": "2026-10-23T12:40:24.000Z"
+        },
+        {
+          "id": 1686713,
+          "tickers": [
+            "BIENY"
+          ],
+          "published_at": "2026-10-23T12:40:27.000Z"
+        },
+        {
+          "id": 1686714,
+          "tickers": [
+            "AYDEM"
+          ],
+          "published_at": "2026-10-23T12:40:41.000Z"
+        },
+        {
+          "id": 1686715,
+          "tickers": [
+            "TOASO"
+          ],
+          "published_at": "2026-10-23T12:40:55.000Z"
+        },
+        {
+          "id": 1686716,
+          "tickers": [
+            "BUCIM"
+          ],
+          "published_at": "2026-10-23T12:41:03.000Z"
+        },
+        {
+          "id": 1686717,
+          "tickers": [
+            "PGSUS"
+          ],
+          "published_at": "2026-10-23T12:41:10.000Z"
+        },
+        {
+          "id": 1686718,
+          "tickers": [
+            "YATAS"
+          ],
+          "published_at": "2026-10-23T12:42:42.000Z"
+        },
+        {
+          "id": 1686719,
+          "tickers": [
+            "ALGYO"
+          ],
+          "published_at": "2026-10-23T12:42:44.000Z"
+        },
+        {
+          "id": 1686720,
+          "tickers": [
+            "HKTM"
+          ],
+          "published_at": "2026-10-23T12:42:52.000Z"
+        },
+        {
+          "id": 1686721,
+          "tickers": [
+            "HTTBT"
+          ],
+          "published_at": "2026-10-23T12:42:54.000Z"
+        },
+        {
+          "id": 1686722,
+          "tickers": [
+            "DUNYH"
+          ],
+          "published_at": "2026-10-23T12:43:00.000Z"
+        },
+        {
+          "id": 1686723,
+          "tickers": [
+            "SISE"
+          ],
+          "published_at": "2026-10-23T12:43:13.000Z"
+        },
+        {
+          "id": 1686724,
+          "tickers": [
+            "ENDAE"
+          ],
+          "published_at": "2026-10-23T12:43:33.000Z"
+        },
+        {
+          "id": 1686725,
+          "tickers": [
+            "RTALB"
+          ],
+          "published_at": "2026-10-23T12:43:40.000Z"
+        },
+        {
+          "id": 1686726,
+          "tickers": [
+            "ANGEN"
+          ],
+          "published_at": "2026-10-23T12:43:52.000Z"
+        },
+        {
+          "id": 1686727,
+          "tickers": [
+            "VSNMD"
+          ],
+          "published_at": "2026-10-23T12:44:14.000Z"
+        },
+        {
+          "id": 1686728,
+          "tickers": [
+            "GIPTA"
+          ],
+          "published_at": "2026-10-23T12:44:22.000Z"
+        },
+        {
+          "id": 1686729,
+          "tickers": [
+            "PRKAB"
+          ],
+          "published_at": "2026-10-23T12:44:34.000Z"
+        },
+        {
+          "id": 1686730,
+          "tickers": [
+            "OYYAT"
+          ],
+          "published_at": "2026-10-23T12:44:36.000Z"
+        },
+        {
+          "id": 1686731,
+          "tickers": [
+            "GWIND"
+          ],
+          "published_at": "2026-10-23T12:44:38.000Z"
+        },
+        {
+          "id": 1686732,
+          "tickers": [
+            "KLGYO"
+          ],
+          "published_at": "2026-10-23T12:44:40.000Z"
+        },
+        {
+          "id": 1686733,
+          "tickers": [
+            "PAHOL"
+          ],
+          "published_at": "2026-10-23T12:44:42.000Z"
+        },
+        {
+          "id": 1686734,
+          "tickers": [
+            "MOPAS"
+          ],
+          "published_at": "2026-10-23T12:44:45.000Z"
+        },
+        {
+          "id": 1686735,
+          "tickers": [
+            "IMASM"
+          ],
+          "published_at": "2026-10-23T12:45:02.000Z"
+        },
+        {
+          "id": 1686736,
+          "tickers": [
+            "KRTEK"
+          ],
+          "published_at": "2026-10-23T12:45:08.000Z"
+        },
+        {
+          "id": 1686737,
+          "tickers": [
+            "MNDRS"
+          ],
+          "published_at": "2026-10-23T12:45:49.000Z"
+        },
+        {
+          "id": 1686738,
+          "tickers": [
+            "ATAGY"
+          ],
+          "published_at": "2026-10-23T12:46:06.000Z"
+        },
+        {
+          "id": 1686740,
+          "tickers": [
+            "DGNMO"
+          ],
+          "published_at": "2026-10-23T12:46:48.000Z"
+        },
+        {
+          "id": 1686741,
+          "tickers": [
+            "EGEPO"
+          ],
+          "published_at": "2026-10-23T12:46:50.000Z"
+        },
+        {
+          "id": 1686742,
+          "tickers": [
+            "ERCB"
+          ],
+          "published_at": "2026-10-23T12:47:25.000Z"
+        },
+        {
+          "id": 1686743,
+          "tickers": [
+            "GLCVY"
+          ],
+          "published_at": "2026-10-23T12:47:29.000Z"
+        },
+        {
+          "id": 1686744,
+          "tickers": [
+            "OZSUB"
+          ],
+          "published_at": "2026-10-23T12:47:59.000Z"
+        },
+        {
+          "id": 1686745,
+          "tickers": [
+            "BAKAB"
+          ],
+          "published_at": "2026-10-23T12:48:35.000Z"
+        },
+        {
+          "id": 1686749,
+          "tickers": [
+            "USHOL"
+          ],
+          "published_at": "2026-10-23T12:49:47.000Z"
+        },
+        {
+          "id": 1686764,
+          "tickers": [
+            "USHOL"
+          ],
+          "published_at": "2026-10-23T13:03:00.000Z"
+        },
+        {
+          "id": 1686765,
+          "tickers": [
+            "YIGIT"
+          ],
+          "published_at": "2026-10-23T13:07:34.000Z"
+        },
+        {
+          "id": 1686766,
+          "tickers": [
+            "GSDHO"
+          ],
+          "published_at": "2026-10-23T13:09:37.000Z"
+        },
+        {
+          "id": 1686774,
+          "tickers": [
+            "FORMT"
+          ],
+          "published_at": "2026-10-23T13:24:19.000Z"
+        },
+        {
+          "id": 1686800,
+          "tickers": [
+            "RYGYO"
+          ],
+          "published_at": "2026-10-23T13:53:11.000Z"
+        },
+        {
+          "id": 1686893,
+          "tickers": [
+            "YGGYO"
+          ],
+          "published_at": "2026-10-23T14:50:42.000Z"
+        }
+      ],
+      "circuit": {
+        "version": 1,
+        "rule": "bist30-bist100-repeats-code-v1",
+        "limit": 40,
+        "total_events": 475,
+        "total_tickers": 400,
+        "selected_tickers": [
+          "EREGL",
+          "AEFES",
+          "AKBNK",
+          "ASELS",
+          "ASTOR",
+          "EKGYO",
+          "FROTO",
+          "GARAN",
+          "ISCTR",
+          "KRDMD",
+          "MGROS",
+          "PETKM",
+          "PGSUS",
+          "SAHOL",
+          "SASA",
+          "SISE",
+          "TCELL",
+          "TOASO",
+          "TRALT",
+          "TRMET",
+          "TTKOM",
+          "VAKBN",
+          "YKBNK",
+          "AKFYE",
+          "AKSEN",
+          "ALTNY",
+          "ALARK",
+          "BERA",
+          "BINHO",
+          "BRYAT",
+          "BTCIM",
+          "CWENE",
+          "ECILC",
+          "ECZYT",
+          "EGEEN",
+          "EGGUB",
+          "EUREN",
+          "FENER",
+          "GLRMK",
+          "GLYHO"
+        ],
+        "omitted": 360,
+        "all_rows": [
+          {
+            "label": "#EREGL",
+            "value": "2 bildirim · BIST 30"
+          },
+          {
+            "label": "#AEFES",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#AKBNK",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#ASELS",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#ASTOR",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#EKGYO",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#FROTO",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#GARAN",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#ISCTR",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#KRDMD",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#MGROS",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#PETKM",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#PGSUS",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#SAHOL",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#SASA",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#SISE",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#TCELL",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#TOASO",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#TRALT",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#TRMET",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#TTKOM",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#VAKBN",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#YKBNK",
+            "value": "1 bildirim · BIST 30"
+          },
+          {
+            "label": "#AKFYE",
+            "value": "2 bildirim · BIST 100"
+          },
+          {
+            "label": "#AKSEN",
+            "value": "2 bildirim · BIST 100"
+          },
+          {
+            "label": "#ALTNY",
+            "value": "2 bildirim · BIST 100"
+          },
+          {
+            "label": "#ALARK",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#BERA",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#BINHO",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#BRYAT",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#BTCIM",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#CWENE",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ECILC",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ECZYT",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#EGEEN",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#EGGUB",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#EUREN",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#FENER",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#GLRMK",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#GLYHO",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#GRSEL",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#GWIND",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#HALKB",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#HEKTS",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ISDMR",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ISMEN",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#KARSN",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#KATMR",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#KCAER",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#KORDS",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#OBAMS",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ODAS",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#OYAKC",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#PAHOL",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#RYSAS",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#SNGYO",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#TCKRC",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#TRENJ",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#TSKB",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#TUKAS",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#TURSG",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ULKER",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#VESTL",
+            "value": "1 bildirim · BIST 100"
+          },
+          {
+            "label": "#ATAGY",
+            "value": "3 bildirim"
+          },
+          {
+            "label": "#BAKAB",
+            "value": "3 bildirim"
+          },
+          {
+            "label": "#BOSSA",
+            "value": "3 bildirim"
+          },
+          {
+            "label": "#CUSAN",
+            "value": "3 bildirim"
+          },
+          {
+            "label": "#ZEDUR",
+            "value": "3 bildirim"
+          },
+          {
+            "label": "#AKHAN",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ANGEN",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ARMGD",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#AVOD",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#BAYRK",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#CEMAS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#CEMTS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#DENGE",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#DGGYO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#DGNMO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#DMSAS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#DURDO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#DYOBY",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#EDIP",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#EFOR",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#EKIM",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#EPLAS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ERCB",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ESCOM",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#FORMT",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#GIPTA",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#GRNYO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#GSDHO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#GUNDG",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#HATEK",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#HOROZ",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#HUNER",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ICUGS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#IHAAS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#IHYAY",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#INTEM",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#INTET",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#INVEO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#KRTEK",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#KZBGY",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#MCARD",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#METRO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#MNDTR",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#MOBTL",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#MSGYO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ODINE",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ORZAX",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#OYAYO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#OYYAT",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#OZSUB",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#PAPIL",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#PKART",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#PRDGS",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#PRKAB",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#PSGYO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#RTALB",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#SEGYO",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#SKYMD",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#SMART",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#SONME",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#SRVGY",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#TATEN",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#UCAYM",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#USHOL",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#VERTU",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#YIGIT",
+            "value": "2 bildirim"
+          },
+          {
+            "label": "#ACSEL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ADEL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ADESE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AGESA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AGROT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AHSGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AKENR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AKFGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AKFIS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AKGRT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AKMGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AKSUE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALBTN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALCAR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALCTL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALFAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALKA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ALKIM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ARASE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ARDYZ",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ARENA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ARFYE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ARZUM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ASUZU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ATATP",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ATATR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AVGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AYCES",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AYDEM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AYEN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#AZTEK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BAGFS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BAHKM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BALSU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BANVT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BEGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BESLR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BESTE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BETAE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BFREN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BIENY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BIGCH",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BINBN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BKRGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BLCYT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BLUME",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BMSCH",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BNTAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BORLS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BRISA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BRKSN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BRLSM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BUCIM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BVSAN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#BYDNR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CATES",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CELHA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CEMZY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CGCAM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CITAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CMBTN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CONSE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#CRFSA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DAGI",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DAPGM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DARDL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DERHL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DERIM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DESPC",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DGATE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DITAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DMRGD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DNISI",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DOFER",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DOFRB",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DOKTA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DUNYH",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#DURKN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ECOGR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EGEPO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EGPRO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EGSER",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EKDMR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EKOS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EKSUN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ELITE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EMKEL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EMPAE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ENDAE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ENSRI",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ERBOS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ESEN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ETILR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EUKYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EUPWR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#EUYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#FADE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#FLAP",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#FMIZP",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#FONET",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#FRMPL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GEDZA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GENIL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GENKM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GENTS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GESAN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GLBMD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GLCVY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GOKNR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GOLDA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GSDDE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#GZNMI",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#HATSN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#HKTM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#HLGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#HRKET",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#HTTBT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#HURGZ",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ICBCT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IDGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IHEVA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IHGZT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IHLAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IHLGM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IMASM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#INDES",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#INGRM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ISFIN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ISGSY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ISSEN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ISVEA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ISYAT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IZFAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#IZINV",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#JANTS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KAREL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KAYSE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KBORU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KFEIN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KIMMR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KLGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KLKIM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KLRHO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KLSER",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KMPUR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KNFRT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KONKA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KONYA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KPEKS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KRDMA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KRDMB",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KRONT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KRPLS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KRSTL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KUTPO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KUVVA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#KZGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#LIDFA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#LINK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#LRSHO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#LUKSK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#LXGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MAGEN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MAKIM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MAKTK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MARBL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MARMR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MARTI",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MEDTR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MEGMT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MEKAG",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MEPET",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MERCN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MEYSU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MHRGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MIATK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MNDRS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MOPAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MRGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MRSHL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MTRKS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MTRYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#MZHLD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NATEN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NETAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NETCD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NETGL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NIBAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NTHOL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#NUGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OBASE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OFSYM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ONRYT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ORCAY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ORGE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OSTIM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OYLUM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OZGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OZRDN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#OZYSR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PAGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PAMEL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PARSN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PASEU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PATEK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PCILT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PENGD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PENTA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PETUN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PINSU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PKENT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PLTUR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PNLSN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PNSUT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#POLTK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#PRKME",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#QUAGR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#QUICK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#REEDR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#RNPOL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#RODRG",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#RUBNS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#RUZYE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#RYGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SAMAT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SARAE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SAYAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SDTTR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SEKUR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SEYKM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SILVR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SKBNK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SMRTG",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SNICA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SOHOE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SSAAT",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SUNTK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SURGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#SVGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TARKM",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TKNKA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TLMAN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TMSN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TNZTP",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TSGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TSPOR",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TUCLK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TUREX",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#TURGG",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ULUFA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#UNLU",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VAKKO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VANGD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VESBE",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VEYAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VKFYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VKGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VKING",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VRGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#VSNMD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YATAS",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YAYLA",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YEOTK",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YESIL",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YGGYO",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YKSLN",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#YYLGD",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ZERGY",
+            "value": "1 bildirim"
+          },
+          {
+            "label": "#ZGYO",
+            "value": "1 bildirim"
+          }
+        ],
+        "indices": {
+          "status": "verified",
+          "snapshot": {
+            "bist30": [
+              "AEFES",
+              "AKBNK",
+              "ASELS",
+              "ASTOR",
+              "BIMAS",
+              "EKGYO",
+              "ENKAI",
+              "EREGL",
+              "FROTO",
+              "GARAN",
+              "GUBRF",
+              "ISCTR",
+              "KCHOL",
+              "KRDMD",
+              "MGROS",
+              "PETKM",
+              "PGSUS",
+              "SAHOL",
+              "SASA",
+              "SISE",
+              "TAVHL",
+              "TCELL",
+              "THYAO",
+              "TOASO",
+              "TRALT",
+              "TRMET",
+              "TTKOM",
+              "TUPRS",
+              "VAKBN",
+              "YKBNK"
+            ],
+            "bist100": [
+              "AEFES",
+              "AGHOL",
+              "AHGAZ",
+              "AKBNK",
+              "AKCNS",
+              "AKFYE",
+              "AKSA",
+              "AKSEN",
+              "ALARK",
+              "ALBRK",
+              "ALTNY",
+              "ANHYT",
+              "ANSGR",
+              "ARCLK",
+              "ASELS",
+              "ASTOR",
+              "AYGAZ",
+              "BERA",
+              "BIMAS",
+              "BINHO",
+              "BRSAN",
+              "BRYAT",
+              "BTCIM",
+              "CANTE",
+              "CCOLA",
+              "CIMSA",
+              "CVKMD",
+              "CWENE",
+              "DOAS",
+              "DOHOL",
+              "ECILC",
+              "ECZYT",
+              "EGEEN",
+              "EGGUB",
+              "EKGYO",
+              "ENERY",
+              "ENJSA",
+              "ENKAI",
+              "ENTRA",
+              "EREGL",
+              "EUREN",
+              "FENER",
+              "FROTO",
+              "GARAN",
+              "GLRMK",
+              "GLYHO",
+              "GRSEL",
+              "GUBRF",
+              "GWIND",
+              "HALKB",
+              "HEKTS",
+              "ISCTR",
+              "ISDMR",
+              "ISMEN",
+              "KARSN",
+              "KATMR",
+              "KCAER",
+              "KCHOL",
+              "KORDS",
+              "KRDMD",
+              "LMKDC",
+              "MAVI",
+              "MGROS",
+              "MPARK",
+              "OBAMS",
+              "ODAS",
+              "OTKAR",
+              "OYAKC",
+              "PAHOL",
+              "PETKM",
+              "PGSUS",
+              "RGYAS",
+              "RYSAS",
+              "SAHOL",
+              "SASA",
+              "SISE",
+              "SNGYO",
+              "SOKM",
+              "TABGD",
+              "TAVHL",
+              "TCELL",
+              "TCKRC",
+              "THYAO",
+              "TKFEN",
+              "TOASO",
+              "TRALT",
+              "TRENJ",
+              "TRGYO",
+              "TRMET",
+              "TSKB",
+              "TTKOM",
+              "TTRAK",
+              "TUKAS",
+              "TUPRS",
+              "TURSG",
+              "ULKER",
+              "VAKBN",
+              "VESTL",
+              "YKBNK",
+              "ZOREN"
+            ],
+            "checkedAt": "2026-10-23T13:35:07.028Z",
+            "source": "https://www.kap.org.tr/tr/Endeksler"
+          }
+        },
+        "tweet_style": "plain"
+      }
+    }
+  },
+  "claims": [
+    {
+      "text": "2026-10-23: 475 bildirim; 400 farklı hisse. Gösterilen 40; gösterilmeyen 360. Öncelik BIST30, BIST100 (BIST30 hariç), diğer; grup içinde tekrar sayısı azalan, eşitlikte kod artan.\n#EREGL: 2 bildirim · BIST 30\n#AEFES: 1 bildirim · BIST 30\n#AKBNK: 1 bildirim · BIST 30\n#ASELS: 1 bildirim · BIST 30\n#ASTOR: 1 bildirim · BIST 30\n#EKGYO: 1 bildirim · BIST 30\n#FROTO: 1 bildirim · BIST 30\n#GARAN: 1 bildirim · BIST 30\n#ISCTR: 1 bildirim · BIST 30\n#KRDMD: 1 bildirim · BIST 30\n#MGROS: 1 bildirim · BIST 30\n#PETKM: 1 bildirim · BIST 30\n#PGSUS: 1 bildirim · BIST 30\n#SAHOL: 1 bildirim · BIST 30\n#SASA: 1 bildirim · BIST 30\n#SISE: 1 bildirim · BIST 30\n#TCELL: 1 bildirim · BIST 30\n#TOASO: 1 bildirim · BIST 30\n#TRALT: 1 bildirim · BIST 30\n#TRMET: 1 bildirim · BIST 30\n#TTKOM: 1 bildirim · BIST 30\n#VAKBN: 1 bildirim · BIST 30\n#YKBNK: 1 bildirim · BIST 30\n#AKFYE: 2 bildirim · BIST 100\n#AKSEN: 2 bildirim · BIST 100\n#ALTNY: 2 bildirim · BIST 100\n#ALARK: 1 bildirim · BIST 100\n#BERA: 1 bildirim · BIST 100\n#BINHO: 1 bildirim · BIST 100\n#BRYAT: 1 bildirim · BIST 100\n#BTCIM: 1 bildirim · BIST 100\n#CWENE: 1 bildirim · BIST 100\n#ECILC: 1 bildirim · BIST 100\n#ECZYT: 1 bildirim · BIST 100\n#EGEEN: 1 bildirim · BIST 100\n#EGGUB: 1 bildirim · BIST 100\n#EUREN: 1 bildirim · BIST 100\n#FENER: 1 bildirim · BIST 100\n#GLRMK: 1 bildirim · BIST 100\n#GLYHO: 1 bildirim · BIST 100\n#GRSEL: 1 bildirim · BIST 100\n#GWIND: 1 bildirim · BIST 100\n#HALKB: 1 bildirim · BIST 100\n#HEKTS: 1 bildirim · BIST 100\n#ISDMR: 1 bildirim · BIST 100\n#ISMEN: 1 bildirim · BIST 100\n#KARSN: 1 bildirim · BIST 100\n#KATMR: 1 bildirim · BIST 100\n#KCAER: 1 bildirim · BIST 100\n#KORDS: 1 bildirim · BIST 100\n#OBAMS: 1 bildirim · BIST 100\n#ODAS: 1 bildirim · BIST 100\n#OYAKC: 1 bildirim · BIST 100\n#PAHOL: 1 bildirim · BIST 100\n#RYSAS: 1 bildirim · BIST 100\n#SNGYO: 1 bildirim · BIST 100\n#TCKRC: 1 bildirim · BIST 100\n#TRENJ: 1 bildirim · BIST 100\n#TSKB: 1 bildirim · BIST 100\n#TUKAS: 1 bildirim · BIST 100\n#TURSG: 1 bildirim · BIST 100\n#ULKER: 1 bildirim · BIST 100\n#VESTL: 1 bildirim · BIST 100\n#ATAGY: 3 bildirim\n#BAKAB: 3 bildirim\n#BOSSA: 3 bildirim\n#CUSAN: 3 bildirim\n#ZEDUR: 3 bildirim\n#AKHAN: 2 bildirim\n#ANGEN: 2 bildirim\n#ARMGD: 2 bildirim\n#AVOD: 2 bildirim\n#BAYRK: 2 bildirim\n#CEMAS: 2 bildirim\n#CEMTS: 2 bildirim\n#DENGE: 2 bildirim\n#DGGYO: 2 bildirim\n#DGNMO: 2 bildirim\n#DMSAS: 2 bildirim\n#DURDO: 2 bildirim\n#DYOBY: 2 bildirim\n#EDIP: 2 bildirim\n#EFOR: 2 bildirim\n#EKIM: 2 bildirim\n#EPLAS: 2 bildirim\n#ERCB: 2 bildirim\n#ESCOM: 2 bildirim\n#FORMT: 2 bildirim\n#GIPTA: 2 bildirim\n#GRNYO: 2 bildirim\n#GSDHO: 2 bildirim\n#GUNDG: 2 bildirim\n#HATEK: 2 bildirim\n#HOROZ: 2 bildirim\n#HUNER: 2 bildirim\n#ICUGS: 2 bildirim\n#IHAAS: 2 bildirim\n#IHYAY: 2 bildirim\n#INTEM: 2 bildirim\n#INTET: 2 bildirim\n#INVEO: 2 bildirim\n#KRTEK: 2 bildirim\n#KZBGY: 2 bildirim\n#MCARD: 2 bildirim\n#METRO: 2 bildirim\n#MNDTR: 2 bildirim\n#MOBTL: 2 bildirim\n#MSGYO: 2 bildirim\n#ODINE: 2 bildirim\n#ORZAX: 2 bildirim\n#OYAYO: 2 bildirim\n#OYYAT: 2 bildirim\n#OZSUB: 2 bildirim\n#PAPIL: 2 bildirim\n#PKART: 2 bildirim\n#PRDGS: 2 bildirim\n#PRKAB: 2 bildirim\n#PSGYO: 2 bildirim\n#RTALB: 2 bildirim\n#SEGYO: 2 bildirim\n#SKYMD: 2 bildirim\n#SMART: 2 bildirim\n#SONME: 2 bildirim\n#SRVGY: 2 bildirim\n#TATEN: 2 bildirim\n#UCAYM: 2 bildirim\n#USHOL: 2 bildirim\n#VERTU: 2 bildirim\n#YIGIT: 2 bildirim\n#ACSEL: 1 bildirim\n#ADEL: 1 bildirim\n#ADESE: 1 bildirim\n#AGESA: 1 bildirim\n#AGROT: 1 bildirim\n#AHSGY: 1 bildirim\n#AKENR: 1 bildirim\n#AKFGY: 1 bildirim\n#AKFIS: 1 bildirim\n#AKGRT: 1 bildirim\n#AKMGY: 1 bildirim\n#AKSUE: 1 bildirim\n#ALBTN: 1 bildirim\n#ALCAR: 1 bildirim\n#ALCTL: 1 bildirim\n#ALFAS: 1 bildirim\n#ALGYO: 1 bildirim\n#ALKA: 1 bildirim\n#ALKIM: 1 bildirim\n#ARASE: 1 bildirim\n#ARDYZ: 1 bildirim\n#ARENA: 1 bildirim\n#ARFYE: 1 bildirim\n#ARZUM: 1 bildirim\n#ASUZU: 1 bildirim\n#ATATP: 1 bildirim\n#ATATR: 1 bildirim\n#AVGYO: 1 bildirim\n#AYCES: 1 bildirim\n#AYDEM: 1 bildirim\n#AYEN: 1 bildirim\n#AZTEK: 1 bildirim\n#BAGFS: 1 bildirim\n#BAHKM: 1 bildirim\n#BALSU: 1 bildirim\n#BANVT: 1 bildirim\n#BEGYO: 1 bildirim\n#BESLR: 1 bildirim\n#BESTE: 1 bildirim\n#BETAE: 1 bildirim\n#BFREN: 1 bildirim\n#BIENY: 1 bildirim\n#BIGCH: 1 bildirim\n#BINBN: 1 bildirim\n#BKRGY: 1 bildirim\n#BLCYT: 1 bildirim\n#BLUME: 1 bildirim\n#BMSCH: 1 bildirim\n#BNTAS: 1 bildirim\n#BORLS: 1 bildirim\n#BRISA: 1 bildirim\n#BRKSN: 1 bildirim\n#BRLSM: 1 bildirim\n#BUCIM: 1 bildirim\n#BVSAN: 1 bildirim\n#BYDNR: 1 bildirim\n#CATES: 1 bildirim\n#CELHA: 1 bildirim\n#CEMZY: 1 bildirim\n#CGCAM: 1 bildirim\n#CITAS: 1 bildirim\n#CMBTN: 1 bildirim\n#CONSE: 1 bildirim\n#CRFSA: 1 bildirim\n#DAGI: 1 bildirim\n#DAPGM: 1 bildirim\n#DARDL: 1 bildirim\n#DERHL: 1 bildirim\n#DERIM: 1 bildirim\n#DESPC: 1 bildirim\n#DGATE: 1 bildirim\n#DITAS: 1 bildirim\n#DMRGD: 1 bildirim\n#DNISI: 1 bildirim\n#DOFER: 1 bildirim\n#DOFRB: 1 bildirim\n#DOKTA: 1 bildirim\n#DUNYH: 1 bildirim\n#DURKN: 1 bildirim\n#ECOGR: 1 bildirim\n#EGEPO: 1 bildirim\n#EGPRO: 1 bildirim\n#EGSER: 1 bildirim\n#EKDMR: 1 bildirim\n#EKOS: 1 bildirim\n#EKSUN: 1 bildirim\n#ELITE: 1 bildirim\n#EMKEL: 1 bildirim\n#EMPAE: 1 bildirim\n#ENDAE: 1 bildirim\n#ENSRI: 1 bildirim\n#ERBOS: 1 bildirim\n#ESEN: 1 bildirim\n#ETILR: 1 bildirim\n#EUKYO: 1 bildirim\n#EUPWR: 1 bildirim\n#EUYO: 1 bildirim\n#FADE: 1 bildirim\n#FLAP: 1 bildirim\n#FMIZP: 1 bildirim\n#FONET: 1 bildirim\n#FRMPL: 1 bildirim\n#GEDZA: 1 bildirim\n#GENIL: 1 bildirim\n#GENKM: 1 bildirim\n#GENTS: 1 bildirim\n#GESAN: 1 bildirim\n#GLBMD: 1 bildirim\n#GLCVY: 1 bildirim\n#GOKNR: 1 bildirim\n#GOLDA: 1 bildirim\n#GSDDE: 1 bildirim\n#GZNMI: 1 bildirim\n#HATSN: 1 bildirim\n#HKTM: 1 bildirim\n#HLGYO: 1 bildirim\n#HRKET: 1 bildirim\n#HTTBT: 1 bildirim\n#HURGZ: 1 bildirim\n#ICBCT: 1 bildirim\n#IDGYO: 1 bildirim\n#IHEVA: 1 bildirim\n#IHGZT: 1 bildirim\n#IHLAS: 1 bildirim\n#IHLGM: 1 bildirim\n#IMASM: 1 bildirim\n#INDES: 1 bildirim\n#INGRM: 1 bildirim\n#ISFIN: 1 bildirim\n#ISGSY: 1 bildirim\n#ISSEN: 1 bildirim\n#ISVEA: 1 bildirim\n#ISYAT: 1 bildirim\n#IZFAS: 1 bildirim\n#IZINV: 1 bildirim\n#JANTS: 1 bildirim\n#KAREL: 1 bildirim\n#KAYSE: 1 bildirim\n#KBORU: 1 bildirim\n#KFEIN: 1 bildirim\n#KGYO: 1 bildirim\n#KIMMR: 1 bildirim\n#KLGYO: 1 bildirim\n#KLKIM: 1 bildirim\n#KLRHO: 1 bildirim\n#KLSER: 1 bildirim\n#KMPUR: 1 bildirim\n#KNFRT: 1 bildirim\n#KONKA: 1 bildirim\n#KONYA: 1 bildirim\n#KPEKS: 1 bildirim\n#KRDMA: 1 bildirim\n#KRDMB: 1 bildirim\n#KRONT: 1 bildirim\n#KRPLS: 1 bildirim\n#KRSTL: 1 bildirim\n#KUTPO: 1 bildirim\n#KUVVA: 1 bildirim\n#KZGYO: 1 bildirim\n#LIDFA: 1 bildirim\n#LINK: 1 bildirim\n#LRSHO: 1 bildirim\n#LUKSK: 1 bildirim\n#LXGYO: 1 bildirim\n#MAGEN: 1 bildirim\n#MAKIM: 1 bildirim\n#MAKTK: 1 bildirim\n#MARBL: 1 bildirim\n#MARMR: 1 bildirim\n#MARTI: 1 bildirim\n#MEDTR: 1 bildirim\n#MEGMT: 1 bildirim\n#MEKAG: 1 bildirim\n#MEPET: 1 bildirim\n#MERCN: 1 bildirim\n#MEYSU: 1 bildirim\n#MHRGY: 1 bildirim\n#MIATK: 1 bildirim\n#MNDRS: 1 bildirim\n#MOPAS: 1 bildirim\n#MRGYO: 1 bildirim\n#MRSHL: 1 bildirim\n#MTRKS: 1 bildirim\n#MTRYO: 1 bildirim\n#MZHLD: 1 bildirim\n#NATEN: 1 bildirim\n#NETAS: 1 bildirim\n#NETCD: 1 bildirim\n#NETGL: 1 bildirim\n#NIBAS: 1 bildirim\n#NTHOL: 1 bildirim\n#NUGYO: 1 bildirim\n#OBASE: 1 bildirim\n#OFSYM: 1 bildirim\n#ONRYT: 1 bildirim\n#ORCAY: 1 bildirim\n#ORGE: 1 bildirim\n#OSTIM: 1 bildirim\n#OYLUM: 1 bildirim\n#OZGYO: 1 bildirim\n#OZRDN: 1 bildirim\n#OZYSR: 1 bildirim\n#PAGYO: 1 bildirim\n#PAMEL: 1 bildirim\n#PARSN: 1 bildirim\n#PASEU: 1 bildirim\n#PATEK: 1 bildirim\n#PCILT: 1 bildirim\n#PENGD: 1 bildirim\n#PENTA: 1 bildirim\n#PETUN: 1 bildirim\n#PINSU: 1 bildirim\n#PKENT: 1 bildirim\n#PLTUR: 1 bildirim\n#PNLSN: 1 bildirim\n#PNSUT: 1 bildirim\n#POLTK: 1 bildirim\n#PRKME: 1 bildirim\n#QUAGR: 1 bildirim\n#QUICK: 1 bildirim\n#REEDR: 1 bildirim\n#RNPOL: 1 bildirim\n#RODRG: 1 bildirim\n#RUBNS: 1 bildirim\n#RUZYE: 1 bildirim\n#RYGYO: 1 bildirim\n#SAMAT: 1 bildirim\n#SARAE: 1 bildirim\n#SAYAS: 1 bildirim\n#SDTTR: 1 bildirim\n#SEKUR: 1 bildirim\n#SEYKM: 1 bildirim\n#SILVR: 1 bildirim\n#SKBNK: 1 bildirim\n#SMRTG: 1 bildirim\n#SNICA: 1 bildirim\n#SOHOE: 1 bildirim\n#SSAAT: 1 bildirim\n#SUNTK: 1 bildirim\n#SURGY: 1 bildirim\n#SVGYO: 1 bildirim\n#TARKM: 1 bildirim\n#TKNKA: 1 bildirim\n#TLMAN: 1 bildirim\n#TMSN: 1 bildirim\n#TNZTP: 1 bildirim\n#TSGYO: 1 bildirim\n#TSPOR: 1 bildirim\n#TUCLK: 1 bildirim\n#TUREX: 1 bildirim\n#TURGG: 1 bildirim\n#ULUFA: 1 bildirim\n#UNLU: 1 bildirim\n#VAKKO: 1 bildirim\n#VANGD: 1 bildirim\n#VESBE: 1 bildirim\n#VEYAS: 1 bildirim\n#VKFYO: 1 bildirim\n#VKGYO: 1 bildirim\n#VKING: 1 bildirim\n#VRGYO: 1 bildirim\n#VSNMD: 1 bildirim\n#YATAS: 1 bildirim\n#YAYLA: 1 bildirim\n#YEOTK: 1 bildirim\n#YESIL: 1 bildirim\n#YGGYO: 1 bildirim\n#YKSLN: 1 bildirim\n#YYLGD: 1 bildirim\n#ZERGY: 1 bildirim\n#ZGYO: 1 bildirim\nRapor kayıtlı KAP bildirimleriyle sınırlıdır.",
+      "evidence": [
+        {
+          "document": 0,
+          "passage": "computed_report",
+          "quote": "2026-10-23: 475 bildirim; 400 farklı hisse. Gösterilen 40; gösterilmeyen 360. Öncelik BIST30, BIST100 (BIST30 hariç), diğer; grup içinde tekrar sayısı azalan, eşitlikte kod artan.\n#EREGL: 2 bildirim · BIST 30\n#AEFES: 1 bildirim · BIST 30\n#AKBNK: 1 bildirim · BIST 30\n#ASELS: 1 bildirim · BIST 30\n#ASTOR: 1 bildirim · BIST 30\n#EKGYO: 1 bildirim · BIST 30\n#FROTO: 1 bildirim · BIST 30\n#GARAN: 1 bildirim · BIST 30\n#ISCTR: 1 bildirim · BIST 30\n#KRDMD: 1 bildirim · BIST 30\n#MGROS: 1 bildirim · BIST 30\n#PETKM: 1 bildirim · BIST 30\n#PGSUS: 1 bildirim · BIST 30\n#SAHOL: 1 bildirim · BIST 30\n#SASA: 1 bildirim · BIST 30\n#SISE: 1 bildirim · BIST 30\n#TCELL: 1 bildirim · BIST 30\n#TOASO: 1 bildirim · BIST 30\n#TRALT: 1 bildirim · BIST 30\n#TRMET: 1 bildirim · BIST 30\n#TTKOM: 1 bildirim · BIST 30\n#VAKBN: 1 bildirim · BIST 30\n#YKBNK: 1 bildirim · BIST 30\n#AKFYE: 2 bildirim · BIST 100\n#AKSEN: 2 bildirim · BIST 100\n#ALTNY: 2 bildirim · BIST 100\n#ALARK: 1 bildirim · BIST 100\n#BERA: 1 bildirim · BIST 100\n#BINHO: 1 bildirim · BIST 100\n#BRYAT: 1 bildirim · BIST 100\n#BTCIM: 1 bildirim · BIST 100\n#CWENE: 1 bildirim · BIST 100\n#ECILC: 1 bildirim · BIST 100\n#ECZYT: 1 bildirim · BIST 100\n#EGEEN: 1 bildirim · BIST 100\n#EGGUB: 1 bildirim · BIST 100\n#EUREN: 1 bildirim · BIST 100\n#FENER: 1 bildirim · BIST 100\n#GLRMK: 1 bildirim · BIST 100\n#GLYHO: 1 bildirim · BIST 100\n#GRSEL: 1 bildirim · BIST 100\n#GWIND: 1 bildirim · BIST 100\n#HALKB: 1 bildirim · BIST 100\n#HEKTS: 1 bildirim · BIST 100\n#ISDMR: 1 bildirim · BIST 100\n#ISMEN: 1 bildirim · BIST 100\n#KARSN: 1 bildirim · BIST 100\n#KATMR: 1 bildirim · BIST 100\n#KCAER: 1 bildirim · BIST 100\n#KORDS: 1 bildirim · BIST 100\n#OBAMS: 1 bildirim · BIST 100\n#ODAS: 1 bildirim · BIST 100\n#OYAKC: 1 bildirim · BIST 100\n#PAHOL: 1 bildirim · BIST 100\n#RYSAS: 1 bildirim · BIST 100\n#SNGYO: 1 bildirim · BIST 100\n#TCKRC: 1 bildirim · BIST 100\n#TRENJ: 1 bildirim · BIST 100\n#TSKB: 1 bildirim · BIST 100\n#TUKAS: 1 bildirim · BIST 100\n#TURSG: 1 bildirim · BIST 100\n#ULKER: 1 bildirim · BIST 100\n#VESTL: 1 bildirim · BIST 100\n#ATAGY: 3 bildirim\n#BAKAB: 3 bildirim\n#BOSSA: 3 bildirim\n#CUSAN: 3 bildirim\n#ZEDUR: 3 bildirim\n#AKHAN: 2 bildirim\n#ANGEN: 2 bildirim\n#ARMGD: 2 bildirim\n#AVOD: 2 bildirim\n#BAYRK: 2 bildirim\n#CEMAS: 2 bildirim\n#CEMTS: 2 bildirim\n#DENGE: 2 bildirim\n#DGGYO: 2 bildirim\n#DGNMO: 2 bildirim\n#DMSAS: 2 bildirim\n#DURDO: 2 bildirim\n#DYOBY: 2 bildirim\n#EDIP: 2 bildirim\n#EFOR: 2 bildirim\n#EKIM: 2 bildirim\n#EPLAS: 2 bildirim\n#ERCB: 2 bildirim\n#ESCOM: 2 bildirim\n#FORMT: 2 bildirim\n#GIPTA: 2 bildirim\n#GRNYO: 2 bildirim\n#GSDHO: 2 bildirim\n#GUNDG: 2 bildirim\n#HATEK: 2 bildirim\n#HOROZ: 2 bildirim\n#HUNER: 2 bildirim\n#ICUGS: 2 bildirim\n#IHAAS: 2 bildirim\n#IHYAY: 2 bildirim\n#INTEM: 2 bildirim\n#INTET: 2 bildirim\n#INVEO: 2 bildirim\n#KRTEK: 2 bildirim\n#KZBGY: 2 bildirim\n#MCARD: 2 bildirim\n#METRO: 2 bildirim\n#MNDTR: 2 bildirim\n#MOBTL: 2 bildirim\n#MSGYO: 2 bildirim\n#ODINE: 2 bildirim\n#ORZAX: 2 bildirim\n#OYAYO: 2 bildirim\n#OYYAT: 2 bildirim\n#OZSUB: 2 bildirim\n#PAPIL: 2 bildirim\n#PKART: 2 bildirim\n#PRDGS: 2 bildirim\n#PRKAB: 2 bildirim\n#PSGYO: 2 bildirim\n#RTALB: 2 bildirim\n#SEGYO: 2 bildirim\n#SKYMD: 2 bildirim\n#SMART: 2 bildirim\n#SONME: 2 bildirim\n#SRVGY: 2 bildirim\n#TATEN: 2 bildirim\n#UCAYM: 2 bildirim\n#USHOL: 2 bildirim\n#VERTU: 2 bildirim\n#YIGIT: 2 bildirim\n#ACSEL: 1 bildirim\n#ADEL: 1 bildirim\n#ADESE: 1 bildirim\n#AGESA: 1 bildirim\n#AGROT: 1 bildirim\n#AHSGY: 1 bildirim\n#AKENR: 1 bildirim\n#AKFGY: 1 bildirim\n#AKFIS: 1 bildirim\n#AKGRT: 1 bildirim\n#AKMGY: 1 bildirim\n#AKSUE: 1 bildirim\n#ALBTN: 1 bildirim\n#ALCAR: 1 bildirim\n#ALCTL: 1 bildirim\n#ALFAS: 1 bildirim\n#ALGYO: 1 bildirim\n#ALKA: 1 bildirim\n#ALKIM: 1 bildirim\n#ARASE: 1 bildirim\n#ARDYZ: 1 bildirim\n#ARENA: 1 bildirim\n#ARFYE: 1 bildirim\n#ARZUM: 1 bildirim\n#ASUZU: 1 bildirim\n#ATATP: 1 bildirim\n#ATATR: 1 bildirim\n#AVGYO: 1 bildirim\n#AYCES: 1 bildirim\n#AYDEM: 1 bildirim\n#AYEN: 1 bildirim\n#AZTEK: 1 bildirim\n#BAGFS: 1 bildirim\n#BAHKM: 1 bildirim\n#BALSU: 1 bildirim\n#BANVT: 1 bildirim\n#BEGYO: 1 bildirim\n#BESLR: 1 bildirim\n#BESTE: 1 bildirim\n#BETAE: 1 bildirim\n#BFREN: 1 bildirim\n#BIENY: 1 bildirim\n#BIGCH: 1 bildirim\n#BINBN: 1 bildirim\n#BKRGY: 1 bildirim\n#BLCYT: 1 bildirim\n#BLUME: 1 bildirim\n#BMSCH: 1 bildirim\n#BNTAS: 1 bildirim\n#BORLS: 1 bildirim\n#BRISA: 1 bildirim\n#BRKSN: 1 bildirim\n#BRLSM: 1 bildirim\n#BUCIM: 1 bildirim\n#BVSAN: 1 bildirim\n#BYDNR: 1 bildirim\n#CATES: 1 bildirim\n#CELHA: 1 bildirim\n#CEMZY: 1 bildirim\n#CGCAM: 1 bildirim\n#CITAS: 1 bildirim\n#CMBTN: 1 bildirim\n#CONSE: 1 bildirim\n#CRFSA: 1 bildirim\n#DAGI: 1 bildirim\n#DAPGM: 1 bildirim\n#DARDL: 1 bildirim\n#DERHL: 1 bildirim\n#DERIM: 1 bildirim\n#DESPC: 1 bildirim\n#DGATE: 1 bildirim\n#DITAS: 1 bildirim\n#DMRGD: 1 bildirim\n#DNISI: 1 bildirim\n#DOFER: 1 bildirim\n#DOFRB: 1 bildirim\n#DOKTA: 1 bildirim\n#DUNYH: 1 bildirim\n#DURKN: 1 bildirim\n#ECOGR: 1 bildirim\n#EGEPO: 1 bildirim\n#EGPRO: 1 bildirim\n#EGSER: 1 bildirim\n#EKDMR: 1 bildirim\n#EKOS: 1 bildirim\n#EKSUN: 1 bildirim\n#ELITE: 1 bildirim\n#EMKEL: 1 bildirim\n#EMPAE: 1 bildirim\n#ENDAE: 1 bildirim\n#ENSRI: 1 bildirim\n#ERBOS: 1 bildirim\n#ESEN: 1 bildirim\n#ETILR: 1 bildirim\n#EUKYO: 1 bildirim\n#EUPWR: 1 bildirim\n#EUYO: 1 bildirim\n#FADE: 1 bildirim\n#FLAP: 1 bildirim\n#FMIZP: 1 bildirim\n#FONET: 1 bildirim\n#FRMPL: 1 bildirim\n#GEDZA: 1 bildirim\n#GENIL: 1 bildirim\n#GENKM: 1 bildirim\n#GENTS: 1 bildirim\n#GESAN: 1 bildirim\n#GLBMD: 1 bildirim\n#GLCVY: 1 bildirim\n#GOKNR: 1 bildirim\n#GOLDA: 1 bildirim\n#GSDDE: 1 bildirim\n#GZNMI: 1 bildirim\n#HATSN: 1 bildirim\n#HKTM: 1 bildirim\n#HLGYO: 1 bildirim\n#HRKET: 1 bildirim\n#HTTBT: 1 bildirim\n#HURGZ: 1 bildirim\n#ICBCT: 1 bildirim\n#IDGYO: 1 bildirim\n#IHEVA: 1 bildirim\n#IHGZT: 1 bildirim\n#IHLAS: 1 bildirim\n#IHLGM: 1 bildirim\n#IMASM: 1 bildirim\n#INDES: 1 bildirim\n#INGRM: 1 bildirim\n#ISFIN: 1 bildirim\n#ISGSY: 1 bildirim\n#ISSEN: 1 bildirim\n#ISVEA: 1 bildirim\n#ISYAT: 1 bildirim\n#IZFAS: 1 bildirim\n#IZINV: 1 bildirim\n#JANTS: 1 bildirim\n#KAREL: 1 bildirim\n#KAYSE: 1 bildirim\n#KBORU: 1 bildirim\n#KFEIN: 1 bildirim\n#KGYO: 1 bildirim\n#KIMMR: 1 bildirim\n#KLGYO: 1 bildirim\n#KLKIM: 1 bildirim\n#KLRHO: 1 bildirim\n#KLSER: 1 bildirim\n#KMPUR: 1 bildirim\n#KNFRT: 1 bildirim\n#KONKA: 1 bildirim\n#KONYA: 1 bildirim\n#KPEKS: 1 bildirim\n#KRDMA: 1 bildirim\n#KRDMB: 1 bildirim\n#KRONT: 1 bildirim\n#KRPLS: 1 bildirim\n#KRSTL: 1 bildirim\n#KUTPO: 1 bildirim\n#KUVVA: 1 bildirim\n#KZGYO: 1 bildirim\n#LIDFA: 1 bildirim\n#LINK: 1 bildirim\n#LRSHO: 1 bildirim\n#LUKSK: 1 bildirim\n#LXGYO: 1 bildirim\n#MAGEN: 1 bildirim\n#MAKIM: 1 bildirim\n#MAKTK: 1 bildirim\n#MARBL: 1 bildirim\n#MARMR: 1 bildirim\n#MARTI: 1 bildirim\n#MEDTR: 1 bildirim\n#MEGMT: 1 bildirim\n#MEKAG: 1 bildirim\n#MEPET: 1 bildirim\n#MERCN: 1 bildirim\n#MEYSU: 1 bildirim\n#MHRGY: 1 bildirim\n#MIATK: 1 bildirim\n#MNDRS: 1 bildirim\n#MOPAS: 1 bildirim\n#MRGYO: 1 bildirim\n#MRSHL: 1 bildirim\n#MTRKS: 1 bildirim\n#MTRYO: 1 bildirim\n#MZHLD: 1 bildirim\n#NATEN: 1 bildirim\n#NETAS: 1 bildirim\n#NETCD: 1 bildirim\n#NETGL: 1 bildirim\n#NIBAS: 1 bildirim\n#NTHOL: 1 bildirim\n#NUGYO: 1 bildirim\n#OBASE: 1 bildirim\n#OFSYM: 1 bildirim\n#ONRYT: 1 bildirim\n#ORCAY: 1 bildirim\n#ORGE: 1 bildirim\n#OSTIM: 1 bildirim\n#OYLUM: 1 bildirim\n#OZGYO: 1 bildirim\n#OZRDN: 1 bildirim\n#OZYSR: 1 bildirim\n#PAGYO: 1 bildirim\n#PAMEL: 1 bildirim\n#PARSN: 1 bildirim\n#PASEU: 1 bildirim\n#PATEK: 1 bildirim\n#PCILT: 1 bildirim\n#PENGD: 1 bildirim\n#PENTA: 1 bildirim\n#PETUN: 1 bildirim\n#PINSU: 1 bildirim\n#PKENT: 1 bildirim\n#PLTUR: 1 bildirim\n#PNLSN: 1 bildirim\n#PNSUT: 1 bildirim\n#POLTK: 1 bildirim\n#PRKME: 1 bildirim\n#QUAGR: 1 bildirim\n#QUICK: 1 bildirim\n#REEDR: 1 bildirim\n#RNPOL: 1 bildirim\n#RODRG: 1 bildirim\n#RUBNS: 1 bildirim\n#RUZYE: 1 bildirim\n#RYGYO: 1 bildirim\n#SAMAT: 1 bildirim\n#SARAE: 1 bildirim\n#SAYAS: 1 bildirim\n#SDTTR: 1 bildirim\n#SEKUR: 1 bildirim\n#SEYKM: 1 bildirim\n#SILVR: 1 bildirim\n#SKBNK: 1 bildirim\n#SMRTG: 1 bildirim\n#SNICA: 1 bildirim\n#SOHOE: 1 bildirim\n#SSAAT: 1 bildirim\n#SUNTK: 1 bildirim\n#SURGY: 1 bildirim\n#SVGYO: 1 bildirim\n#TARKM: 1 bildirim\n#TKNKA: 1 bildirim\n#TLMAN: 1 bildirim\n#TMSN: 1 bildirim\n#TNZTP: 1 bildirim\n#TSGYO: 1 bildirim\n#TSPOR: 1 bildirim\n#TUCLK: 1 bildirim\n#TUREX: 1 bildirim\n#TURGG: 1 bildirim\n#ULUFA: 1 bildirim\n#UNLU: 1 bildirim\n#VAKKO: 1 bildirim\n#VANGD: 1 bildirim\n#VESBE: 1 bildirim\n#VEYAS: 1 bildirim\n#VKFYO: 1 bildirim\n#VKGYO: 1 bildirim\n#VKING: 1 bildirim\n#VRGYO: 1 bildirim\n#VSNMD: 1 bildirim\n#YATAS: 1 bildirim\n#YAYLA: 1 bildirim\n#YEOTK: 1 bildirim\n#YESIL: 1 bildirim\n#YGGYO: 1 bildirim\n#YKSLN: 1 bildirim\n#YYLGD: 1 bildirim\n#ZERGY: 1 bildirim\n#ZGYO: 1 bildirim\nRapor kayıtlı KAP bildirimleriyle sınırlıdır."
+        }
+      ]
+    }
+  ],
+  "entities": [],
+  "event_key": "circuit-1792786128000",
+  "uncertainties": [],
+  "source_notes": []
+}

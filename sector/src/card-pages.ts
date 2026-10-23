@@ -5,6 +5,7 @@ import type {CardTheme} from './card-theme';
 import type {CardLayout} from './card-layout';
 import {OutputCapacityError,type CapacityDiagnostic} from './output-capacity';
 export {cardSvg} from './card';
+export {selectCircuitReport,circuitOmissionNote,CIRCUIT_REPORT_LIMIT} from './circuit-selection';
 export const MAX_CARDS=4;
 export const CARD_CAPACITY_MESSAGE='Seçilen veri okunaklı biçimde dört görsele sığmıyor. Hiçbir satır çıkarılmadı. Kapsamı daraltabilir veya ayrıca thread isteyebilirsin; otomatik thread oluşturulmadı.';
 export function balancedPages<T>(rows:readonly T[],capacity:number,pages=Math.max(1,Math.ceil(rows.length/capacity))):T[][]{
@@ -37,6 +38,6 @@ export function draftCards(d:Draft,theme?:CardTheme,layout:CardLayout='editorial
   return svg;
  });
 }
-export function cardSvgs(d:Pick<Draft,'headline'|'body'|'template'|'card_data'|'output_preferences'>,theme?:CardTheme,layout:CardLayout='editorial'){
- return draftCards({...d,card_headline:d.headline,card_body:d.body} as Draft,theme,layout);
+export function cardSvgs(d:Pick<Draft,'headline'|'body'|'template'|'card_data'|'output_preferences'>&Partial<Pick<Draft,'card_headline'|'card_body'>>,theme?:CardTheme,layout:CardLayout='editorial'){
+ return draftCards({...d,card_headline:d.card_headline??d.headline,card_body:d.card_body??d.body} as Draft,theme,layout);
 }

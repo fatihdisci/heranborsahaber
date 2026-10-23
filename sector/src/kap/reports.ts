@@ -3,6 +3,7 @@ import type {OutputPreferences} from '../output-preferences';
 import {normalize,type Disclosure,type Indices,type fullText} from './parser';
 import type {Document,Draft} from '../types';
 import {OutputCapacityError} from '../output-capacity';
+import {selectCircuitReport,circuitOmissionNote,CIRCUIT_REPORT_LIMIT} from '../circuit-selection';
 export const istanbulDay=(at:number)=>new Date(at+10800000).toISOString().slice(0,10);
 const clean=(s:string)=>s.replace(/[|\s]+$/g,'').trim();
 export interface Purchase {ticker:string;day:string;units:string;program:string;priceMicros?:string;}
@@ -42,19 +43,9 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
  const replaced=new Set(unique.map(r=>r.disclosure.relatedOid).filter(Boolean));
  const current=unique.filter(r=>!r.disclosure.oid||!replaced.has(r.disclosure.oid));
  const rows:{label:string;value:string}[]=[],parts:string[]=[];
- let heading='',footer=kind==='circuit'?'KAP günlük kayıtları':'KAP kayıtları • '+day+' '+time+' itibarıyla';
- if(kind==='circuit'){
-  const counts=new Map<string,number>();for(const r of current)for(const code of new Set(r.disclosure.subjectCodes))counts.set(code,(counts.get(code)??0)+1);
-  heading=`Devre kesici raporu: ${current.length} bildirim`;
-  parts.push(`Bugün kaydedilen ${current.length} devre kesici bildirimi, ${counts.size} farklı hisseyi kapsıyor.`);
-  const fresh=indices&&indices.bist50?.length===50&&Math.abs(at-Date.parse(indices.checkedAt))<36*3600000;
-  const tier=(c:string)=>fresh?(indices!.bist30.includes(c)?30:indices!.bist50?.includes(c)?50:indices!.bist100.includes(c)?100:999):999;
-  const sorted=[...counts].sort((a,b)=>tier(a[0])-tier(b[0])||b[1]-a[1]||a[0].localeCompare(b[0]));
-  for(const t of [30,50,100]){const members=sorted.filter(([c])=>tier(c)===t);if(members.length)parts.push(`BIST ${t}${t>30?' (önceki gruplar hariç)':''}: `+members.slice(0,limit(5)).map(([c,n])=>`#${c} (${n})`).join(', ')+(members.length>limit(5)?` ve ${members.length-5} hisse`:'')+'.');}
-  const repeats=sorted.filter(([,n])=>n>1);if(repeats.length)parts.push('Tekrarlayanlar: '+repeats.slice(0,limit(8)).map(([c,n])=>`#${c} ${n} kez`).join(', ')+(repeats.length>limit(8)?` ve ${repeats.length-8} hisse`:'')+'.');
-  for(const [c,n] of sorted)rows.push({label:'#'+c,value:`${n} bildirim${tier(c)<999?' · BIST '+tier(c):''}`});
-  if(!fresh)parts.push('Güncel endeks üyeliği doğrulanamadığından endeks ayrımı gösterilmedi.');
- }else{
+ let heading='',footer='KAP kayıtları • '+day+' '+time+' itibarıyla';
+ if(kind==='circuit')return circuitDailyReport(current.map(r=>r.disclosure),indices,at,coverage,preferences);
+ {
   const failed=current.filter(r=>!r.purchases||r.error).length;
   // Each programme table is a snapshot. Later disclosures replace earlier
   // tables for that issuer/programme; identical transactions within a table
@@ -76,13 +67,32 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
  }
  if(coverage)parts.push(coverage);
  let body=parts.join('\n\n');
- if(kind==='circuit'&&preferences?.list)body=parts[0]+'\n\n'+rows.slice(0,preferences.list==='all'?Infinity:preferences.count??5).map(r=>r.label+' ('+r.value.split(' ')[0]+')').join(' ');
  const title='📢 '+heading;
  const source='https://www.kap.org.tr/tr/bildirim-sorgu';
  const doc:Document={source_id:'kap-daily-report',source_name:'KAP günlük kayıt raporu',family:'kap-report',official:true,url:source+'#'+kind+'-'+at,title:heading,body,passages:[{id:'computed_report',text:body}],published_at:new Date(at).toISOString(),primary_urls:current.map(r=>r.disclosure.url),language:'tr'};
- const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+(preferences?.show_time?' • '+time+' itibarıyla':''),card_data:{report:{rows,footer,...(kind==='circuit'?{events:current.map(r=>({id:r.disclosure.id,tickers:[...r.disclosure.subjectCodes],published_at:r.disclosure.publishedAt}))}:{})}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
- if(!preferences?.list&&!twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n')).valid){draft.body=kind==='circuit'?parts[0]+'\n\n'+rows.slice(0,5).map(r=>r.label).join(' '):`${rows.length} hissede pay geri alımı bildirimi.\n\n`+rows.map(r=>rows.length<6?r.label+': '+r.value:r.label).join(' ');}
+ const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:day+(preferences?.show_time?' • '+time+' itibarıyla':''),card_data:{report:{rows,footer}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
+ if(!preferences?.list&&!twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n')).valid){draft.body=`${rows.length} hissede pay geri alımı bildirimi.\n\n`+rows.map(r=>rows.length<6?r.label+': '+r.value:r.label).join(' ');}
  const tweet=twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n'));
  if(!tweet.valid)throw new OutputCapacityError('tweet_capacity_exceeded',{version:1,kind:'tweet',events:current.length,tickers:rows.length,tweet_length:tweet.weightedLength,tweet_limit:280,preference:preferences?.list??'default_summary'});
  return {draft,documents:[doc]};
+}
+
+function circuitDailyReport(current:Disclosure[],indices:Indices|null,at:number,coverage:string,preferences?:OutputPreferences):{draft:Draft;documents:Document[]}{
+ const events=current.map(d=>({id:d.id,tickers:[...d.subjectCodes],published_at:d.publishedAt}));
+ const requested=preferences?.list==='first'?preferences.count??5:CIRCUIT_REPORT_LIMIT;
+ const {rows,selection}=selectCircuitReport(events,indices,at,Math.min(requested,CIRCUIT_REPORT_LIMIT));
+ const headline='Devre kesici',note=circuitOmissionNote(selection);
+ const body=(codes:string[],tags:boolean)=>[codes.map(c=>(tags?'#':'')+c).join(' '),note].filter(Boolean).join('\n');
+ const text=(codes:string[],tags:boolean)=>[headline,body(codes,tags)].filter(Boolean).join('\n\n');
+ const hashtag=twitter.parseTweet(text(selection.selected_tickers,true)),plain=twitter.parseTweet(text(selection.selected_tickers,false));
+ if(!hashtag.valid&&!plain.valid){
+  let fit=0;for(let n=1;n<rows.length;n++){const codes=selection.selected_tickers.slice(0,n),shortNote=circuitOmissionNote({...selection,omitted:selection.total_tickers-n}),candidate=[headline,[codes.join(' '),shortNote].filter(Boolean).join('\n')].join('\n\n');if(twitter.parseTweet(candidate).valid)fit=n;}
+  throw new OutputCapacityError('tweet_capacity_exceeded',{version:1,kind:'tweet',events:events.length,tickers:selection.total_tickers,selected_tickers:rows.length,fit_tickers:fit,tweet_length:plain.weightedLength,tweet_limit:280,hashtag_tweet_length:hashtag.weightedLength,preference:preferences?.list??'default_summary'});
+ }
+ selection.tweet_style=hashtag.valid?'hashtags':'plain';
+ const source='https://www.kap.org.tr/tr/bildirim-sorgu',day=istanbulDay(at);
+ const evidence=`${day}: ${events.length} bildirim; ${selection.total_tickers} farklı hisse. Gösterilen ${rows.length}; gösterilmeyen ${selection.omitted}. Öncelik BIST30, BIST100 (BIST30 hariç), diğer; grup içinde tekrar sayısı azalan, eşitlikte kod artan.\n`+selection.all_rows.map(r=>r.label+': '+r.value).join('\n')+'\n'+coverage;
+ const document:Document={source_id:'kap-daily-report',source_name:'KAP günlük kayıt raporu',family:'kap-report',official:true,url:source+'#circuit-'+at,title:'Devre kesici raporu',body:evidence,passages:[{id:'computed_report',text:evidence}],published_at:new Date(at).toISOString(),primary_urls:current.map(d=>d.url),language:'tr'};
+ const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline,body:rows.length?body(selection.selected_tickers,hashtag.valid):'Kaydedilmiş devre kesici bildirimi yok.',hashtags:[],category:'kap',importance:85,template:'info',card_headline:'Devre kesici raporu',card_body:`${events.length} bildirim · ${selection.total_tickers} farklı hisse`,card_data:{report:{rows,footer:note,events,circuit:selection}},claims:[{text:evidence,evidence:[{document:0,passage:'computed_report',quote:evidence}]}],entities:[],event_key:'circuit-'+at,uncertainties:[],source_notes:[]};
+ return {draft,documents:[document]};
 }

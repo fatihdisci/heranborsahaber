@@ -221,6 +221,7 @@ export function validateDraft(value:unknown,documents:Document[]):{draft:Draft;v
 function formattedPostText(d:Draft):string {
  d=outputView(d);
  const listLimit=tweetListLimit(d,5);
+ if(d.card_data?.report?.circuit)return [d.headline,d.body].filter(Boolean).join('\n\n');
  if(d.card_data?.report?.buyback)return [d.headline,d.body].join('\n\n');
  if(d.card_data?.report)return [headlineWithEmoji(d.headline),d.body,'#Borsa #BIST'].join('\n\n');
  const clean=normalizeHashtagPlacement(d),headline=headlineWithEmoji(clean.headline);

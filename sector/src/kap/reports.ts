@@ -2,6 +2,7 @@ import twitter from 'twitter-text';
 import type {OutputPreferences} from '../output-preferences';
 import {normalize,type Disclosure,type Indices,type fullText} from './parser';
 import type {Document,Draft} from '../types';
+import {OutputCapacityError} from '../output-capacity';
 export const istanbulDay=(at:number)=>new Date(at+10800000).toISOString().slice(0,10);
 const clean=(s:string)=>s.replace(/[|\s]+$/g,'').trim();
 export interface Purchase {ticker:string;day:string;units:string;program:string;priceMicros?:string;}
@@ -81,6 +82,7 @@ export function report(kind:'circuit'|'buyback',records:ReportRecord[],indices:I
  const doc:Document={source_id:'kap-daily-report',source_name:'KAP günlük kayıt raporu',family:'kap-report',official:true,url:source+'#'+kind+'-'+at,title:heading,body,passages:[{id:'computed_report',text:body}],published_at:new Date(at).toISOString(),primary_urls:current.map(r=>r.disclosure.url),language:'tr'};
  const draft:Draft={...(preferences?{output_preferences:preferences}:{}),headline:title,body,hashtags:['Borsa','BIST'],category:'kap',importance:85,template:'info',card_headline:heading,card_body:kind==='circuit'?'Günlük devre kesici raporu':day+(preferences?.show_time?' • '+time+' itibarıyla':''),card_data:{report:{rows,footer,...(kind==='circuit'?{events:current.map(r=>({id:r.disclosure.id,tickers:[...r.disclosure.subjectCodes],published_at:r.disclosure.publishedAt}))}:{})}},claims:[{text:body,evidence:[{document:0,passage:'computed_report',quote:body}]}],entities:[],event_key:kind+'-'+at,uncertainties:[],source_notes:[]};
  if(!preferences?.list&&!twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n')).valid){draft.body=kind==='circuit'?parts[0]+'\n\n'+rows.slice(0,5).map(r=>r.label).join(' '):`${rows.length} hissede pay geri alımı bildirimi.\n\n`+rows.map(r=>rows.length<6?r.label+': '+r.value:r.label).join(' ');}
- if(!twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n')).valid)throw Error('tweet_capacity_exceeded');
+ const tweet=twitter.parseTweet([draft.headline,draft.body,'#Borsa #BIST'].join('\n\n'));
+ if(!tweet.valid)throw new OutputCapacityError('tweet_capacity_exceeded',{version:1,kind:'tweet',events:current.length,tickers:rows.length,tweet_length:tweet.weightedLength,tweet_limit:280,preference:preferences?.list??'default_summary'});
  return {draft,documents:[doc]};
 }

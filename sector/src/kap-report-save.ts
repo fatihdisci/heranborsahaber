@@ -1,6 +1,8 @@
 import {renderMedia} from './media-set';
 import {sha256} from './utils/text';
 import {postText} from './editorial';
+import twitter from 'twitter-text';
+import {OutputCapacityError} from './output-capacity';
 import type {Env,Document,Draft} from './types';
 // Deterministic reports use the existing delivery/retry ledger, without a model
 // lease or an additional Telegram sender.
@@ -11,7 +13,10 @@ export async function saveReport(env:Env,row:{update_id:number;message_id:number
  if(postText(result.draft).length>1024)throw Error('kap_report_caption_limit');
  const hash=await sha256('kap-report:'+row.update_id),id=[hash.slice(0,8),hash.slice(8,12),'4'+hash.slice(13,16),'8'+hash.slice(17,20),hash.slice(20,32)].join('-'),media=`drafts/${id}/1.png`,time=Math.floor(Date.now()/1000),doc=result.documents[0];
  if(!await env.DB.prepare('SELECT id FROM drafts WHERE id=?').bind(id).first()){
-  await renderMedia(env,media,result.draft,env.RENDER_REPORT);
+  try{await renderMedia(env,media,result.draft,env.RENDER_REPORT);}catch(e){
+   if(e instanceof OutputCapacityError){const events=result.draft.card_data?.report?.events,tweet=twitter.parseTweet(postText(result.draft));e.diagnostic={...e.diagnostic,...(events?{events:events.length,tickers:new Set(events.flatMap(e=>e.tickers)).size}:{}),tweet_length:tweet.weightedLength,tweet_limit:280,preference:result.draft.output_preferences?.list??'default_summary'};}
+   throw e;
+  }
   await env.DB.batch([
    ...(day?[env.DB.prepare("INSERT INTO buyback_days VALUES(?,'kap',?,'legacy')").bind(day,id)]:[]),
    env.DB.prepare('INSERT OR IGNORE INTO sources(id,config,enabled) VALUES(?,?,0)').bind(doc.source_id,JSON.stringify({id:doc.source_id,name:doc.source_name,method:'reference'})),

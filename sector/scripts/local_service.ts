@@ -17,6 +17,7 @@ import {refreshNewsRequests} from '../src/news-inbox';
 import {tick,seed,deliver,errorCode} from '../src/pipeline';
 import {leaseJob,submitJob,ingestOfficial} from '../src/bridge';
 import {telegram} from '../src/telegram';
+import {observeAccountPosts,sendDailyAccountReport} from '../src/nitter-daily-report';
 import {registerTelegramCommands} from '../src/telegram-commands';
 import {KapStore} from '../src/kap/store';
 import {KapDelivery} from '../src/kap-delivery';
@@ -80,6 +81,12 @@ async function modelLoop(){while(!stopping()){let job:Awaited<ReturnType<typeof 
 async function newsLoop(){let official=0;while(!stopping()){try{await tick(env);await status('collector_health',{ok:true,at:new Date().toISOString()});if(Date.now()-official>10*60_000){try{await scanOfficial(async(_path,value)=>ingestOfficial(env,value as Record<string,unknown>),directory+'/official-state.json');official=Date.now();await status('official_health',{ok:true,at:new Date().toISOString()});}catch(e){await status('official_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}}catch(e){await status('collector_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}if(Date.now()-lastArtifactCleanup>=60*60_000){try{await cleanupSourceArtifacts();lastArtifactCleanup=Date.now();}catch(e){await status('artifact_cleanup_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}}await pause(60_000);}}
 async function fintablesXLoop(){while(!stopping()){try{await pollFintablesX(env);}catch(e){await status('fintables_x_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
 async function spkXLoop(){while(!stopping()){try{await pollSpkX(env);}catch(e){await status('spk_x_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(10_000);}}
+async function xAccountReportLoop(){let nextPoll=0;while(!stopping()){
+ const now=Date.now();
+ if(now>=nextPoll){try{await observeAccountPosts(env,now);}catch(e){await status('nitter_account_health',{ok:false,at:now,code:errorCode(e)});}nextPoll=Date.now()+5*60_000;}
+ try{const result=await sendDailyAccountReport(env,Date.now());if(result.state==='sent')await status('nitter_daily_report_health',{ok:true,at:new Date().toISOString(),state:'sent'});}catch(e){await status('nitter_daily_report_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}
+ await pause(15_000);
+}}
 async function designLoop(){while(!stopping()){try{await redesignOne(env,png);}catch(e){await status('design_health',{ok:false,at:new Date().toISOString(),code:errorCode(e)});}await pause(1000);}}
 async function xLoop(){while(!stopping()){try{
  const keys=JSON.parse(await readFile(directory+'/x-credentials.json','utf8'));
@@ -125,5 +132,5 @@ try{await withServiceLock(lock,()=>unlink(lockPath),async()=>{
   const stopCheck=setInterval(async()=>{const completed=await env.DB.prepare("SELECT COUNT(*) AS n FROM model_jobs WHERE state='complete'").first<{n:number}>();if((completed?.n??0)>0){shutdown.stop();clearInterval(stopCheck);}},1000);
   try{await modelLoop();}finally{clearInterval(stopCheck);}return;
  }
- await Promise.all([spkXLoop(),fintablesXLoop(),newsLoop(),modelLoop(),telegramLoop(),telegramCommandsLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);
+ await Promise.all([spkXLoop(),fintablesXLoop(),xAccountReportLoop(),newsLoop(),modelLoop(),telegramLoop(),telegramCommandsLoop(),deliveryLoop(),kapLoop(),manualLoop(),reportCacheLoop(),requestsLoop(),designLoop(),xLoop()]);
 });}finally{shutdown.dispose();}

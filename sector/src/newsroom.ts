@@ -1,3 +1,4 @@
+import {newsMenuCallback,refreshNewsMenu,interestSummary} from './news-menu';
 import {digestDeliveryStatus,newsReadiness} from './news-readiness';
 import type {Env} from './types';
 import {telegram,TelegramError} from './telegram';
@@ -9,7 +10,7 @@ export async function newsroomMessage(env:Env,m:{text?:string;forward_origin?:un
  if(/^\/arsiv(?:\s|$)/.test(text)){const q=text.slice(6).trim();const rows=await searchNewsArchive(env,q);await send(env,rows.length?rows.map((r:any)=>`${r.id} · ${r.title}\n${r.route} · ${r.url}`).join('\n\n'):'Arşivde eşleşen kayıt yok.');return true;}
  const link=/^\/olay ([a-f0-9]{32}) ([a-f0-9]{32})$/.exec(text);if(link){const count=(await env.DB.prepare('SELECT COUNT(*) n FROM news_candidates WHERE id IN (?,?)').bind(link[1],link[2]).first<any>())?.n;if(count!==2){await send(env,'İki farklı ve kayıtlı aday kimliği gerekli.');return true;}await env.DB.prepare('INSERT OR IGNORE INTO news_event_links VALUES(?,?,?,?)').bind(link[1],link[2],env.TELEGRAM_USER_ID!,Date.now()).run();await send(env,'Olay ilişkisi sahibin onayıyla kaydedildi. Haberler bastırılmadı veya bağımsız teyit sayılmadı.');return true;}
  const review=/^\/aday ([a-f0-9]{32}) (instant|digest|archive)$/.exec(text);if(review){await env.DB.prepare('INSERT OR IGNORE INTO news_feedback VALUES(?,?,?,?)').bind(env.TELEGRAM_UPDATE_ID??Date.now(),review[1],'review:'+review[2],Date.now()).run();await send(env,'İnceleme etiketi kaydedildi; canlı rota değiştirilmedi.');return true;}
- if(text==='/golgerapor'){const prefs=await newsPreferences(env);await send(env,JSON.stringify(await newsReadiness(env,prefs,NEWS_RULE_VERSION),null,2));return true;}
+ if(text==='/golgerapor'){const prefs=await newsPreferences(env);await send(env,JSON.stringify({...await newsReadiness(env,prefs,NEWS_RULE_VERSION),interest_feedback:await interestSummary(env)},null,2));return true;}
  if(text==='/haberfiltre'){const prefs=await newsPreferences(env);const counts=(await env.DB.prepare('SELECT route,legacy_eligible,COUNT(*) n FROM news_candidates GROUP BY route,legacy_eligible').all()).results;await send(env,`Haber filtresi: ${prefs.mode}${prefs.requested_mode==='active'&&prefs.mode!=='active'?' (aktif istek hazırlık kontrolünde durduruldu)':''}. Seçki yapılandırması: ${prefs.digest_enabled?'açık':'kapalı'} (${prefs.digest_times.join(', ')} İstanbul). Seçki gönderimi: ${digestDeliveryStatus(prefs)?'açık':'kapalı'}${prefs.mode==='shadow'?' — gölge modda gönderim kapalı':''}.
 ${(prefs.readiness_reasons??[]).join('\n')}
 ${JSON.stringify(counts)}
@@ -24,9 +25,10 @@ export async function sendSelection(env:Env,since=0,ids?:string[]){
  await send(env,rows.length?'Toplu seçki · Hazırlanmasını istediğin habere dokun.':'Seçkide güncel aday yok.',{reply_markup:JSON.stringify({inline_keyboard:rows.map(r=>[{text:r.title.slice(0,85),callback_data:'pick:'+r.id}])})});
 }
 export async function newsroomCallback(env:Env,data:string,messageId:number,update:number):Promise<string|null>{
+ const menu=await newsMenuCallback(env,data,messageId,update);if(menu!==null)return menu;
  const feedback=/^nf:(reason|irrelevant|repeat|digest):([a-f0-9-]{36})$/.exec(data);
  if(feedback){const row=await env.DB.prepare('SELECT n.* FROM news_cards c JOIN news_candidates n ON n.article_id=c.article_id WHERE c.id=? AND c.message_id=?').bind(feedback[2],messageId).first<any>();if(!row)return 'Bu kartta yeni filtre kararı bulunmuyor.';
-  if(feedback[1]==='reason'){const group=(await env.DB.prepare('SELECT source_id,family,url,title,published_at FROM news_candidates WHERE event_group=?').bind(row.event_group).all()).results;await send(env,`Rota: ${row.route}\nNedenler: ${row.reasons}\nEşleşme: ${row.confidence}\nKural: ${row.rule_version}\nİlişki önerileri: ${row.suggestions}\nAynı olay grubu: ${row.event_group}\nBağımsız teyit sayılmaz; kaynak ailesi: ${row.family}\nAynı olay kaynakları: ${JSON.stringify(group)}`);return 'Karar ayrıntıları açıldı.';}
+  if(['reason','irrelevant'].includes(feedback[1])){await refreshNewsMenu(env,feedback[2],messageId,'more');return 'Güncel menü açıldı.';}
   await env.DB.prepare('INSERT OR IGNORE INTO news_feedback VALUES(?,?,?,?)').bind(update,row.id,feedback[1],Date.now()).run();return 'Geri bildirim kaydedildi. Şirket susturulmadı; kalıcı kural değiştirilmedi.';
  }
  const pick=/^pick:([a-f0-9]{32})$/.exec(data);if(!pick)return null;

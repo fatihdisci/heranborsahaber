@@ -1,56 +1,42 @@
-# Telegram düğme rehberi
+# Sade Telegram arayüzü
 
-Metni kopyala (📋) düğmesi kaldırıldı. Tweet metni Telegram'ın kendi metin seçme/kopyalama özelliğiyle alınabilir. Düğmeler içerik türüne ve yayın durumuna göre görünür; hepsi her kartta çıkmaz.
+## Haber önizlemesi
 
-## Hazır tweet ve görsel kartında
+Ana menüde yalnız **İçerik oluştur**, **❤️**, **👎** ve **Diğer** görünür.
 
-| Düğme | İşlev |
+- İçerik oluştur: mevcut tam kaynak okuma/model/kanıt denetimiyle tweet ve görsel hazırlar. Yinelenen istek yeni model işi oluşturmaz.
+- ❤️: haber/konu ilgimi çekiyor. Yayın onayı, paylaşıldı işareti veya acil rota değildir.
+- 👎: bu tarz haber istemiyorum. Şirketi/kaynağı otomatik susturmaz.
+- Aynı geri bildirim düğmesine tekrar basmak seçimi kaldırır; diğerine basmak değiştirir. Seçim `✓` ile görünür. Yerel inline düğmelerdir; native reaksiyon teslimatına veya grup sohbetine dayanmaz.
+- Diğer: Kaynağı aç; ilgili filtre adayı hâlâ kayıtlıysa Tekrar haber/Acil değil; gerekiyorsa belirsiz teslimat için açık yeniden gönderim onayı; Geri.
+
+Diğer/Geri ve beğeni seçimleri yalnız mevcut mesajın klavyesini değiştirir. Ayrı teşekkür veya menü mesajı oluşturmaz. Mevcut ayrıntılı geri bildirimler silinmez. Sahip, kaynak article/candidate kimliği ve callback makbuzu kaydedilir. Tekrarlı/eski callback seçim değiştirmez; tıklanmama olumsuz sayılmaz. `/golgerapor` ilgi seçimlerini üç rotalı insan incelemesinden ayrı gösterir.
+
+## Hazır tweet–görsel
+
+Ana menü: **X’te paylaş**, **Düzenle**, **Diğer**. X düğmesi bağlantı/uygunluk koşullarına bağlıdır; gerçek tweet+görsel yayını için açık onaydır. Sahip, revision, süre, medya, günlük 20 API sınırı ve tekrar/belirsiz sonuç korumaları korunur.
+
+Diğer menüsünde yalnız o içerikte kullanılabilen işlemler görünür:
+
+| İşlem | Etkisi |
 |---|---|
-| 🔗 | Haberin veya bildirimin kaynak bağlantısını açar. |
-| ✏️ | Tweet ve görsel metnini düzenlemek için talimat ister. Yeni içerik mevcut kaynak ve sayı kontrollerinden geçer. |
-| 🎨 | Desteklenen şablonlarda yerleşim seçme menüsünü açar. Devre kesici ve rapor gibi sabit düzenlerde gösterilmez. |
-| 🚀 | Açık paylaşım onayıdır: tweet ve görseli X API paylaşım kuyruğuna alır. Günlük 20 API paylaşımı bütçesi, güncel revision, süre ve tekrar korumaları uygulanır. X bağlantısı etkin olduğunda gösterilir; geçerlilik basıldığında yeniden denetlenir. Bu düğmeye basmak gerçek yayın isteğidir. |
-| ✅ | Elle X'e gönderdiğin içeriği paylaşıldı işaretler. Günlük yayın sayacı ve zaman aralığı uyarısı güncellenir. X'e gönderim yapmaz. |
-| ⏸ | İçeriği ertelendi işaretler. Zamanlı gönderim planlamaz ve X'e paylaşmaz. |
-| 📊 | Bugünkü toplam, manuel/API ayrımı, API bütçesi, son yayın ve paylaşım aralığı önerisini gösterir. |
-| 🖼 | Kartın sıkıştırılmamış orijinal PNG dosyasını Telegram belgesi olarak gönderir. Panoya kopyalamaz; AI çağırmaz. |
-| 🧾 | Editör için kaynakları, iddiaların dayanaklarını, veri dönemini, belirsizlikleri ve kaynak notlarını açar. Paylaşım görseline yazı eklemez. |
-| 🔎 | Kartta okunan tablo satırlarını ve mevcutsa değer/birim/yön/dönem alanlarını gösterir. |
-| 🔧 | Desteklenen tablo hücresini düzeltmek için yanıt ister; örnek `buy.0.value = 123 lot`. Önce/sonra farkı kaydedilir, mevcut denetimle yeniden hazırlanır. Kullanıcı düzeltmesi resmî teyit sayılmaz. |
-| 📄 | Genel geri alım raporunun bütün satırlarını CSV dosyası olarak verir. |
+| Kaynağı aç | Asıl kaynağı açar. |
+| Tasarımı değiştir | Aynı kartta düzen seçeneklerini açar. Sabit devre kesici/rapor şablonunda yoktur. Rastgele veya adlandırılmış düzen seçilince metin/kanıt korunur. |
+| PNG indir | Orijinal PNG dosyasını gönderir. Panoya kopyalama veya yeni AI üretimi değildir. |
+| Elle paylaştım | Manuel yayın beyanını kaydeder. X'e paylaşmaz. |
+| Ertele | Manuel erteleme işaretidir; otomatik gönderim planlamaz. |
+| Kanıtlar | Editöre kaynak/iddia/dayanak/belirsizlik görünümünü açar. |
+| Tablo verileri | Uygun yapılandırılmış tablo/rapor satırlarını gösterir. |
+| Hücre düzelt | Uygun tablolarda hedefli düzeltme ister; fark kaydı ve mevcut denetim akışı korunur. |
+| CSV indir | Genel geri alım raporunda CSV verir. |
+| Geri | Aynı kartın ana menüsüne döner. |
 
-## Yayınlandı veya ertelendi durumunda
+**Yayımlanmış:** yalnız Yayın özeti ve Diğer. Özet bu içeriğin yöntem/zamanını gösterir. Manuel saati düzelt/İşareti geri al yalnız uygun manuel kayıtta bulunur; X'teki tweeti silmez. API yayını veya sonucu belirsiz işlem manuel geri alınamaz. Sıradaki/belirsiz API işleminde ikinci paylaşım düğmesi gösterilmez.
 
-| Düğme | İşlev |
-|---|---|
-| ☑️ | Paylaşıldı durumundaki kartın yayın özetini/sayacını gösterir. |
-| 🕒 | Elle paylaşıldı işaretlenen içeriğin yayın saatini düzeltmek için yanıt ister. İstanbul saati kullanılır. API yayınının saatini değiştirmez. |
-| ↩️ | Manuel paylaşıldı işaretini geri alır. X'teki tweeti silmez; API yayınını geri almaz. |
-| ▶️ | Ertelendi işaretini kaldırıp içeriği hazır duruma döndürür. X'e göndermez. |
+**Ertelenmiş:** Hazıra al ve Diğer. Hazıra al erteleme işaretini kaldırır; yayın başlatmaz.
 
-## Tasarım menüsünde
+Metni kopyala düğmesi yoktur. Genel yayın sayacı `/yayinlar`, sistem sağlığı `/durum`, filtre `/haberfiltre`, gölge/ilgi raporu `/golgerapor` ile ana komut menüsündedir. Haber paneli mevcut Mini App'i açar. Bu arayüz değişikliği filtreyi veya seçkiyi etkinleştirmez.
 
-| Düğme | İşlev |
-|---|---|
-| 🎲 | Mevcut yerleşimden farklı desteklenen bir düzeni rastgele seçer. Tweet ve kanıt metni değişmez. |
-| editorial | Standart yayın yerleşimini seçer. |
-| frame | Çerçeveli yerleşimi seçer. |
-| rail | Sol dikey şeritli yerleşimi seçer. |
-| masthead | Üst başlık bloğu ağırlıklı yerleşimi seçer. |
-| center | Ortalanmış başlıklı yerleşimi seçer. |
-| brief | Bantlar ve alt bilgi bloğuyla kısa haber yerleşimini seçer. |
+## Eski kartların geçişi
 
-## Haber önizlemesinde
-
-| Düğme | İşlev |
-|---|---|
-| 🔗 | Kaynağı açar. |
-| ✨ | Haberin tam metnini okuyup tweet ve görsel hazırlamasını ister. Aynı istek iki kez model işi oluşturmaz. |
-| ℹ️ | Yeni haber filtresinin rota kararını, gerekçelerini, eşleşme güvenini ve olay kaynaklarını gösterir. |
-| 👎 | “İlgisiz” geri bildirimi kaydeder. Kaynağı veya şirketi otomatik susturmaz. |
-| 🔁 | “Tekrar haber” geri bildirimi kaydeder. Tweeti/kartı yeniden üretmez. |
-| 🕓 | “Acil değil / seçkilik” geri bildirimi kaydeder. Tek başına rotayı değiştirmez veya seçki gönderimini açmaz. |
-| Seçkideki haber başlığı | Seçilen haber için mevcut tam kaynak/model/denetim akışını başlatır. |
-| Mesaj gelmediyse yeniden gönder (çift olabilir) | Yalnız belirsiz teslimatta gösterilir. Hazır içeriğin yeniden teslimini açıkça onaylar; ilk mesaj gelmişse kopya oluşturabilir. Yeni AI üretimi değildir. |
-
-“Haber paneli” menü düğmesi mevcut Mini App'i açar. Otomatik filtre gölge modda, otomatik seçki kapalıdır. Geri bildirim düğmeleri bunları etkinleştirmez.
+`refresh_telegram_menus.ts` yalnız `editMessageReplyMarkup` kullanır; metin, caption, görsel, revision veya yayın durumunu değiştirmez. Sadece mevcut mesaj kimliği ve sürümü hâlâ eşleşen kartlar yenilenir. Aynı mesaj kimliği tekrar planlanmaz. Özel yerel JSON makbuzuyla yeniden başlatılabilir; 429 beklemesi ve sınırlı retry vardır. Kaynak/kanıt veya menü açma testleri sahte taşıyıcılarla yapılır; gerçek X yayını testi yapılmaz. Eski sürümsüz manuel yayın/copy callback'leri güncel menüye yönlendirilir; sürümlü kontroller sunucuda yeniden doğrulanır.

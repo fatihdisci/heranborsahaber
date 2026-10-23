@@ -1,8 +1,9 @@
+import {refreshDraftMenu} from './card-menu';
 import {preparePublication,snapshotStatement} from './publication-snapshot';
 import {publicationAdvice,dailyAdvice,cadence,publicationPlan} from './publication-policy';
 export {cadence} from './publication-policy';
 import type {Env} from './types';
-import {telegram,keyboard} from './telegram';
+import {telegram} from './telegram';
 import {postText} from './editorial';
 export const publicationSQL=`SELECT draft_id,MIN(finished_at) published_at,'api' method FROM x_posts WHERE state='sent' GROUP BY draft_id UNION ALL SELECT draft_id,published_at,'manual' method FROM publication_marks m WHERE state='published' AND NOT EXISTS(SELECT 1 FROM x_posts x WHERE x.draft_id=m.draft_id AND x.state='sent')`;
 export async function publicationSummary(env:Env,now=Date.now()){
@@ -12,17 +13,7 @@ export async function publicationSummary(env:Env,now=Date.now()){
  const reserved=(await env.DB.prepare("SELECT COUNT(*) n FROM x_posts WHERE day=? AND state IN ('queued','uploading','posting','sent','uncertain')").bind(day).first<{n:number}>())?.n??0;
  const api=today.filter(r=>r.method==='api').length;return {day,reserved,total:today.length,manual:today.length-api,api,last,note:publicationAdvice(last,today.length,now)};
 }
-export async function refreshPublicationCard(env:Env,id:string){
- const r=await env.DB.prepare('SELECT * FROM drafts WHERE id=?').bind(id).first<any>();if(!r?.message_id)return;
- const mark=await env.DB.prepare('SELECT state FROM publication_marks WHERE draft_id=?').bind(id).first<{state:string}>();
- const api=await env.DB.prepare("SELECT state FROM x_posts WHERE draft_id=? AND state IN ('queued','uploading','posting','sent','uncertain') LIMIT 1").bind(id).first<{state:string}>();
- const published=api?.state==='sent'||mark?.state==='published';
- const m=keyboard(id,r.revision,JSON.parse(r.documents),postText(JSON.parse(r.content)),env.X_PUBLISH_ENABLED==='true'&&!published&&!api,JSON.parse(r.content));
- if(published){m.inline_keyboard=m.inline_keyboard.map(row=>row.filter(b=>!('callback_data'in b&&(b.callback_data?.startsWith('pub:mark:')||b.callback_data?.startsWith('pub:defer:'))))).filter(row=>row.length);m.inline_keyboard.push([{text:'☑️',callback_data:'pub:stats:'+id},...(api?[]:[{text:'🕒',callback_data:'pub:time:'+id},{text:'↩️',callback_data:'pub:undo:'+id}])]);}
- if(JSON.parse(r.content).card_data?.report?.general)m.inline_keyboard.push([{text:'📄',callback_data:`asset:csv:${id}:${r.revision}`},{text:'🖼',callback_data:`asset:image:${id}:${r.revision}`}]);
- if(mark?.state==='deferred'&&!published)m.inline_keyboard.push([{text:'▶️',callback_data:'pub:undo:'+id}]);
- await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(r.message_id),reply_markup:JSON.stringify(m)}));
-}
+export async function refreshPublicationCard(env:Env,id:string){await refreshDraftMenu(env,id);}
 export async function publicationAction(env:Env,action:string,id:string,update:number,messageId?:number,now=Date.now()){
  const row=await env.DB.prepare("SELECT message_id,delivery_state FROM drafts WHERE id=?").bind(id).first<{message_id:number;delivery_state:string}>();
  if(!row||row.delivery_state!=='sent'||messageId!==undefined&&row.message_id!==messageId)return 'Güncel içerik kartını kullan.';

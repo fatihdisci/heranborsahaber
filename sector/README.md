@@ -277,3 +277,5 @@ Yayın kaydı artık revision, metin, kaynak bağlantıları ve PNG hash'inin de
 Etkinleştirme, geri dönüş, geçiş testi ve kalan kararlar: [editör iş akışı inceleme raporu](docs/editor-workflow-review.md). Bu geliştirme push/deploy yapmadan inceleme için hazırlanmıştır.
 
 Editör iş akışının takip düzeltmeleri, ayrı Python/OCR/build sonuçları ve güncel ZIP hash’i: [takip incelemesi](docs/editor-workflow-followup.md). Aktif filtreye geçişin sürümlü insan incelemesi şartları: [hazırlık kontrolü](docs/news-filter-readiness.md). Bu dosyalar etkinleştirme yapmaz.
+
+Telegram ana menüleri sadeleştirilmiştir: haber önizlemesinde İçerik oluştur / ❤️ / 👎 / Diğer; hazır kartta X’te paylaş / Düzenle / Diğer. İkincil işlemler aynı karttaki açılır menüdedir; Geri ana menüye döner. Yayın sayacı `/yayinlar`, sağlık `/durum`, filtre `/haberfiltre`, gölge ve ayrı ilgi özeti `/golgerapor` ile erişilir. Beğeni seçimi yayın veya rota onayı değildir. [Güncel rehber](docs/telegram-buttons.md).

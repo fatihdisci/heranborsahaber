@@ -1,3 +1,4 @@
+import {previewMarkup,refreshNewsMenu} from './news-menu';
 import {recordNewsCandidate,newsPreferences} from './news-routing';
 import {retryDraftDelivery,deliveryTarget} from './delivery-recovery';
 import {topicScore} from './editorial';
@@ -15,7 +16,7 @@ export function previewDuplicate(a:string,b:string):boolean {
  const subject=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('tr-TR').replace(/[^\p{L}\p{N}]+/gu,' ').trim().split(' ').slice(0,2).join(' ');
  return subject(a)===subject(b)&&numbers(a)===numbers(b)&&titleSimilarity(a,b)>=.9;
 }
-function markup(id:string,url:string){return {inline_keyboard:[[{text:'🔗',url}],[{text:'✨',callback_data:'news:'+id},{text:'ℹ️',callback_data:'nf:reason:'+id}],[{text:'👎',callback_data:'nf:irrelevant:'+id},{text:'🔁',callback_data:'nf:repeat:'+id},{text:'🕓',callback_data:'nf:digest:'+id}]]};}
+
 type ProgressCard={id:string;message_id:number;title:string;summary:string;url:string;config:string;status:string;job_state:string|null;delivery_state:string|null};
 export function newsProgressNote(row:Pick<ProgressCard,'status'|'job_state'|'delivery_state'>,paused=false):string {
  if(row.delivery_state==='sent')return 'Tweet ve görsel hazırlandı.';
@@ -34,7 +35,7 @@ async function showNewsProgress(env:Env,row:ProgressCard,note:string):Promise<bo
  if(previous.retry_at>Date.now())return false;
  const save=(value:unknown)=>env.DB.prepare('INSERT INTO system_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,JSON.stringify(value)).run();
  try{
-  await telegram(env,'editMessageText',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(row.message_id),text:previewText(JSON.parse(row.config).name,row.title,row.summary)+'\n\n'+note,link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(markup(row.id,row.url))}));
+  await telegram(env,'editMessageText',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(row.message_id),text:previewText(JSON.parse(row.config).name,row.title,row.summary)+'\n\n'+note,link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(await previewMarkup(env,row.id,row.url))}));
   await save({note});
   return true;
  }catch(e){
@@ -51,7 +52,7 @@ export async function requestNews(env:Env,id:string,messageId:number,confirmedRe
   if(result==='sent'){await env.DB.prepare("UPDATE news_cards SET state='complete' WHERE id=?").bind(id).run();return 'Bu haberin tweet ve görseli zaten hazırlandı.';}
   if(result==='queued'){await env.DB.prepare("UPDATE news_cards SET state='model_queued' WHERE id=?").bind(id).run();return 'Hazır tweet ve görselin teslimatı sıraya alındı. Yeniden AI kullanılmayacak.';}
   if(result==='confirm'){
-   if(env.MODE==='telegram_review')await telegram(env,'editMessageReplyMarkup',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(messageId),reply_markup:JSON.stringify({inline_keyboard:[[{text:'🔗',url:existing.url}],[{text:'Mesaj gelmediyse yeniden gönder (çift olabilir)',callback_data:`newsretry:${id}:${existing.revision}`}]]})}));
+   if(env.MODE==='telegram_review')await refreshNewsMenu(env,id,messageId,'more');
    return 'Teslimat belirsiz; mesaj gelmiş olabilir. Yeniden gönderim için karttaki onay düğmesini kullan.';
   }
   return 'Hazır taslak için güvenli yeniden deneme sınırı veya süre doldu; yeniden içerik üretilmedi.';
@@ -100,7 +101,7 @@ export async function announceNews(env:Env):Promise<void> {
   }
   const locked=await env.DB.prepare("UPDATE news_cards SET state='sending',next_try=? WHERE id=? AND state='waiting'").bind(time+120,id).run();if(!locked.meta.changes)continue;
   try{
-   const sent=await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:previewText(JSON.parse(a.config).name,a.title,a.summary),link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(markup(id,a.url))}));
+   const sent=await telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text:previewText(JSON.parse(a.config).name,a.title,a.summary),link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(await previewMarkup(env,id,a.url))}));
    await env.DB.prepare("UPDATE news_cards SET state='sent',message_id=? WHERE id=?").bind(Number(sent.message_id),id).run();
   }catch(e){const retry=e instanceof TelegramError&&e.code===429;await env.DB.prepare('UPDATE news_cards SET state=?,next_try=? WHERE id=?').bind(retry?'waiting':'uncertain',time+(e instanceof TelegramError?e.retryAfter:300),id).run();}
  }
@@ -115,6 +116,6 @@ export async function refreshNewsRequests(env:Env):Promise<void>{
   const deliveryProblem=['uncertain','failed','suppressed'].includes(r.delivery_state??'');
   const known=r.draft_id?await deliveryTarget(env,r.draft_id,r.draft_message_id):undefined;
   const note=r.delivery_state==='suppressed'?'Bu içerik güncel gönderim tercihlerine göre kapatıldı.':deliveryProblem?(r.delivery_state==='uncertain'&&!known?'Tweet ve görsel hazır, ancak teslimat doğrulanamadı. Mesaj gelmiş olabilir. Aynı düğme güvenli yeniden gönderim seçeneğini açar.':'Tweet ve görsel hazır. Teslimatı aynı düğmeyle yeniden deneyebilirsin; AI tekrar çalışmaz.'):'Taslak doğrulanamadı. Aynı düğmeyle yeniden deneyebilirsin.';
-  if(changed.meta.changes&&env.MODE==='telegram_review')await telegram(env,'editMessageText',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(r.message_id),text:previewText(JSON.parse(r.config).name,r.title,r.summary)+'\n\n'+note,link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(markup(r.id,r.url))})).catch(()=>{});
+  if(changed.meta.changes&&env.MODE==='telegram_review')await telegram(env,'editMessageText',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,message_id:String(r.message_id),text:previewText(JSON.parse(r.config).name,r.title,r.summary)+'\n\n'+note,link_preview_options:JSON.stringify({is_disabled:true}),reply_markup:JSON.stringify(await previewMarkup(env,r.id,r.url))})).catch(()=>{});
  }
 }

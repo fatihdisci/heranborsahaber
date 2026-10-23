@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {localDatabase} from '../src/local-adapters';
-import {keyboard} from '../src/telegram';
+import {keyboard} from '../src/telegram';import {draftKeyboard} from '../src/telegram-ui';
 import {postText} from '../src/editorial';
 import worker from '../src/worker';
 import type {Env,Document,Draft} from '../src/types';
@@ -21,19 +21,16 @@ test('draft keyboards omit text-copy for short and long captions while retaining
  for(const length of [1,256,257,1024]){
   const buttons=keyboard(id,2,docs,'a'.repeat(length),true).inline_keyboard.flat();
   assert(!buttons.some(b=>b.text==='📋'||'copy_text' in b||('callback_data' in b&&b.callback_data?.startsWith('asset:text:'))));
-  for(const prefix of ['s:edit:','xpost:','pub:mark:','pub:stats:','asset:image:'])assert(buttons.some(b=>'callback_data' in b&&b.callback_data?.startsWith(prefix)),prefix);
-  assert.equal(buttons.find(b=>'url' in b)?.url,docs[0].url);
+  for(const prefix of ['s:edit:','xpost:','dm:more:'])assert(buttons.some(b=>'callback_data' in b&&b.callback_data?.startsWith(prefix)),prefix);
+  assert.equal(draftKeyboard(id,2,docs,true,undefined,{},'more').inline_keyboard.flat().find(b=>b.url)?.url,docs[0].url);
  }
 });
-test('legacy text callback still sends exact text with UTF-16 entity, without AI or duplicate delivery',async()=>{
+test('legacy text callback cannot send copy messages or create model jobs',async()=>{
  const env=await fixture(),original=globalThis.fetch,calls:{url:string;body:URLSearchParams}[]=[];
  globalThis.fetch=async(url,init)=>{calls.push({url:String(url),body:init!.body as URLSearchParams});return Response.json({ok:true,result:{message_id:101}});};
  try{
   await press(env);await press(env);
-  const messages=calls.filter(c=>c.url.endsWith('/sendMessage'));assert.equal(messages.length,1);
-  const text=postText(draft);assert.equal(messages[0].body.get('text'),text);
-  assert.deepEqual(JSON.parse(messages[0].body.get('entities')!),[{type:'pre',offset:0,length:text.length}]);
-  assert.equal(messages[0].body.has('parse_mode'),false);
+  assert.equal(calls.filter(c=>c.url.endsWith('/sendMessage')).length,0);
   assert.equal((await env.DB.prepare('SELECT state FROM drafts').first<{state:string}>())!.state,'pending');
   assert.equal((await env.DB.prepare('SELECT count(*) AS n FROM model_jobs').first<{n:number}>())!.n,0);
  }finally{globalThis.fetch=original;}

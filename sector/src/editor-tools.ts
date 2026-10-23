@@ -1,12 +1,13 @@
+import {refreshDraftMenu} from './card-menu';
 import type {Env,Draft,Document} from './types';
-import {telegram} from './telegram';import {enqueueEdit} from './bridge';import {CARD_LAYOUTS} from './card-layout';
+import {telegram} from './telegram';import {enqueueEdit} from './bridge';
 const now=()=>Math.floor(Date.now()/1000);
 const send=(env:Env,text:string,extra:Record<string,string>={})=>telegram(env,'sendMessage',new URLSearchParams({chat_id:env.TELEGRAM_CHAT_ID!,text,...extra}));
 export function evidenceView(d:Draft,docs:Document[],verification:string){
  return {sources:docs.map(doc=>({name:doc.source_name,url:doc.url,official:doc.official,period:doc.published_at,owner_correction:doc.source_id==='editor-correction'})),claims:(d.claims??[]).map(c=>({claim:c.text,excerpts:(c.evidence??[]).map(e=>({source:e.document,passage:e.passage,quote:e.quote.slice(0,240)}))})),uncertainties:d.uncertainties,source_notes:d.source_notes??[],verification};
 }
 export function tableView(d:Draft,docs:Document[]){
- const data=d.card_data;return (['buy','sell','holdings','metrics'] as const).flatMap(side=>(data?.[side]??[]).map((r,i)=>({path:`${side}.${i}`,subject:r.label,value:r.value,unit:r.value.match(/(?:TL|USD|EUR|lot|adet|%)/gi)?.join(' ')??null,direction:side,period:data?.as_of??null,published_at:docs[0]?.published_at??null})));
+ const data=d.card_data;if(data?.report?.general)return data.report.general.rows.map((r,i)=>({path:`report.general.rows.${i}`,subject:r.ticker,value:r.lots,unit:'lot',direction:'buyback',price:r.price,amount:r.amount,period:data.report!.general!.day}));if(data?.report)return data.report.rows.map((r,i)=>({path:`report.rows.${i}`,subject:r.label,value:r.value,unit:null,direction:'report',period:docs[0]?.published_at??null}));if(data?.tickers?.length)return data.tickers.map((ticker,i)=>({path:`tickers.${i}`,subject:ticker,value:null,unit:null,direction:'circuit',period:docs[0]?.published_at??null}));return (['buy','sell','holdings','metrics'] as const).flatMap(side=>(data?.[side]??[]).map((r,i)=>({path:`${side}.${i}`,subject:r.label,value:r.value,unit:r.value.match(/(?:TL|USD|EUR|lot|adet|%)/gi)?.join(' ')??null,direction:side,period:data?.as_of??null,published_at:docs[0]?.published_at??null})));
 }
 export async function editorCallback(env:Env,data:string,messageId:number):Promise<string|null>{
  const m=/^ed:(data|evidence|correct|layout):([a-f0-9-]{36}):(\d+)$/.exec(data);if(!m)return null;
@@ -14,7 +15,7 @@ export async function editorCallback(env:Env,data:string,messageId:number):Promi
  const d=JSON.parse(row.content) as Draft,docs=JSON.parse(row.documents) as Document[];
  if(m[1]==='layout'){
   if(d.template==='circuit'||d.card_data?.report)return 'Bu şablon tek sabit düzen kullanır.';
-  await send(env,'Görsel düzenini seç.',{reply_markup:JSON.stringify({inline_keyboard:[[{text:'🎲',callback_data:`design:${row.id}:${row.revision}`}],...CARD_LAYOUTS.map(l=>[{text:l,callback_data:`design:${row.id}:${row.revision}:${l}`}])]})});return 'Düzen seçenekleri açıldı.';
+  await refreshDraftMenu(env,row.id,'layouts');return '';
  }
  if(m[1]==='correct'){
   const p=await send(env,'Hücreyi bu mesaja yanıtlayarak düzelt: buy.0.value = 123 lot\nAlanlar: buy / sell / holdings / metrics, sıfırdan başlayan satır, label / value. Düzeltme kullanıcı beyanı olarak kaydedilecek ve mevcut denetimden geçecek.',{reply_markup:JSON.stringify({force_reply:true,selective:true})});

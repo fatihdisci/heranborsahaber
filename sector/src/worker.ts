@@ -1,3 +1,5 @@
+import {cardMenuCallback,refreshDraftMenu} from './card-menu';
+import {publicationState} from './telegram-ui';
 import {OUTPUT_LIMIT_MESSAGE} from './output-preferences';
 import {editorMessage,editorCallback} from './editor-tools';
 import {newsroomMessage,newsroomCallback} from './newsroom';
@@ -44,12 +46,25 @@ async function webhook(request:Request,env:Env):Promise<Response> {
  }
  const cb=update.callback_query as {id:string;data:string;from:{id:number};message?:{message_id:number;chat:{id:number;type:string}}}|undefined;
  if(!cb||!cb.message||!isOwner(env,String(cb.from?.id),String(cb.message.chat?.id),cb.message.chat?.type))return json({ok:true});
+ const menu=await cardMenuCallback(env,cb.data,cb.message.message_id);if(menu!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,...(menu?{text:menu}:{})}));return json({ok:true});}
+ const publication=cb.data?.match(/^dp:(mark|undo|defer|time):([a-f0-9-]{36}):(\d{1,6})$/);
+ if(publication){
+  const row=await env.DB.prepare("SELECT id FROM drafts WHERE id=? AND revision=? AND message_id=? AND state='pending' AND delivery_state='sent' AND expires_at>?").bind(publication[2],Number(publication[3]),cb.message.message_id,Math.floor(Date.now()/1000)).first<{id:string}>();
+  let answer='Kart değişmiş veya süresi dolmuş; güncel kartı kullan.';
+  if(row){const state=await publicationState(env,row.id),action=publication[1];
+   const allowed=!state.api&&(action==='time'?state.manual:action==='undo'?(state.manual||state.deferred):!state.published);
+   answer=allowed?await publicationAction(env,action,row.id,Number(id),cb.message.message_id):'Bu işlem mevcut yayın durumunda uygun değil.';
+  }
+  await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer.slice(0,200),show_alert:'true'}));return json({ok:true});
+ }
+ // Revisionless legacy publication/copy controls cannot mutate current state.
+ const legacy=cb.data?.match(/^pub:(?:mark|undo|defer|time|stats):([a-f0-9-]{36})$/)??cb.data?.match(/^asset:text:([a-f0-9-]{36}):\d+$/);
+ if(legacy){const row=await env.DB.prepare("SELECT id FROM drafts WHERE id=? AND message_id=? AND delivery_state='sent'").bind(legacy[1],cb.message.message_id).first<{id:string}>();if(row)await refreshDraftMenu(env,row.id);await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:row?'Güncel menü açıldı.':'Güncel kartı kullan.'}));return json({ok:true});}
  const ed=await editorCallback(env,cb.data,cb.message.message_id);if(ed!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:ed}));return json({ok:true});}
  const newsroom=await newsroomCallback(env,cb.data,cb.message.message_id,Number(id));if(newsroom!==null){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:newsroom.slice(0,190)}));return json({ok:true});}
- const pub=cb.data?.match(/^pub:(mark|undo|defer|time|stats):([a-f0-9-]{36})$/);
- if(pub){const text=await publicationAction(env,pub[1],pub[2],Number(id),cb.message.message_id);await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:text.slice(0,200),show_alert:'true'}));return json({ok:true});}
  if(cb.data==='xcount'||cb.data?.startsWith('xpost:')){await requestX(env,cb.data,cb.message.message_id,cb.id);return json({ok:true});}
  if(cb.data?.startsWith('design:')){
+  const parts=cb.data.split(':');const current=await env.DB.prepare("SELECT id FROM drafts WHERE id=? AND revision=? AND message_id=? AND delivery_state='sent' AND state='pending' AND expires_at>?").bind(parts[1],Number(parts[2]),cb.message.message_id,Math.floor(Date.now()/1000)).first();if(!current){await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:'Güncel ve süresi geçmemiş kartı kullan.'}));return json({ok:true});}
   const answer=await requestRedesign(env,cb.data,cb.message.message_id,Number(id));
   await telegram(env,'answerCallbackQuery',new URLSearchParams({callback_query_id:cb.id,text:answer})).catch(()=>{});
   return json({ok:true});

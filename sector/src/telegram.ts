@@ -1,5 +1,5 @@
+import {draftKeyboard,publicationState,type PublicationState} from './telegram-ui';
 import {sha256} from './utils/text';
-import {callback} from './approval';
 import {postText} from './editorial';
 import type {Env,Draft,Document} from './types';
 export function isOwner(env:Env,from:string,chat:string,type:string):boolean {
@@ -49,18 +49,17 @@ export function sourceKeyboard(docs:Document[]) {
  const urls=[...new Set(docs.map(d=>d.url))];
  if(!urls.length)throw new Error('source_url_missing');
  for(const value of urls){const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password)throw new Error('source_url_invalid');}
- return [[{text:'🔗',url:urls[0]}]];
+ return [[{text:'Kaynağı aç',url:urls[0]}]];
 }
-export function keyboard(id:string,revision:number,docs:Document[],_caption:string,publish=false,draft?:Draft) {
- return {inline_keyboard:[[...sourceKeyboard(docs)[0],{text:'✏️',callback_data:callback('edit',id,revision)},...(draft?.template==='circuit'||draft?.card_data?.report?[]:[{text:'🎨',callback_data:`ed:layout:${id}:${revision}`}])],[...(publish?[{text:'🚀',callback_data:`xpost:${id}:${revision}`}]:[]),{text:'✅',callback_data:`pub:mark:${id}`},{text:'⏸',callback_data:`pub:defer:${id}`},{text:'📊',callback_data:`pub:stats:${id}`}],[{text:'🖼',callback_data:`asset:image:${id}:${revision}`},{text:'🧾',callback_data:`ed:evidence:${id}:${revision}`},...(draft?.card_data?[{text:'🔎',callback_data:`ed:data:${id}:${revision}`}]:[]),...(!draft?.card_data?.report&&['buy','sell','holdings','metrics'].some(k=>(draft?.card_data as any)?.[k]?.length)?[{text:'🔧',callback_data:`ed:correct:${id}:${revision}`}]:[])]]};
+export function keyboard(id:string,revision:number,docs:Document[],_caption:string,publish=false,draft?:Draft,state:PublicationState={}) {
+ return draftKeyboard(id,revision,docs,publish,draft,state);
 }
 export async function sendDraft(env:Env,id:string,revision:number,draft:Draft,docs:Document[],png:Uint8Array,_verification:string,existingMessageId?:number,fetcher:typeof fetch=fetch):Promise<number> {
  if(env.MODE!=='telegram_review')throw new Error('telegram_dry_run');
  const caption=postText(draft);
  // Fail before uploading anything; never produce an orphan photo or split post.
  if(caption.length>1024)throw new Error('telegram_caption_too_long');
- const markup=keyboard(id,revision,docs,caption,env.X_PUBLISH_ENABLED==='true',draft);
- if(draft.card_data?.report?.general)markup.inline_keyboard.push([{text:'📄',callback_data:`asset:csv:${id}:${revision}`},{text:'🖼',callback_data:`asset:image:${id}:${revision}`}]);
+ const markup=keyboard(id,revision,docs,caption,env.X_PUBLISH_ENABLED==='true',draft,env.DB?await publicationState(env,id):{});
  const form=new FormData();form.set('chat_id',env.TELEGRAM_CHAT_ID!);form.set('photo',new Blob([png as BlobPart],{type:'image/png'}),'endeks-haber.png');
  form.set('reply_markup',JSON.stringify(markup));
  if(existingMessageId){

@@ -12,7 +12,7 @@ test('exactly one API operation uploads the photo, complete caption and source b
  const id=await sendDraft(env,'00000000-0000-4000-8000-000000000000',1,draft,docs,new Uint8Array([1,2]),'official_attributed',undefined,f);
  assert.equal(id,10);assert.equal(calls.length,1);assert(calls[0].url.endsWith('/sendPhoto'));assert(calls[0].form.get('photo') instanceof Blob);
  const caption=String(calls[0].form.get('caption'));assert(caption.includes(draft.body));assert(!/DENEME|X kapalı|Önem:|Kaynak:/.test(caption));
- assert.equal(JSON.parse(String(calls[0].form.get('reply_markup'))).inline_keyboard[0][0].url,docs[0].url);
+ assert.deepEqual(JSON.parse(String(calls[0].form.get('reply_markup'))).inline_keyboard.flat().map((b:any)=>b.text),['Düzenle','Diğer']);
 });
 test('overlong caption or unsafe source fails before any photo or message can be sent',async()=>{
  let count=0;const f=(async()=>{count++;throw Error('unexpected network');}) as typeof fetch;

@@ -1,8 +1,9 @@
 import {readFile,writeFile,rename,mkdir} from 'node:fs/promises';import {homedir} from 'node:os';import {resolve,sep} from 'node:path';
+import {panelURL} from '../src/miniapp/panel-url';
 import {snapshot} from './panel_snapshot';import {validSnapshot} from '../src/miniapp/types';
 const root=homedir()+'/Library/Application Support/sector-haber',dir=root+'/miniapp';
 let stop=false;process.on('SIGTERM',()=>stop=true);process.on('SIGINT',()=>stop=true);
-async function sync(){const config=JSON.parse(await readFile(dir+'/config.json','utf8'));const base=new URL(config.url);if(base.protocol!=='https:'||base.username||base.password||!base.hostname.endsWith('.workers.dev'))throw Error('panel_url_invalid');
+async function sync(){const config=JSON.parse(await readFile(dir+'/config.json','utf8'));const base=panelURL(config.url);
  const state:Record<string,number>=JSON.parse(await readFile(dir+'/media-state.json','utf8').catch(()=>'{}'));
  const owner=JSON.parse(await readFile(root+'/secrets.json','utf8')).TELEGRAM_USER_ID;
  const result=snapshot(root+'/sector-haber.sqlite',root+'/kap/kap.sqlite',Date.now(),String(owner??''));if(!validSnapshot(result.snapshot))throw Error('panel_snapshot_invalid');

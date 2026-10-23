@@ -3,6 +3,7 @@ main = "../src/miniapp/worker.ts"
 compatibility_date = "2026-10-21"
 workers_dev = true
 preview_urls = false
+routes = [{ pattern = "panel.discilaw.com", custom_domain = true }]
 [assets]
 directory = "./public"
 binding = "ASSETS"
